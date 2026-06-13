@@ -4,7 +4,7 @@ import path from "path";
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
-  transpilePackages: ["@triage-ops/db"],
+  transpilePackages: ["@triage-ops/db", "@triage-ops/metrics"],
 };
 
 export default nextConfig;

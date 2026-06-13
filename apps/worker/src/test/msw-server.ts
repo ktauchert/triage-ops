@@ -31,3 +31,34 @@ export function gitlabErrorHandler(projectId: number, status: number, body: stri
     () => new HttpResponse(body, { status }),
   );
 }
+
+export function githubIssuesHandler(
+  owner: string,
+  repo: string,
+  issues: unknown[],
+  options: { hasNextPage?: boolean } = {},
+) {
+  return http.get(
+    `https://api.github.com/repos/${owner}/${repo}/issues`,
+    () =>
+      HttpResponse.json(issues, {
+        headers: options.hasNextPage
+          ? {
+              link: `<https://api.github.com/repos/${owner}/${repo}/issues?page=2>; rel="next"`,
+            }
+          : {},
+      }),
+  );
+}
+
+export function githubErrorHandler(
+  owner: string,
+  repo: string,
+  status: number,
+  body: string,
+) {
+  return http.get(
+    `https://api.github.com/repos/${owner}/${repo}/issues`,
+    () => new HttpResponse(body, { status }),
+  );
+}

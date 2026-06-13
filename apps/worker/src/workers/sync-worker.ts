@@ -5,12 +5,12 @@ import {
 } from "@triage-ops/db";
 import type { SyncJobPayload } from "@triage-ops/shared-types";
 import type { Job } from "bullmq";
-import { fetchGitLabIssues } from "../lib/gitlab/client.js";
 import { acquireLock } from "../lib/lock.js";
 import { getRedis } from "../lib/redis.js";
+import { fetchProjectIssues } from "../lib/vcs/fetch-project-issues.js";
 
-function mapIssueState(state: "opened" | "closed"): IssueState {
-  return state === "opened" ? IssueState.OPEN : IssueState.CLOSED;
+function mapIssueState(state: "open" | "closed"): IssueState {
+  return state === "open" ? IssueState.OPEN : IssueState.CLOSED;
 }
 
 export async function processSyncJob(job: Job<SyncJobPayload>): Promise<void> {
@@ -34,61 +34,62 @@ export async function processSyncJob(job: Job<SyncJobPayload>): Promise<void> {
     });
 
     let page = 1;
-    let totalPages = 1;
+    let hasMore = true;
     let issuesSynced = 0;
 
-    while (page <= totalPages) {
-      const result = await fetchGitLabIssues({
+    while (hasMore) {
+      const result = await fetchProjectIssues({
+        provider: project.connection.provider,
         baseUrl: project.connection.baseUrl,
         accessToken: project.connection.accessToken,
-        gitlabProjectId: project.gitlabProjectId,
+        externalProjectId: project.externalProjectId,
+        pathWithNamespace: project.pathWithNamespace,
         page,
         perPage: 100,
       });
-
-      totalPages = result.totalPages;
 
       for (const issue of result.issues) {
         await prisma.issue.upsert({
           where: {
             projectId_gitlabIssueIid: {
               projectId,
-              gitlabIssueIid: issue.iid,
+              gitlabIssueIid: issue.issueNumber,
             },
           },
           create: {
-            gitlabIssueIid: issue.iid,
-            gitlabIssueId: issue.id,
+            gitlabIssueIid: issue.issueNumber,
+            gitlabIssueId: issue.externalIssueId,
             title: issue.title,
             description: issue.description,
             state: mapIssueState(issue.state),
-            authorUsername: issue.author.username,
-            assigneeUsername: issue.assignee?.username ?? null,
+            authorUsername: issue.authorUsername,
+            assigneeUsername: issue.assigneeUsername,
             weight: issue.weight,
-            createdAt: new Date(issue.created_at),
-            updatedAt: new Date(issue.updated_at),
-            closedAt: issue.closed_at ? new Date(issue.closed_at) : null,
-            lastActivityAt: new Date(issue.updated_at),
+            createdAt: new Date(issue.createdAt),
+            updatedAt: new Date(issue.updatedAt),
+            closedAt: issue.closedAt ? new Date(issue.closedAt) : null,
+            lastActivityAt: new Date(issue.updatedAt),
             projectId,
           },
           update: {
             title: issue.title,
             description: issue.description,
             state: mapIssueState(issue.state),
-            authorUsername: issue.author.username,
-            assigneeUsername: issue.assignee?.username ?? null,
+            authorUsername: issue.authorUsername,
+            assigneeUsername: issue.assigneeUsername,
             weight: issue.weight,
-            updatedAt: new Date(issue.updated_at),
-            closedAt: issue.closed_at ? new Date(issue.closed_at) : null,
-            lastActivityAt: new Date(issue.updated_at),
+            updatedAt: new Date(issue.updatedAt),
+            closedAt: issue.closedAt ? new Date(issue.closedAt) : null,
+            lastActivityAt: new Date(issue.updatedAt),
             syncedAt: new Date(),
           },
         });
         issuesSynced += 1;
       }
 
+      hasMore = result.hasMore;
       page += 1;
-      await job.updateProgress(Math.round(((page - 1) / totalPages) * 100));
+      await job.updateProgress(hasMore ? Math.min(95, page * 10) : 100);
     }
 
     await prisma.project.update({

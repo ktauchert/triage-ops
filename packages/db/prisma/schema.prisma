@@ -7,36 +7,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// GitLab instance credentials (self-hosted or gitlab.com).
-model GitLabConnection {
-  id          String    @id @default(cuid())
+/// VCS credentials (GitLab instance or GitHub account).
+model VcsConnection {
+  id          String      @id @default(cuid())
   name        String
+  provider    VcsProvider @default(GITLAB)
   baseUrl     String
   accessToken String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   projects    Project[]
 
-  @@map("gitlab_connections")
+  @@map("vcs_connections")
 }
 
-/// A GitLab project registered for triage sync.
+/// A registered repository/project for triage sync.
 model Project {
-  id                String           @id @default(cuid())
-  gitlabProjectId   Int
-  pathWithNamespace String
-  name              String
-  lastSyncedAt      DateTime?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  connectionId      String
-  connection        GitLabConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  issues            Issue[]
-  milestones        Milestone[]
-  labels            Label[]
-  syncRuns          SyncRun[]
+  id                  String        @id @default(cuid())
+  externalProjectId   Int?
+  pathWithNamespace   String
+  name                String
+  lastSyncedAt        DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  connectionId        String
+  connection          VcsConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  issues              Issue[]
+  milestones          Milestone[]
+  labels              Label[]
+  syncRuns            SyncRun[]
 
-  @@unique([connectionId, gitlabProjectId])
+  @@unique([connectionId, pathWithNamespace])
   @@index([connectionId])
   @@map("projects")
 }
@@ -124,6 +125,11 @@ model SyncRun {
   @@index([projectId, startedAt])
   @@index([status])
   @@map("sync_runs")
+}
+
+enum VcsProvider {
+  GITLAB
+  GITHUB
 }
 
 enum IssueState {
