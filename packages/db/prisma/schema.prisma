@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// GitLab instance credentials (self-hosted or gitlab.com).
+model GitLabConnection {
+  id          String    @id @default(cuid())
+  name        String
+  baseUrl     String
+  accessToken String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  projects    Project[]
+
+  @@map("gitlab_connections")
+}
+
+/// A GitLab project registered for triage sync.
+model Project {
+  id                String           @id @default(cuid())
+  gitlabProjectId   Int
+  pathWithNamespace String
+  name              String
+  lastSyncedAt      DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  connectionId      String
+  connection        GitLabConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  issues            Issue[]
+  milestones        Milestone[]
+  labels            Label[]
+  syncRuns          SyncRun[]
+
+  @@unique([connectionId, gitlabProjectId])
+  @@index([connectionId])
+  @@map("projects")
+}
+
+model Milestone {
+  id                String         @id @default(cuid())
+  gitlabMilestoneId Int
+  title             String
+  description       String?
+  state             MilestoneState
+  dueDate           DateTime?
+  startDate         DateTime?
+  createdAt         DateTime
+  updatedAt         DateTime
+  projectId         String
+  project           Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues            Issue[]
+
+  @@unique([projectId, gitlabMilestoneId])
+  @@index([projectId, state])
+  @@map("milestones")
+}
+
+model Label {
+  id        String       @id @default(cuid())
+  name      String
+  color     String?
+  projectId String
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues    IssueLabel[]
+
+  @@unique([projectId, name])
+  @@map("labels")
+}
+
+model Issue {
+  id               String     @id @default(cuid())
+  gitlabIssueIid   Int
+  gitlabIssueId    Int
+  title            String
+  description      String?
+  state            IssueState
+  authorUsername   String?
+  assigneeUsername String?
+  weight           Int?
+  createdAt        DateTime
+  updatedAt        DateTime
+  closedAt         DateTime?
+  lastActivityAt   DateTime?
+  syncedAt         DateTime   @default(now())
+  projectId        String
+  project          Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestoneId      String?
+  milestone        Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  labels           IssueLabel[]
+
+  @@unique([projectId, gitlabIssueIid])
+  @@index([projectId, state])
+  @@index([lastActivityAt])
+  @@index([milestoneId])
+  @@map("issues")
+}
+
+model IssueLabel {
+  issueId String
+  labelId String
+  issue   Issue  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([issueId, labelId])
+  @@map("issue_labels")
+}
+
+/// Audit trail for background sync jobs per project.
+model SyncRun {
+  id           String     @id @default(cuid())
+  status       SyncStatus @default(PENDING)
+  startedAt    DateTime   @default(now())
+  completedAt  DateTime?
+  issuesSynced Int        @default(0)
+  errorMessage String?
+  projectId    String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, startedAt])
+  @@index([status])
+  @@map("sync_runs")
+}
+
+enum IssueState {
+  OPEN
+  CLOSED
+}
+
+enum MilestoneState {
+  ACTIVE
+  CLOSED
+}
+
+enum SyncStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}

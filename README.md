@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TriageOps (GitLab Lens)
 
-## Getting Started
+A data-sync and triage engine for GitLab issue boards. Syncs issue metadata into Postgres and surfaces triage metrics — ghost tickets, zombie tickets, milestone decay — via a dashboard.
 
-First, run the development server:
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
+npm install
+npm run docker:up
+npm run db:migrate
+npm run dev          # web  → http://localhost:3000
+npm run dev:worker   # worker daemon
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Documentation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Full project documentation lives in **[`docs/`](./docs/README.md)**:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Doc | Description |
+|-----|-------------|
+| [Current State](./docs/current-state.md) | What's built today |
+| [Architecture](./docs/architecture.md) | Monorepo layout, worker, DB, data flow |
+| [Implementation Phases](./docs/phases.md) | Roadmap and next steps |
+| [MVP Definition of Done](./docs/mvp-definition-of-done.md) | Phase 1 ship criteria |
+| [Running the App](./docs/running-the-app.md) | Local dev, Docker, troubleshooting |
+| [Development Guide](./docs/development-guide.md) | TDD, conventions, where to put code |
 
-## Learn More
+## Monorepo structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+apps/web       Next.js dashboard (App Router)
+apps/worker    BullMQ background jobs + GitLab client
+packages/db    Prisma schema, migrations, Postgres client
+packages/shared-types   Queue payloads and shared DTOs
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run dev              # Start web dev server
+npm run dev:worker       # Start worker daemon
+npm run test             # Run Vitest across workspaces
+npm run build            # Production build all packages
+npm run db:migrate       # Apply Prisma migrations
+npm run docker:up        # Start Postgres, Redis, Ollama
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Requires **Node.js ≥ 20** and **Docker**.

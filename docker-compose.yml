@@ -1,0 +1,102 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: triage-ops-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: triage_ops
+      POSTGRES_PASSWORD: triage_ops
+      POSTGRES_DB: triage_ops
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U triage_ops -d triage_ops"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: triage-ops-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: triage-ops-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: triage-ops-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://triage_ops:triage_ops@postgres:5432/triage_ops
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: triage-ops-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://triage_ops:triage_ops@postgres:5432/triage_ops
+      REDIS_URL: redis://redis:6379
+      OLLAMA_HOST: http://ollama:11434
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: triage-ops-migrate
+    profiles:
+      - migrate
+    environment:
+      DATABASE_URL: postgresql://triage_ops:triage_ops@postgres:5432/triage_ops
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["npx", "prisma", "migrate", "deploy", "--schema", "packages/db/prisma/schema.prisma"]
+    restart: "no"
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:

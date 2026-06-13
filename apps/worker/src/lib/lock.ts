@@ -1,0 +1,50 @@
+import type { Redis } from "ioredis";
+
+const LOCK_PREFIX = "triage-ops:lock:";
+
+export type LockHandle = {
+  key: string;
+  token: string;
+  release: () => Promise<boolean>;
+};
+
+/**
+ * Acquire a distributed lock with SET NX EX semantics.
+ * Returns null when the lock is already held.
+ */
+export async function acquireLock(
+  redis: Redis,
+  resource: string,
+  ttlSeconds = 300,
+): Promise<LockHandle | null> {
+  const key = `${LOCK_PREFIX}${resource}`;
+  const token = crypto.randomUUID();
+  const acquired = await redis.set(key, token, "EX", ttlSeconds, "NX");
+
+  if (acquired !== "OK") {
+    return null;
+  }
+
+  return {
+    key,
+    token,
+    release: () => releaseLock(redis, key, token),
+  };
+}
+
+/** Release lock only if we still own it (token match). */
+export async function releaseLock(
+  redis: Redis,
+  key: string,
+  token: string,
+): Promise<boolean> {
+  const script = `
+    if redis.call("get", KEYS[1]) == ARGV[1] then
+      return redis.call("del", KEYS[1])
+    else
+      return 0
+    end
+  `;
+  const result = await redis.eval(script, 1, key, token);
+  return result === 1;
+}
