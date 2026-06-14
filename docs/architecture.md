@@ -105,7 +105,7 @@ flowchart LR
 |-------|------|
 | Schema | `prisma/schema.prisma` |
 | Migrations | `prisma/migrations/` |
-| Seed | `prisma/seed.ts` |
+| Seed | `src/seed.ts` |
 | Client | `src/client.ts` (singleton, loads root `.env`) |
 | Public API | `src/index.ts` |
 

@@ -64,7 +64,7 @@ Scaffolding and core pipeline infrastructure.
 
 ### Step 6 — Developer experience — mostly done
 
-- [x] Seed script: sample connections + projects (`packages/db/prisma/seed.ts`)
+- [x] Seed script: sample connections + projects (`packages/db/src/seed.ts`)
 - [x] Worker sync upserts milestones from issue payload (title, due date, state)
 - [ ] Worker sync upserts labels
 - [ ] Encrypt `accessToken` at rest (documented as known MVP limitation in UI)

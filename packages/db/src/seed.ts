@@ -1,6 +1,5 @@
-import { PrismaClient, VcsProvider } from "@prisma/client";
+import { prisma, VcsProvider } from "./index";
 
-const prisma = new PrismaClient();
 const DEFAULT_GITHUB_API_URL = "https://api.github.com";
 
 async function main() {
@@ -14,7 +13,8 @@ async function main() {
   );
   const gitlabPath =
     process.env.SEED_GITLAB_PROJECT_PATH ?? "group/sample-project";
-  const gitlabName = process.env.SEED_GITLAB_PROJECT_NAME ?? "Sample GitLab Project";
+  const gitlabName =
+    process.env.SEED_GITLAB_PROJECT_NAME ?? "Sample GitLab Project";
 
   const githubToken =
     process.env.SEED_GITHUB_TOKEN ?? "replace-me-with-real-token";

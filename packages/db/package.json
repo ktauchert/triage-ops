@@ -16,7 +16,7 @@
     "db:migrate:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
     "db:push": "dotenv -e ../../.env -- prisma db push",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
-    "db:seed": "dotenv -e ../../.env -- tsx prisma/seed.ts"
+    "db:seed": "dotenv -e ../../.env -- tsx src/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -29,6 +29,6 @@
     "typescript": "^5"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx src/seed.ts"
   }
 }
