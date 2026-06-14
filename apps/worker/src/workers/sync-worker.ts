@@ -3,14 +3,98 @@ import {
   SyncStatus,
   prisma,
 } from "@triage-ops/db";
-import type { SyncJobPayload } from "@triage-ops/shared-types";
+import type { NormalizedIssue, SyncJobPayload } from "@triage-ops/shared-types";
 import type { Job } from "bullmq";
 import { acquireLock } from "../lib/lock.js";
 import { getRedis } from "../lib/redis.js";
 import { fetchProjectIssues } from "../lib/vcs/fetch-project-issues.js";
+import {
+  mapMilestoneState,
+  parseMilestoneDueDate,
+} from "../lib/milestone.js";
 
 function mapIssueState(state: "open" | "closed"): IssueState {
   return state === "open" ? IssueState.OPEN : IssueState.CLOSED;
+}
+
+async function resolveMilestoneId(
+  projectId: string,
+  milestone: NormalizedIssue["milestone"],
+): Promise<string | null> {
+  if (!milestone) {
+    return null;
+  }
+
+  const record = await prisma.milestone.upsert({
+    where: {
+      projectId_gitlabMilestoneId: {
+        projectId,
+        gitlabMilestoneId: milestone.externalId,
+      },
+    },
+    create: {
+      gitlabMilestoneId: milestone.externalId,
+      title: milestone.title,
+      state: mapMilestoneState(milestone.state),
+      dueDate: parseMilestoneDueDate(milestone.dueDate),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      projectId,
+    },
+    update: {
+      title: milestone.title,
+      state: mapMilestoneState(milestone.state),
+      dueDate: parseMilestoneDueDate(milestone.dueDate),
+      updatedAt: new Date(),
+    },
+  });
+
+  return record.id;
+}
+
+async function upsertSyncedIssue(
+  projectId: string,
+  issue: NormalizedIssue,
+): Promise<void> {
+  const milestoneId = await resolveMilestoneId(projectId, issue.milestone);
+
+  await prisma.issue.upsert({
+    where: {
+      projectId_gitlabIssueIid: {
+        projectId,
+        gitlabIssueIid: issue.issueNumber,
+      },
+    },
+    create: {
+      gitlabIssueIid: issue.issueNumber,
+      gitlabIssueId: BigInt(issue.externalIssueId),
+      title: issue.title,
+      description: issue.description,
+      state: mapIssueState(issue.state),
+      authorUsername: issue.authorUsername,
+      assigneeUsername: issue.assigneeUsername,
+      weight: issue.weight,
+      createdAt: new Date(issue.createdAt),
+      updatedAt: new Date(issue.updatedAt),
+      closedAt: issue.closedAt ? new Date(issue.closedAt) : null,
+      lastActivityAt: new Date(issue.updatedAt),
+      milestoneId,
+      projectId,
+    },
+    update: {
+      title: issue.title,
+      description: issue.description,
+      state: mapIssueState(issue.state),
+      authorUsername: issue.authorUsername,
+      assigneeUsername: issue.assigneeUsername,
+      weight: issue.weight,
+      updatedAt: new Date(issue.updatedAt),
+      closedAt: issue.closedAt ? new Date(issue.closedAt) : null,
+      lastActivityAt: new Date(issue.updatedAt),
+      milestoneId,
+      syncedAt: new Date(),
+    },
+  });
 }
 
 export async function processSyncJob(job: Job<SyncJobPayload>): Promise<void> {
@@ -49,41 +133,7 @@ export async function processSyncJob(job: Job<SyncJobPayload>): Promise<void> {
       });
 
       for (const issue of result.issues) {
-        await prisma.issue.upsert({
-          where: {
-            projectId_gitlabIssueIid: {
-              projectId,
-              gitlabIssueIid: issue.issueNumber,
-            },
-          },
-          create: {
-            gitlabIssueIid: issue.issueNumber,
-            gitlabIssueId: issue.externalIssueId,
-            title: issue.title,
-            description: issue.description,
-            state: mapIssueState(issue.state),
-            authorUsername: issue.authorUsername,
-            assigneeUsername: issue.assigneeUsername,
-            weight: issue.weight,
-            createdAt: new Date(issue.createdAt),
-            updatedAt: new Date(issue.updatedAt),
-            closedAt: issue.closedAt ? new Date(issue.closedAt) : null,
-            lastActivityAt: new Date(issue.updatedAt),
-            projectId,
-          },
-          update: {
-            title: issue.title,
-            description: issue.description,
-            state: mapIssueState(issue.state),
-            authorUsername: issue.authorUsername,
-            assigneeUsername: issue.assigneeUsername,
-            weight: issue.weight,
-            updatedAt: new Date(issue.updatedAt),
-            closedAt: issue.closedAt ? new Date(issue.closedAt) : null,
-            lastActivityAt: new Date(issue.updatedAt),
-            syncedAt: new Date(),
-          },
-        });
+        await upsertSyncedIssue(projectId, issue);
         issuesSynced += 1;
       }
 

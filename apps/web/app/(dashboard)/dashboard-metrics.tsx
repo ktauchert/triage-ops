@@ -20,7 +20,15 @@ type IssueSummary = {
   id: string;
   gitlabIssueIid: number;
   title: string;
+  state?: string;
   lastActivityAt: Date | null;
+};
+
+type MilestoneSummary = {
+  id: string;
+  title: string;
+  state: string;
+  dueDate: Date | null;
 };
 
 type MetricsPayload = {
@@ -29,6 +37,15 @@ type MetricsPayload = {
   lastSyncedAt: Date | null;
   computedAt: string;
   thresholds: { ghostDays: number; zombieDays: number };
+  overview: {
+    totalIssues: number;
+    openIssues: number;
+    closedIssues: number;
+    totalMilestones: number;
+    activeMilestones: number;
+  };
+  issues: IssueSummary[];
+  milestones: MilestoneSummary[];
   ghost: { count: number; issues: IssueSummary[] };
   zombie: { count: number; issues: IssueSummary[] };
   milestoneDecay: {
@@ -57,23 +74,58 @@ export function DashboardMetrics({
         {formatRelativeDate(metrics.computedAt)}
       </p>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard
-          title="Ghost tickets"
-          description={`Open issues inactive for more than ${metrics.thresholds.ghostDays} days`}
-          count={metrics.ghost.count}
-        />
-        <MetricCard
-          title="Zombie tickets"
-          description={`Assigned, no milestone, stale for ${metrics.thresholds.zombieDays}+ days`}
-          count={metrics.zombie.count}
-        />
-        <MetricCard
-          title="Milestone decay"
-          description="Overdue active milestones with open issues"
-          count={metrics.milestoneDecay.count}
-        />
-      </div>
+      <section className="space-y-3">
+        <h3 className="text-lg font-semibold">Overview</h3>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <MetricCard title="Total issues" count={metrics.overview.totalIssues} />
+          <MetricCard title="Open issues" count={metrics.overview.openIssues} />
+          <MetricCard
+            title="Closed issues"
+            count={metrics.overview.closedIssues}
+          />
+          <MetricCard
+            title="Milestones"
+            count={metrics.overview.totalMilestones}
+          />
+          <MetricCard
+            title="Active milestones"
+            count={metrics.overview.activeMilestones}
+          />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-lg font-semibold">Triage signals</h3>
+        <div className="grid gap-4 md:grid-cols-3">
+          <MetricCard
+            title="Ghost tickets"
+            description={`Open issues inactive for more than ${metrics.thresholds.ghostDays} days`}
+            count={metrics.ghost.count}
+          />
+          <MetricCard
+            title="Zombie tickets"
+            description={`Assigned, no milestone, stale for ${metrics.thresholds.zombieDays}+ days`}
+            count={metrics.zombie.count}
+          />
+          <MetricCard
+            title="Milestone decay"
+            description="Overdue active milestones with open issues"
+            count={metrics.milestoneDecay.count}
+          />
+        </div>
+      </section>
+
+      <IssueTable
+        title="All synced issues"
+        issues={metrics.issues}
+        showState
+        emptyMessage="No issues synced yet. Run a sync from the Projects page."
+      />
+
+      <MilestoneTable
+        milestones={metrics.milestones}
+        emptyMessage="No milestones synced yet. Milestones appear when issues are linked to them on GitHub/GitLab."
+      />
 
       <IssueTable
         title="Ghost issues"
@@ -125,17 +177,59 @@ function MetricCard({
   count,
 }: {
   title: string;
-  description: string;
+  description?: string;
   count: number;
 }) {
   return (
     <Card>
-      <CardHeader>
-        <CardDescription>{description}</CardDescription>
-        <CardTitle>{title}</CardTitle>
+      <CardHeader className="pb-2">
+        {description ? <CardDescription>{description}</CardDescription> : null}
+        <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-4xl font-bold">{count}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MilestoneTable({
+  milestones,
+  emptyMessage,
+}: {
+  milestones: MilestoneSummary[];
+  emptyMessage: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Synced milestones</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {milestones.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>State</TableHead>
+                <TableHead>Due date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {milestones.map((milestone) => (
+                <TableRow key={milestone.id}>
+                  <TableCell>{milestone.title}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{milestone.state}</Badge>
+                  </TableCell>
+                  <TableCell>{formatRelativeDate(milestone.dueDate)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );
@@ -146,11 +240,13 @@ function IssueTable({
   issues,
   emptyMessage,
   compact = false,
+  showState = false,
 }: {
   title: string;
   issues: IssueSummary[];
   emptyMessage: string;
   compact?: boolean;
+  showState?: boolean;
 }) {
   if (issues.length === 0 && emptyMessage) {
     return (
@@ -184,6 +280,7 @@ function IssueTable({
             <TableRow>
               <TableHead>#</TableHead>
               <TableHead>Title</TableHead>
+              {showState ? <TableHead>State</TableHead> : null}
               <TableHead>Last activity</TableHead>
             </TableRow>
           </TableHeader>
@@ -192,6 +289,11 @@ function IssueTable({
               <TableRow key={issue.id}>
                 <TableCell>{issue.gitlabIssueIid}</TableCell>
                 <TableCell>{issue.title}</TableCell>
+                {showState ? (
+                  <TableCell>
+                    <Badge variant="secondary">{issue.state}</Badge>
+                  </TableCell>
+                ) : null}
                 <TableCell>
                   {formatRelativeDate(issue.lastActivityAt)}
                 </TableCell>

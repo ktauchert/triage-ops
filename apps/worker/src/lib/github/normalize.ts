@@ -17,6 +17,14 @@ export function normalizeGitHubIssue(issue: GitHubIssueRaw): NormalizedIssue {
     authorUsername: issue.user.login,
     assigneeUsername: issue.assignee?.login ?? null,
     weight: null,
+    milestone: issue.milestone
+      ? {
+          externalId: issue.milestone.id,
+          title: issue.milestone.title,
+          dueDate: issue.milestone.due_on,
+          state: issue.milestone.state,
+        }
+      : null,
   };
 }
 

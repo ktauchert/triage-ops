@@ -6,55 +6,78 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ---
 
-## Completed (Step 1 & Step 2)
+## Completed
 
 ### Monorepo foundation
 
 - npm workspaces at repo root (`apps/*`, `packages/*`)
 - Root scripts for dev, build, lint, test, database, and Docker
-- `.env.example` with local defaults
+- `.env.example` with local defaults (root `.env` loaded by web, worker, and Prisma scripts)
 
 ### Database layer (`packages/db`)
 
 - **Prisma schema** with relational models:
-  - `GitLabConnection` — GitLab instance URL + access token
-  - `Project` — registered GitLab project per connection
-  - `Issue` — synced issue metadata (title, state, assignee, dates, etc.)
-  - `Milestone`, `Label`, `IssueLabel` — supporting triage metrics
-  - `SyncRun` — audit trail for background sync jobs
-- **Initial migration** applied: `20260613044427_init`
-- **Prisma client singleton** exported from `@triage-ops/db`
+  - `VcsConnection` — GitLab or GitHub credentials (`provider`, `baseUrl`, `accessToken`)
+  - `Project` — registered repo/project (`externalProjectId`, `pathWithNamespace`)
+  - `Issue`, `Milestone`, `Label`, `IssueLabel`, `SyncRun`
+- **Migrations applied:** `init`, `vcs_provider` (GitHub + rename), `github_issue_id_bigint`
+- **Prisma client singleton** with monorepo root `.env` discovery
+- **Seed script** (`npm run db:seed`) for GitLab and/or GitHub sample data
 
 ### Shared types (`packages/shared-types`)
 
 - Queue name constants (`gitlab-sync`)
 - Job payload types (`SyncJobPayload`)
-- GitLab API response DTOs (`GitLabIssueRaw`, `FetchGitLabIssuesParams`)
+- GitLab and GitHub issue DTOs
+- `NormalizedIssue` contract for provider-agnostic sync
+
+### Metrics engine (`packages/metrics`)
+
+- Pure functions: `countGhostIssues`, `countZombieIssues`, `getMilestoneDecay`
+- 17 unit tests (boundaries, empty input, edge cases)
 
 ### Worker (`apps/worker`)
 
-- **GitLab API client** — paginated issue fetch with input validation and error types
-- **Redis distributed locks** — prevents concurrent syncs for the same project
+- **GitLab API client** — paginated issue fetch, validation, error types
+- **GitHub API client** — paginated issues, PR filtering, Link-header pagination
+- **VCS router** — `fetchProjectIssues()` dispatches by `VcsProvider`
+- **Redis distributed locks** — per-project sync exclusion
 - **BullMQ queue** — `gitlab-sync` with retry/backoff
-- **Sync worker** — fetches all issue pages from GitLab and upserts into Postgres; updates `SyncRun` status
+- **Sync worker** — upserts issues, links milestones from issue payload (title, due date, state)
 - **esbuild bundle** for production Docker image
-- **15 unit tests** (Vitest + MSW) covering GitLab client and lock behaviour
+- **35 unit tests** (Vitest + MSW): GitLab client, GitHub client, locks, milestone helpers, normalizers
 
 ### Web (`apps/web`)
 
-- Next.js 16 App Router starter (default create-next-app page)
-- `output: "standalone"` configured for Docker production builds
-- No dashboard, API routes, or Shadcn UI yet
+- **Dashboard** — overview counts (issues, milestones), triage signals, issue/milestone tables
+- **Connections** — add/list GitHub or GitLab connections (provider picker)
+- **Projects** — register repo/project, manual sync, last run status
+- **API routes:**
+  - `GET/POST /api/connections`
+  - `GET/POST /api/projects`
+  - `POST /api/projects/[id]/sync`
+  - `GET /api/projects/[id]/sync-runs`
+  - `GET /api/projects/[id]/metrics`
+- **Shadcn-style UI** — sidebar layout, cards, tables, badges
+- **BullMQ enqueue** from web via Redis
+- **7 API helper unit tests**
+- Production build verified (`npm run build -w @triage-ops/web`)
 
 ### Infrastructure
 
-- `docker-compose.yml` with:
-  - **postgres** (host port `5433` → container `5432`)
-  - **redis** (port `6379`)
-  - **ollama** (port `11434`, Phase 2 placeholder)
-  - **web** and **worker** production images
-  - **migrate** profile for `prisma migrate deploy`
-- Multi-stage Dockerfiles for web and worker
+- `docker-compose.yml`:
+  - **postgres** (host `5433`), **redis** (`6379`), **ollama** (`11434`)
+  - **web** + **worker** behind `production` profile (`npm run docker:up:all`)
+  - **migrate** profile (`npm run docker:migrate`)
+- `npm run docker:up` starts infra only (postgres, redis, ollama) for local dev
+- GitHub Actions CI: migrate → test (incl. e2e smoke) → lint → web build
+
+### E2E smoke test (`packages/e2e`)
+
+- Vitest integration test: register connection/project → BullMQ sync → metrics
+- GitHub API mocked via MSW (no real token required)
+- Requires Postgres + Redis (`npm run docker:up`)
+- Run: `npm run test:e2e` (also included in `npm test`)
 
 ---
 
@@ -62,23 +85,24 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 | Item | Notes |
 |------|-------|
-| Milestone / label sync | Schema exists; worker only upserts issues today |
-| Ollama integration | Container runs; no application code uses it yet |
-| Web ↔ worker integration | No API to register connections or enqueue sync jobs |
-| Token encryption | Access tokens stored as plain strings in DB (MVP risk) |
+| Label sync | Schema exists; worker does not upsert labels yet |
+| Milestone sync | Upserted from issue-linked milestones only (no standalone milestones API) |
+| Token security | Access tokens stored as plain strings; documented in UI as MVP limitation |
+| API test coverage | Validation helpers tested; route handlers not fully mocked yet |
+| Phase 1 hardening | CI + E2E smoke done; full production compose verification open |
+| Authentication | **Not implemented** — all API routes and pages are open (see [phases.md](./phases.md) Step 8) |
 
 ---
 
 ## Not started
 
-- Dashboard UI (ghost / zombie / milestone decay metrics)
-- Shadcn UI component library setup
-- API routes for connection/project CRUD and sync triggers
-- Seed script for local development data
-- Authentication / multi-tenant isolation
+- User authentication / session management / API protection
+- Multi-tenant workspace isolation
+- Token encryption at rest
 - Phase 2 LLM jobs (duplicate detection, description drafting)
-- CI pipeline (GitHub Actions / GitLab CI)
-- Production secrets management
+- Scheduled auto-sync, webhooks
+- Helm chart / production install guide
+- SaaS billing
 
 ---
 
@@ -86,9 +110,10 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 | Package | Framework | Tests | Scope |
 |---------|-----------|-------|-------|
-| `@triage-ops/worker` | Vitest + MSW | 15 | GitLab client, Redis locks |
-| `@triage-ops/db` | — | 0 | — |
-| `@triage-ops/web` | — | 0 | — |
+| `@triage-ops/worker` | Vitest + MSW | 35 | GitLab/GitHub clients, locks, milestones, normalizers |
+| `@triage-ops/metrics` | Vitest | 17 | Ghost, zombie, milestone decay |
+| `@triage-ops/web` | Vitest | 7 | API validation helpers |
+| `@triage-ops/e2e` | Vitest | 1 | Register → sync → metrics smoke |
 
 Run all tests:
 
@@ -103,7 +128,7 @@ npm test
 | Variable | Required by | Default (local) |
 |----------|-------------|-----------------|
 | `DATABASE_URL` | db, worker, web | `postgresql://triage_ops:triage_ops@localhost:5433/triage_ops` |
-| `REDIS_URL` | worker | `redis://localhost:6379` |
+| `REDIS_URL` | worker, web | `redis://localhost:6379` |
 | `OLLAMA_HOST` | worker (Phase 2) | `http://localhost:11434` |
 | `WORKER_CONCURRENCY` | worker | `2` |
 

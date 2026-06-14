@@ -2,29 +2,35 @@
 
 ## System overview
 
-TriageOps follows a **sync-and-analyze** pattern: a background worker pulls issue data from GitLab into Postgres; the web app reads that local data to compute and display triage metrics without hammering the GitLab API on every page load.
+TriageOps follows a **sync-and-analyze** pattern: a background worker pulls issue data from GitHub or GitLab into Postgres; the web app reads that local data to compute and display triage metrics without hammering the VCS API on every page load.
 
 ```mermaid
 flowchart LR
-  subgraph GitLab
+  subgraph VCS
+    GH[GitHub API]
     GL[GitLab API]
   end
 
   subgraph TriageOps
     WEB[apps/web\nNext.js]
     WORKER[apps/worker\nBullMQ daemon]
+    METRICS[packages/metrics]
     REDIS[(Redis)]
     PG[(PostgreSQL)]
     OLLAMA[Ollama\nPhase 2]
   end
 
+  GH -->|REST /issues| WORKER
   GL -->|REST /issues| WORKER
   WORKER -->|upsert| PG
   WORKER <-->|jobs + locks| REDIS
-  WEB -->|read metrics| PG
+  WEB -->|read| PG
+  WEB -->|compute| METRICS
   WEB -->|enqueue sync| REDIS
   WORKER -.->|Phase 2| OLLAMA
 ```
+
+> **Security note:** The web app currently has **no authentication**. All dashboard pages and API routes are open. See [phases.md](./phases.md) Step 8 before shared deployment.
 
 ---
 
@@ -37,16 +43,26 @@ flowchart LR
 | Concern | Technology |
 |---------|------------|
 | Framework | Next.js 16 App Router |
-| Styling | Tailwind CSS v4 (Shadcn UI planned) |
+| Styling | Tailwind CSS v4 + Shadcn UI |
 | Data access | `@triage-ops/db` (Prisma) |
+| Metrics | `@triage-ops/metrics` |
+| Job enqueue | BullMQ `Queue` via `lib/queue.ts` |
 | Deployment | Standalone Docker image on port 3000 |
 
-**Planned responsibilities:**
-- Display triage metrics (ghost, zombie, milestone decay)
-- Manage GitLab connections and registered projects
+**Responsibilities:**
+- Display overview counts and triage metrics (ghost, zombie, milestone decay)
+- Manage VCS connections (GitHub or GitLab) and registered projects
 - Trigger sync jobs by enqueueing to BullMQ via Redis
 
-**Current state:** Default Next.js starter page only.
+**Key paths:**
+
+| Path | Purpose |
+|------|---------|
+| `app/(dashboard)/` | Dashboard, connections, projects pages |
+| `app/api/` | REST API routes |
+| `components/` | Shadcn UI components, layout shell |
+| `lib/services/` | `projects.ts`, `metrics.ts` — server-side data helpers |
+| `lib/queue.ts` | BullMQ enqueue helper |
 
 ---
 
@@ -58,9 +74,11 @@ flowchart LR
 |--------|------|---------|
 | Entry point | `src/index.ts` | Starts BullMQ worker, handles graceful shutdown |
 | GitLab client | `src/lib/gitlab/client.ts` | Paginated fetch of project issues via GitLab REST API |
+| GitHub client | `src/lib/github/client.ts` | Paginated fetch via GitHub REST API |
+| VCS router | `src/lib/vcs/fetch-project-issues.ts` | Dispatches by `VcsProvider` |
 | Redis locks | `src/lib/lock.ts` | Distributed lock per project (`SET NX` + token-safe release) |
 | Sync queue | `src/queues/sync-queue.ts` | Queue factory and connection config |
-| Sync processor | `src/workers/sync-worker.ts` | Job handler: fetch → upsert issues → update `SyncRun` |
+| Sync processor | `src/workers/sync-worker.ts` | Job handler: fetch → upsert issues + milestones → update `SyncRun` |
 | Config | `src/config/env.ts` | Required env var validation |
 
 **Job flow (`gitlab-sync` queue):**
@@ -68,11 +86,12 @@ flowchart LR
 1. Job received with payload `{ projectId, syncRunId }`
 2. Acquire Redis lock for `sync:{projectId}` (skip if already locked)
 3. Mark `SyncRun` as `RUNNING`
-4. Load `Project` + `GitLabConnection` from Postgres
-5. Paginate GitLab `/api/v4/projects/:id/issues` (100 per page)
-6. Upsert each issue into `issues` table
-7. Mark `SyncRun` as `COMPLETED` (or `FAILED` on error)
-8. Release lock
+4. Load `Project` + `VcsConnection` from Postgres
+5. Route to GitHub or GitLab client based on `connection.provider`
+6. Paginate issues (100 per page)
+7. Upsert each issue; upsert linked milestones (title, due date, state)
+8. Mark `SyncRun` as `COMPLETED` (or `FAILED` on error)
+9. Release lock
 
 **Retry policy:** 3 attempts, exponential backoff starting at 5 s.
 
@@ -86,13 +105,15 @@ flowchart LR
 |-------|------|
 | Schema | `prisma/schema.prisma` |
 | Migrations | `prisma/migrations/` |
-| Client | `src/client.ts` (singleton) |
+| Seed | `prisma/seed.ts` |
+| Client | `src/client.ts` (singleton, loads root `.env`) |
 | Public API | `src/index.ts` |
 
 **Design constraints enforced in schema:**
 
-- One GitLab project per connection: `@@unique([connectionId, gitlabProjectId])`
+- One project per connection: `@@unique([connectionId, pathWithNamespace])`
 - One issue per project IID: `@@unique([projectId, gitlabIssueIid])`
+- External VCS issue ID stored as `BigInt` (`gitlabIssueId`) for GitHub global IDs
 - Cascade deletes from connection → project → issues
 - Indexes on `Issue.state`, `Issue.lastActivityAt` for metric queries
 
@@ -102,7 +123,22 @@ flowchart LR
 npm run db:generate -w @triage-ops/db   # Regenerate Prisma client
 npm run db:migrate -w @triage-ops/db    # Dev migration
 npm run db:migrate:deploy -w @triage-ops/db  # Production deploy
+npm run db:seed -w @triage-ops/db       # Sample connections + projects
 ```
+
+---
+
+### `packages/metrics` — Triage metric engine
+
+**Role:** Pure functions for computing triage signals from synced issue/milestone data. No I/O, no framework dependencies.
+
+| Function | Definition |
+|----------|------------|
+| `countGhostIssues` | Open issues with `lastActivityAt` older than threshold (default 30 days) |
+| `countZombieIssues` | Open + assigned issues stale beyond threshold (default 14 days) |
+| `getMilestoneDecay` | Active milestones past `dueDate` with open issues attached |
+
+Used by `apps/web/lib/services/metrics.ts` and exposed via `GET /api/projects/[id]/metrics`.
 
 ---
 
@@ -114,34 +150,39 @@ Exports:
 - `QUEUE_NAMES.GITLAB_SYNC`
 - `SyncJobPayload`
 - `GitLabIssueRaw`, `GitLabIssuesPage`, `FetchGitLabIssuesParams`
+- `GitHubIssueRaw`, `GitHubIssuesPage`, `FetchGitHubIssuesParams`
+- `NormalizedIssue` — provider-agnostic issue shape after normalization
 
 ---
 
 ## Infrastructure services
 
-| Service | Image | Host port | Purpose |
-|---------|-------|-----------|---------|
-| `postgres` | `postgres:16-alpine` | **5433** | Primary datastore |
-| `redis` | `redis:7-alpine` | 6379 | BullMQ job queue + distributed locks |
-| `ollama` | `ollama/ollama:latest` | 11434 | Local LLM inference (Phase 2) |
-| `web` | Built from `apps/web/Dockerfile` | 3000 | Production web server |
-| `worker` | Built from `apps/worker/Dockerfile` | — | Production worker daemon |
+| Service | Image | Host port | Profile | Purpose |
+|---------|-------|-----------|---------|---------|
+| `postgres` | `postgres:16-alpine` | **5433** | default | Primary datastore |
+| `redis` | `redis:7-alpine` | 6379 | default | BullMQ job queue + distributed locks |
+| `ollama` | `ollama/ollama:latest` | 11434 | default | Local LLM inference (Phase 2) |
+| `web` | Built from `apps/web/Dockerfile` | 3000 | `production` | Production web server |
+| `worker` | Built from `apps/worker/Dockerfile` | — | `production` | Production worker daemon |
+| `migrate` | `packages/db` | — | `migrate` | One-shot migration runner |
 
 > **Note:** Postgres is mapped to host port **5433** (not 5432) to avoid conflicts with a locally installed Postgres instance.
 
+**Docker profiles:**
+- `npm run docker:up` — infra only (postgres, redis, ollama) for local dev
+- `npm run docker:up:all` — infra + web + worker (`production` profile)
+- `npm run docker:migrate` — apply migrations in container
+
 ---
 
-## Metric definitions (planned)
+## Authentication (planned — Step 8)
 
-These metrics will be computed from synced `Issue` rows in Phase 1 MVP:
+Not implemented. Current architecture exposes all routes without session checks.
 
-| Metric | Definition (draft) |
-|--------|-------------------|
-| **Ghost ticket** | Open issue with no activity (`lastActivityAt`) beyond N days |
-| **Zombie ticket** | Open issue assigned but stale — no updates and no milestone |
-| **Milestone decay** | Active milestone past `dueDate` with open issues still attached |
-
-Exact thresholds (N days) will be configurable in MVP settings.
+Planned approach (to be decided during implementation):
+- Next.js middleware protecting `/api/*` and dashboard routes
+- Session provider (e.g. NextAuth.js / Auth.js) with GitHub or GitLab OAuth
+- Optional `userId` / `workspaceId` on `VcsConnection` for multi-user isolation
 
 ---
 
@@ -149,7 +190,10 @@ Exact thresholds (N days) will be configurable in MVP settings.
 
 - **Framework:** Vitest (TypeScript-native, fast)
 - **HTTP mocking:** MSW (Mock Service Worker) — no real network calls in unit tests
-- **Location:** Tests live next to source (`*.test.ts`) in `apps/worker`
-- **TDD rule:** Write test contract before implementing core utilities (GitLab client, handlers)
+- **Locations:**
+  - `apps/worker/src/**/*.test.ts` — VCS clients, locks, sync helpers (35 tests)
+  - `packages/metrics/src/**/*.test.ts` — metric functions (17 tests)
+  - `apps/web/lib/**/*.test.ts` — API validation helpers (7 tests)
+- **TDD rule:** Write test contract before implementing core utilities
 
 See [Development Guide](./development-guide.md) for the full TDD checklist.

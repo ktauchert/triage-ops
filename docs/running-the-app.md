@@ -13,9 +13,9 @@ Instructions for local development and full Docker deployment.
 | Docker + Docker Compose | Latest stable |
 | Git | Any recent version |
 
-Optional for real sync testing:
-- GitLab personal access token with `read_api` scope
-- A GitLab project with issues
+For real sync testing, you need **one** of:
+- **GitHub** personal access token with `repo` scope (read issues)
+- **GitLab** personal access token with `read_api` scope
 
 ---
 
@@ -36,6 +36,9 @@ npm run docker:up
 
 # 4. Apply database migrations
 npm run db:migrate
+
+# 5. (Optional) Seed sample data
+npm run db:seed
 ```
 
 Verify containers are healthy:
@@ -44,7 +47,7 @@ Verify containers are healthy:
 docker compose ps
 ```
 
-Expected: `triage-ops-postgres` and `triage-ops-redis` show `(healthy)`.
+Expected: `triage-ops-postgres`, `triage-ops-redis`, and `triage-ops-ollama` running.
 
 ---
 
@@ -79,7 +82,20 @@ NODE_ENV=development
 WORKER_CONCURRENCY=2
 ```
 
-> Postgres uses host port **5433** (mapped from container 5432).
+> Postgres uses host port **5433** (mapped from container 5432).  
+> Root `.env` is loaded automatically by web (`dotenv-cli`), worker, and Prisma scripts.
+
+---
+
+## Using the dashboard
+
+1. Open [http://localhost:3000](http://localhost:3000)
+2. Go to **Connections** → add a GitHub or GitLab connection with your token
+3. Go to **Projects** → register a repo (`owner/repo` for GitHub, project path for GitLab)
+4. Click **Sync** and wait for status `COMPLETED`
+5. Open **Dashboard** to see overview counts and triage metrics
+
+> **Security:** There is currently no login. Anyone who can reach the app can manage connections and tokens. Do not expose port 3000 to the internet until [Step 8 — Authentication](./phases.md) is implemented.
 
 ---
 
@@ -89,7 +105,7 @@ Build and run all services including web and worker:
 
 ```bash
 cp .env.example .env
-docker compose up -d --build
+npm run docker:up:all    # postgres + redis + ollama + web + worker
 npm run docker:migrate
 ```
 
@@ -121,6 +137,7 @@ docker compose down -v
 | `npm run db:generate` | Regenerate Prisma client after schema changes |
 | `npm run db:migrate` | Create + apply migration (development) |
 | `npm run db:migrate:deploy` | Apply pending migrations (production/CI) |
+| `npm run db:seed` | Insert sample connections and projects |
 | `npm run db:push -w @triage-ops/db` | Push schema without migration file (prototyping only) |
 | `npm run db:studio -w @triage-ops/db` | Open Prisma Studio GUI |
 
@@ -129,30 +146,13 @@ docker compose down -v
 ## Testing & quality
 
 ```bash
-npm test                              # All workspace tests
+npm test                              # All workspace tests (incl. e2e smoke)
+npm run test:e2e                      # E2E smoke only (needs Postgres + Redis)
 npm run test -w @triage-ops/worker    # Worker tests only
+npm run test -w @triage-ops/metrics    # Metrics tests only
 npm run lint                          # TypeScript + ESLint all packages
 npm run build                         # Production build all packages
 ```
-
----
-
-## Manually triggering a sync (until UI exists)
-
-After registering a connection and project in the database (via Prisma Studio or seed script), enqueue a job using Node:
-
-```bash
-# Example — requires projectId and syncRunId from database
-node --env-file=.env -e "
-  import { createSyncQueue } from './apps/worker/src/queues/sync-queue.ts';
-  const queue = createSyncQueue();
-  await queue.add('sync', { projectId: 'YOUR_PROJECT_ID', syncRunId: 'YOUR_SYNC_RUN_ID' });
-  console.log('Job enqueued');
-  process.exit(0);
-"
-```
-
-> A proper API route and UI button will replace this in Step 3.
 
 ---
 
@@ -162,9 +162,17 @@ node --env-file=.env -e "
 
 The compose file maps Postgres to host port **5433**. Ensure `DATABASE_URL` in `.env` uses port `5433` for local dev.
 
+### Port 11434 already in use (Ollama)
+
+Another Ollama instance may be running locally. Stop it or change the host port mapping in `docker-compose.yml`.
+
 ### Worker exits with "Missing required environment variable"
 
-Ensure `.env` exists at repo root and contains `REDIS_URL` and `DATABASE_URL`. The worker loads env from the shell — use `--env-file=.env` or export variables manually if needed.
+Ensure `.env` exists at repo root and contains `REDIS_URL` and `DATABASE_URL`. Dev scripts load it via `dotenv-cli`.
+
+### `Environment variable not found: DATABASE_URL` (Prisma / Next.js)
+
+Run commands from repo root, or use the workspace scripts (`npm run db:migrate`, `npm run dev`) which load `../../.env` automatically.
 
 ### Redis connection refused
 
@@ -173,15 +181,24 @@ docker compose up -d redis
 docker compose ps redis   # should show (healthy)
 ```
 
+### GitHub sync fails with integer overflow
+
+Re-run migrations — `gitlabIssueId` must be `BigInt` for GitHub global IDs:
+
+```bash
+npm run db:migrate
+```
+
+### Milestone decay shows 0 after first sync
+
+Re-sync the project after upgrading — milestone `dueDate` and `state` are written during issue sync.
+
 ### Prisma migration fails
 
 ```bash
-# Check Postgres is reachable
-docker compose ps postgres
-
-# Reset dev database (⚠️ destroys data)
-npm run db:migrate -w @triage-ops/db -- --name init
-# Or: docker compose down -v && npm run docker:up && npm run db:migrate
+docker compose ps postgres   # check Postgres is reachable
+npm run db:migrate
+# Or reset: docker compose down -v && npm run docker:up && npm run db:migrate
 ```
 
 ### Vitest EACCES / worker pool errors
@@ -198,8 +215,8 @@ npm run test -w @triage-ops/worker
 
 | Process | Package | Port | Depends on |
 |---------|---------|------|------------|
-| Web dev server | `@triage-ops/web` | 3000 | Postgres (for future API routes) |
+| Web dev server | `@triage-ops/web` | 3000 | Postgres, Redis |
 | Worker daemon | `@triage-ops/worker` | — | Postgres, Redis |
 | Postgres | Docker | 5433 | — |
 | Redis | Docker | 6379 | — |
-| Ollama | Docker | 11434 | — (Phase 2) |
+| Ollama | Docker | 11434 | — (Phase 2 app code) |

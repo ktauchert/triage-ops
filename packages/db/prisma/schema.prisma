@@ -9,7 +9,7 @@ datasource db {
 
 /// VCS credentials (GitLab instance or GitHub account).
 model VcsConnection {
-  id          String      @id @default(cuid())
+  id          String      @id(map: "gitlab_connections_pkey") @default(cuid())
   name        String
   provider    VcsProvider @default(GITLAB)
   baseUrl     String
@@ -76,7 +76,7 @@ model Label {
 model Issue {
   id               String     @id @default(cuid())
   gitlabIssueIid   Int
-  gitlabIssueId    Int
+  gitlabIssueId    BigInt
   title            String
   description      String?
   state            IssueState

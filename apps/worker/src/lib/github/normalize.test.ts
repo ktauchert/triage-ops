@@ -57,6 +57,36 @@ describe("normalizeGitHubIssue", () => {
       authorUsername: "alice",
       assigneeUsername: "bob",
       weight: null,
+      milestone: null,
+    });
+  });
+
+  it("maps GitHub milestone due date and state", () => {
+    const normalized = normalizeGitHubIssue({
+      id: 1001,
+      number: 7,
+      title: "Bug",
+      body: "Details",
+      state: "open",
+      created_at: "2025-01-01T00:00:00Z",
+      updated_at: "2025-06-01T00:00:00Z",
+      closed_at: null,
+      user: { login: "alice" },
+      assignee: null,
+      labels: [],
+      milestone: {
+        id: 55,
+        title: "Sprint 1",
+        due_on: "2026-06-01",
+        state: "open",
+      },
+    });
+
+    expect(normalized.milestone).toEqual({
+      externalId: 55,
+      title: "Sprint 1",
+      dueDate: "2026-06-01",
+      state: "open",
     });
   });
 });

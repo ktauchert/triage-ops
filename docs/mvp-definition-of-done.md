@@ -1,35 +1,38 @@
 # MVP Definition of Done
 
-Phase 1 MVP is **done** when a developer can connect a GitLab project, run a sync, and view meaningful triage metrics on a dashboard — self-hosted via Docker or running locally — without manual database intervention.
+Phase 1 MVP is **done** when a developer can connect a GitHub or GitLab project, run a sync, and view meaningful triage metrics on a dashboard — self-hosted via Docker or running locally — without manual database intervention.
 
-Use this checklist before calling MVP shippable.
+Use this checklist before calling MVP **functionally complete**. A separate **production-ready** sign-off additionally requires [Step 8 — Authentication](./phases.md) before the app is exposed beyond local dev.
 
 ---
 
 ## Functional requirements
 
-### GitLab integration
+### VCS integration (GitHub + GitLab)
 
-- [ ] User can register a GitLab connection (instance URL + personal/group access token)
-- [ ] User can register one or more GitLab projects under a connection
-- [ ] User can trigger a manual sync for a project from the UI
-- [ ] Sync progress/status is visible (pending → running → completed/failed)
-- [ ] Synced issues appear in Postgres with correct title, state, assignee, dates, and labels
+- [x] User can register a connection (GitHub token, or GitLab instance URL + token)
+- [x] User can register one or more projects/repos under a connection
+- [x] User can trigger a manual sync for a project from the UI
+- [x] Sync progress/status is visible (pending → running → completed/failed)
+- [x] Synced issues appear in Postgres with correct title, state, assignee, and dates
+- [ ] Synced labels appear in Postgres (schema ready; worker not wired)
 
 ### Triage metrics
 
-- [ ] Dashboard displays **Ghost ticket** count (configurable inactivity threshold, default 30 days)
-- [ ] Dashboard displays **Zombie ticket** count (open + assigned + stale, default 14 days)
-- [ ] Dashboard displays **Milestone decay** — active milestones past due date with open issues
-- [ ] Each metric links to a filterable issue list
-- [ ] Metrics reflect last successful sync timestamp
+- [x] Dashboard displays **Ghost ticket** count (default 30-day inactivity threshold)
+- [x] Dashboard displays **Zombie ticket** count (open + assigned + stale, default 14 days)
+- [x] Dashboard displays **Milestone decay** — active milestones past due date with open issues
+- [x] Dashboard displays **Overview** counts (total/open/closed issues, milestones)
+- [x] Each triage metric links to a filterable issue list on the dashboard
+- [x] Metrics reflect last successful sync timestamp
+- [ ] Metric thresholds configurable via UI (API query params exist)
 
 ### User interface
 
-- [ ] Shadcn UI component library integrated
-- [ ] Responsive layout usable on desktop (mobile nice-to-have)
-- [ ] Clear error messages for failed syncs and invalid GitLab credentials
-- [ ] Empty states when no connections/projects/issues exist
+- [x] Shadcn UI component library integrated
+- [x] Responsive layout usable on desktop (mobile nice-to-have)
+- [x] Clear error messages for failed syncs and invalid input
+- [x] Empty states when no connections/projects/issues exist
 
 ---
 
@@ -37,50 +40,64 @@ Use this checklist before calling MVP shippable.
 
 ### Data layer
 
-- [ ] All Prisma migrations apply cleanly via `npm run db:migrate:deploy`
-- [ ] Unique constraints prevent duplicate project/issue rows on re-sync
-- [ ] `SyncRun` records capture status, timestamps, issue count, and error messages
+- [x] All Prisma migrations apply cleanly via `npm run db:migrate:deploy`
+- [x] Unique constraints prevent duplicate project/issue rows on re-sync
+- [x] `SyncRun` records capture status, timestamps, issue count, and error messages
+- [x] GitHub global issue IDs stored as `BigInt`
 
 ### Worker
 
-- [ ] `gitlab-sync` jobs process without crashing on empty projects (zero issues)
-- [ ] Concurrent sync requests for the same project are rejected (Redis lock)
-- [ ] Failed GitLab API calls mark `SyncRun` as `FAILED` with readable error
-- [ ] Worker restarts gracefully (`SIGTERM` / `SIGINT` handled)
+- [x] Sync jobs process without crashing on empty projects (zero issues)
+- [x] Concurrent sync requests for the same project are rejected (Redis lock)
+- [x] Failed API calls mark `SyncRun` as `FAILED` with readable error
+- [x] Worker restarts gracefully (`SIGTERM` / `SIGINT` handled)
+- [x] GitHub and GitLab providers supported via shared sync pipeline
 
 ### Web
 
-- [ ] Next.js production build succeeds (`npm run build -w @triage-ops/web`)
-- [ ] API routes validate input and return appropriate HTTP status codes (400, 401, 404, 500)
-- [ ] No secrets exposed in client-side bundles or API responses
+- [x] Next.js production build succeeds (`npm run build -w @triage-ops/web`)
+- [x] API routes validate input and return appropriate HTTP status codes (400, 404, 500)
+- [x] Connection tokens not returned in GET API responses
+- [ ] API routes return 401 when unauthenticated (after Step 8)
 
 ### Testing
 
-- [ ] `npm test` passes in CI
-- [ ] GitLab client tests cover: success, pagination, empty results, 401, 500, validation
-- [ ] Metrics engine tests cover: zero matches, boundary dates, malformed input
-- [ ] No unit test makes real network calls (MSW or mocks only)
+- [x] `npm test` passes in CI
+- [x] GitLab client tests cover: success, pagination, empty results, 401, 500, validation
+- [x] GitHub client tests cover: success, pagination, empty results, 401, 500, validation
+- [x] Metrics engine tests cover: zero matches, boundary dates, malformed input
+- [x] No unit test makes real network calls (MSW or mocks only)
+- [x] E2E smoke test script in CI (`npm run test:e2e`)
 
 ### Infrastructure
 
-- [ ] `docker compose up` starts full stack (postgres, redis, web, worker)
-- [ ] `npm run docker:migrate` applies migrations inside Docker
-- [ ] `.env.example` documents all required variables
-- [ ] Documentation in `docs/` is accurate and up to date
+- [x] `npm run docker:up` starts infra (postgres, redis, ollama)
+- [x] `npm run docker:migrate` applies migrations inside Docker
+- [x] `.env.example` documents required variables
+- [x] Documentation in `docs/` reflects current implementation (June 2026)
+- [ ] `npm run docker:up:all` verified end-to-end
 
 ---
 
 ## Non-goals for MVP (explicitly out of scope)
 
-These are **not** required for MVP sign-off:
+These are **not** required for MVP functional sign-off:
 
-- User authentication / multi-tenant accounts
 - LLM duplicate detection or description drafting (Phase 2)
 - Automatic scheduled syncs
-- GitLab webhooks
+- GitHub/GitLab webhooks
 - Token encryption at rest (document as known limitation; track for post-MVP)
 - Mobile-optimised UI
 - SaaS billing
+- Multi-tenant orgs / enterprise SSO (Phase 3)
+
+## Required before production / shared deployment
+
+These are **not** MVP feature-complete items but **must** ship before the app is reachable by others:
+
+- [ ] **Authentication** — login + protected routes (see [phases.md](./phases.md) Step 8)
+- [ ] HTTPS termination (reverse proxy or platform)
+- [ ] Secrets not committed to git (`.env` only local)
 
 ---
 
@@ -92,12 +109,14 @@ A reviewer should be able to perform this flow without assistance:
 2. Run `npm run docker:up` and `npm run db:migrate`
 3. Start web (`npm run dev`) and worker (`npm run dev:worker`)
 4. Open `http://localhost:3000`
-5. Add a GitLab connection with a valid token
-6. Register a GitLab project
+5. Add a **GitHub** or **GitLab** connection with a valid token
+6. Register a project/repo
 7. Click **Sync** and wait for completion
-8. View dashboard showing ghost, zombie, and milestone decay counts that match manual GitLab inspection
+8. View dashboard showing overview counts and ghost, zombie, and milestone decay metrics
 
-**MVP = all functional and technical checkboxes above are ticked, and the acceptance scenario passes.**
+**MVP (functional) = all checked functional and technical boxes above, and the acceptance scenario passes.**
+
+**Production-ready = MVP + Step 8 authentication + HTTPS.**
 
 ---
 
@@ -108,5 +127,5 @@ A reviewer should be able to perform this flow without assistance:
 | Date | |
 | Version / commit | |
 | Reviewer | |
-| GitLab instance tested | |
+| Provider tested (GitHub / GitLab) | |
 | Notes | |

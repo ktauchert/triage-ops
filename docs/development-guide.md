@@ -20,6 +20,7 @@ Conventions, workflows, and patterns for contributing to TriageOps.
 | Package | Import name |
 |---------|-------------|
 | `packages/db` | `@triage-ops/db` |
+| `packages/metrics` | `@triage-ops/metrics` |
 | `packages/shared-types` | `@triage-ops/shared-types` |
 | `apps/web` | `@triage-ops/web` |
 | `apps/worker` | `@triage-ops/worker` |
@@ -49,11 +50,18 @@ apps/worker/src/
 ├── config/         Environment variable helpers
 ├── lib/
 │   ├── gitlab/     GitLab REST API client (+ *.test.ts)
+│   ├── github/     GitHub REST API client (+ *.test.ts)
+│   ├── vcs/        Provider router (fetchProjectIssues)
 │   ├── lock.ts     Redis distributed locks (+ *.test.ts)
 │   └── redis.ts    Redis singleton
 ├── queues/         BullMQ queue definitions
 ├── workers/        Job processors (business logic)
 └── index.ts        Daemon entry point
+
+packages/metrics/src/
+├── ghost.ts        countGhostIssues (+ *.test.ts)
+├── zombie.ts       countZombieIssues (+ *.test.ts)
+└── milestone-decay.ts  getMilestoneDecay (+ *.test.ts)
 
 packages/db/
 ├── prisma/
@@ -71,10 +79,14 @@ packages/db/
 | Database model change | `packages/db/prisma/schema.prisma` → migration |
 | Shared type / queue payload | `packages/shared-types/src/` |
 | GitLab API call | `apps/worker/src/lib/gitlab/` |
+| GitHub API call | `apps/worker/src/lib/github/` |
+| VCS provider routing | `apps/worker/src/lib/vcs/` |
 | Background job logic | `apps/worker/src/workers/` |
 | HTTP API route | `apps/web/app/api/` |
-| Dashboard UI | `apps/web/app/` + `apps/web/components/` |
-| Metric calculation (pure) | `apps/web/lib/metrics/` or new `packages/metrics/` |
+| Dashboard UI | `apps/web/app/(dashboard)/` + `apps/web/components/` |
+| Metric calculation (pure) | `packages/metrics/src/` |
+| Server-side data helpers | `apps/web/lib/services/` |
+| Authentication (planned) | Next.js middleware + session provider — see [phases.md](./phases.md) Step 8 |
 | Unit tests | Next to source file as `*.test.ts` |
 
 ---
@@ -148,27 +160,27 @@ MSW setup lives in `apps/worker/src/test/`:
 4. Register worker in `apps/worker/src/index.ts`
 5. Write tests for processor logic (mock Prisma + GitLab client)
 
-### Enqueueing from web (planned)
+### Enqueueing from web
 
-Web API routes will create a `SyncRun` row, then add a job:
+Implemented in `apps/web/lib/queue.ts`. API routes create a `SyncRun` row, then add a job:
 
 ```typescript
 await prisma.syncRun.create({ data: { projectId, status: "PENDING" } });
-await syncQueue.add("sync", { projectId, syncRunId });
+await enqueueSyncJob({ projectId, syncRunId });
 ```
 
 ---
 
-## UI development (planned — Shadcn)
+## UI development (Shadcn)
 
-When setting up Shadcn in `apps/web`:
+Shadcn is configured in `apps/web`. Prefer Shadcn primitives over bespoke components. Prioritise function over custom styling.
+
+New components:
 
 ```bash
 cd apps/web
-npx shadcn@latest init
+npx shadcn@latest add <component>
 ```
-
-Prefer Shadcn primitives over bespoke components. Prioritise function over custom styling.
 
 ---
 
@@ -209,6 +221,7 @@ npm run db:studio -w @triage-ops/db
 
 # Quality
 npm test
+npm run test:e2e   # requires Postgres + Redis
 npm run lint
 npm run build
 

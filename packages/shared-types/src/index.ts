@@ -29,7 +29,12 @@ export type GitLabIssueRaw = {
   assignee: { username: string } | null;
   labels: string[];
   weight: number | null;
-  milestone: { id: number; title: string } | null;
+  milestone: {
+    id: number;
+    title: string;
+    due_date?: string | null;
+    state?: "active" | "closed";
+  } | null;
 };
 
 export type GitLabIssuesPage = {
@@ -58,7 +63,12 @@ export type GitHubIssueRaw = {
   user: { login: string };
   assignee: { login: string } | null;
   labels: Array<{ name: string }>;
-  milestone: { id: number; title: string } | null;
+  milestone: {
+    id: number;
+    title: string;
+    due_on: string | null;
+    state: "open" | "closed";
+  } | null;
   pull_request?: { url: string };
 };
 
@@ -89,6 +99,12 @@ export type NormalizedIssue = {
   authorUsername: string;
   assigneeUsername: string | null;
   weight: number | null;
+  milestone: {
+    externalId: number;
+    title: string;
+    dueDate: string | null;
+    state: "open" | "closed";
+  } | null;
 };
 
 export const DEFAULT_GITHUB_API_URL = "https://api.github.com";

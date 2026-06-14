@@ -13,5 +13,13 @@ export function normalizeGitLabIssue(issue: GitLabIssueRaw): NormalizedIssue {
     authorUsername: issue.author.username,
     assigneeUsername: issue.assignee?.username ?? null,
     weight: issue.weight,
+    milestone: issue.milestone
+      ? {
+          externalId: issue.milestone.id,
+          title: issue.milestone.title,
+          dueDate: issue.milestone.due_date ?? null,
+          state: issue.milestone.state === "closed" ? "closed" : "open",
+        }
+      : null,
   };
 }
