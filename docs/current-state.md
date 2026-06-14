@@ -52,6 +52,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 - **Dashboard** — overview counts (issues, milestones), triage signals, issue/milestone tables
 - **Connections** — add/list GitHub or GitLab connections (provider picker)
 - **Projects** — register repo/project, manual sync, last run status
+- **Authentication** — Auth.js OAuth (GitHub/GitLab), proxy route protection, deployment profiles
 - **API routes:**
   - `GET/POST /api/connections`
   - `GET/POST /api/projects`
@@ -60,7 +61,7 @@ This document describes what is **implemented**, **partially implemented**, and 
   - `GET /api/projects/[id]/metrics`
 - **Shadcn-style UI** — sidebar layout, cards, tables, badges
 - **BullMQ enqueue** from web via Redis
-- **7 API helper unit tests**
+- **7+ API/auth unit tests**
 - Production build verified (`npm run build -w @triage-ops/web`)
 
 ### Infrastructure
@@ -90,13 +91,11 @@ This document describes what is **implemented**, **partially implemented**, and 
 | Token security | Access tokens stored as plain strings; documented in UI as MVP limitation |
 | API test coverage | Validation helpers tested; route handlers not fully mocked yet |
 | Phase 1 hardening | CI + E2E smoke done; full production compose verification open |
-| Authentication | **Not implemented** — all API routes and pages are open (see [phases.md](./phases.md) Step 8) |
 
 ---
 
 ## Not started
 
-- User authentication / session management / API protection
 - Multi-tenant workspace isolation
 - Token encryption at rest
 - Phase 2 LLM jobs (duplicate detection, description drafting)
@@ -112,7 +111,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 |---------|-----------|-------|-------|
 | `@triage-ops/worker` | Vitest + MSW | 35 | GitLab/GitHub clients, locks, milestones, normalizers |
 | `@triage-ops/metrics` | Vitest | 17 | Ghost, zombie, milestone decay |
-| `@triage-ops/web` | Vitest | 7 | API validation helpers |
+| `@triage-ops/web` | Vitest | 14+ | API validation + auth helpers |
 | `@triage-ops/e2e` | Vitest | 1 | Register → sync → metrics smoke |
 
 Run all tests:
@@ -131,5 +130,9 @@ npm test
 | `REDIS_URL` | worker, web | `redis://localhost:6379` |
 | `OLLAMA_HOST` | worker (Phase 2) | `http://localhost:11434` |
 | `WORKER_CONCURRENCY` | worker | `2` |
+| `AUTH_DISABLED` | web | `true` (local dev) |
+| `AUTH_SECRET` | web | — (required when auth enabled) |
+| `AUTH_PROVIDERS` | web | `github,gitlab` |
+| `AUTH_DATA_SCOPE` | web | `shared` or `per_user` |
 
 See [Running the App](./running-the-app.md) for full setup instructions.

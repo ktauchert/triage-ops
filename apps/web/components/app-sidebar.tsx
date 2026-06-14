@@ -12,11 +12,16 @@ const navItems = [
   { href: "/projects", label: "Projects", icon: FolderKanban },
 ];
 
-export function AppSidebar() {
+type SidebarUserProps = {
+  email?: string | null;
+  name?: string | null;
+};
+
+export function AppSidebarNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r bg-card">
+    <>
       <div className="px-6 py-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           TriageOps
@@ -48,6 +53,15 @@ export function AppSidebar() {
           );
         })}
       </nav>
-    </aside>
+    </>
+  );
+}
+
+export function SidebarUser({ email, name }: SidebarUserProps) {
+  return (
+    <div className="px-1 text-xs text-muted-foreground">
+      <p className="truncate font-medium text-foreground">{name ?? email}</p>
+      {name && email ? <p className="truncate">{email}</p> : null}
+    </div>
   );
 }

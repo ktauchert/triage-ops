@@ -1,5 +1,6 @@
 import { getProjectMetrics } from "@/lib/services/metrics";
 import { listProjects } from "@/lib/services/projects";
+import { getAuthContext } from "@/lib/auth/session";
 import { DashboardMetrics } from "./dashboard-metrics";
 import { ProjectSelector } from "./project-selector";
 
@@ -10,7 +11,8 @@ type DashboardPageProps = {
 };
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const projects = await listProjects();
+  const authContext = await getAuthContext();
+  const projects = await listProjects(authContext);
   const { project: projectParam } = await searchParams;
   const selectedProjectId =
     projectParam && projects.some((project) => project.id === projectParam)

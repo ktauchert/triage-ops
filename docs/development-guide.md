@@ -86,7 +86,7 @@ packages/db/
 | Dashboard UI | `apps/web/app/(dashboard)/` + `apps/web/components/` |
 | Metric calculation (pure) | `packages/metrics/src/` |
 | Server-side data helpers | `apps/web/lib/services/` |
-| Authentication (planned) | Next.js middleware + session provider — see [phases.md](./phases.md) Step 8 |
+| Authentication | `apps/web/auth.ts`, `apps/web/auth.config.ts`, `apps/web/proxy.ts`, `apps/web/lib/auth/` |
 | Unit tests | Next to source file as `*.test.ts` |
 
 ---

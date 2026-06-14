@@ -11,13 +11,24 @@ import {
   requireString,
   requireVcsProvider,
 } from "@/lib/api";
+import { requireApiSession } from "@/lib/auth/session";
 
 export async function GET() {
-  const connections = await listConnections();
+  const session = await requireApiSession();
+  if (session instanceof Response) {
+    return session;
+  }
+
+  const connections = await listConnections(session);
   return jsonResponse({ connections });
 }
 
 export async function POST(request: Request) {
+  const session = await requireApiSession();
+  if (session instanceof Response) {
+    return session;
+  }
+
   const body = await parseJsonBody<Record<string, unknown>>(request);
   if (isErrorResponse(body)) {
     return body;
@@ -45,7 +56,7 @@ export async function POST(request: Request) {
     return errorResponse("baseUrl is required for GitLab connections", 400);
   }
 
-  const connection = await createConnection({
+  const connection = await createConnection(session, {
     name,
     provider,
     baseUrl,

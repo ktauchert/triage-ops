@@ -1,8 +1,19 @@
 import { prisma, VcsProvider } from "./index";
 
 const DEFAULT_GITHUB_API_URL = "https://api.github.com";
+const DEV_USER_ID = "dev-local";
 
 async function main() {
+  await prisma.user.upsert({
+    where: { id: DEV_USER_ID },
+    update: {},
+    create: {
+      id: DEV_USER_ID,
+      email: "dev@local",
+      name: "Local Dev",
+    },
+  });
+
   const gitlabBaseUrl =
     process.env.SEED_GITLAB_BASE_URL ?? "https://gitlab.com";
   const gitlabToken =

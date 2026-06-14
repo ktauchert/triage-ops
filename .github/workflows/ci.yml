@@ -37,6 +37,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://triage_ops:triage_ops@localhost:5432/triage_ops
       REDIS_URL: redis://localhost:6379
+      AUTH_SECRET: test-secret-for-ci
+      AUTH_DISABLED: "true"
 
     steps:
       - uses: actions/checkout@v4

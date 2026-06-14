@@ -1,13 +1,15 @@
 import { listConnections, listProjects } from "@/lib/services/projects";
+import { getAuthContext } from "@/lib/auth/session";
 import { AddProjectForm } from "./add-project-form";
 import { ProjectsTable } from "./projects-table";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
+  const authContext = await getAuthContext();
   const [projects, connections] = await Promise.all([
-    listProjects(),
-    listConnections(),
+    listProjects(authContext),
+    listConnections(authContext),
   ]);
 
   return (

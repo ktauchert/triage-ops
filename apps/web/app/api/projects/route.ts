@@ -11,14 +11,26 @@ import {
   requireOptionalPositiveInt,
   requireString,
 } from "@/lib/api";
+import { requireApiSession } from "@/lib/auth/session";
 import { prisma } from "@triage-ops/db";
+import { canAccessConnection } from "@/lib/auth/access";
 
 export async function GET() {
-  const projects = await listProjects();
+  const session = await requireApiSession();
+  if (session instanceof Response) {
+    return session;
+  }
+
+  const projects = await listProjects(session);
   return jsonResponse({ projects });
 }
 
 export async function POST(request: Request) {
+  const session = await requireApiSession();
+  if (session instanceof Response) {
+    return session;
+  }
+
   const body = await parseJsonBody<Record<string, unknown>>(request);
   if (isErrorResponse(body)) {
     return body;
@@ -44,10 +56,10 @@ export async function POST(request: Request) {
 
   const connection = await prisma.vcsConnection.findUnique({
     where: { id: connectionId },
-    select: { provider: true },
+    select: { provider: true, userId: true },
   });
 
-  if (!connection) {
+  if (!connection || !canAccessConnection(session, connection.userId)) {
     return errorResponse("Connection not found", 404);
   }
 
@@ -74,7 +86,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const project = await createProject({
+    const project = await createProject(session, {
       connectionId,
       externalProjectId,
       pathWithNamespace,

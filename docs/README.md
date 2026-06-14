@@ -58,7 +58,7 @@ triage-ops/
 | Metrics engine (`packages/metrics`) | ✅ Done |
 | Shadcn UI | ✅ Done |
 | CI (test + lint + build) | ✅ Done |
-| **Authentication** | ❌ Not started — [Step 8](./phases.md) |
+| **Authentication** | ✅ Auth.js OAuth — [docs](./running-the-app.md#authentication) |
 | Phase 2 LLM (Ollama) | ⏳ Infra only |
 | Label sync | ⏳ Schema only |
 | E2E smoke test | ✅ `npm run test:e2e` |

@@ -1,5 +1,7 @@
 import { errorResponse, jsonResponse } from "@/lib/api";
 import { getProjectMetrics } from "@/lib/services/metrics";
+import { getProjectById } from "@/lib/services/projects";
+import { requireApiSession } from "@/lib/auth/session";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -19,8 +21,18 @@ function parseOptionalInt(value: string | null): number | undefined {
 }
 
 export async function GET(request: Request, context: RouteContext) {
+  const session = await requireApiSession();
+  if (session instanceof Response) {
+    return session;
+  }
+
   const { id: projectId } = await context.params;
   const { searchParams } = new URL(request.url);
+
+  const project = await getProjectById(session, projectId);
+  if (!project) {
+    return errorResponse("Project not found", 404);
+  }
 
   const ghostDays = parseOptionalInt(searchParams.get("ghostDays"));
   const zombieDays = parseOptionalInt(searchParams.get("zombieDays"));

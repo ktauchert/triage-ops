@@ -30,7 +30,7 @@ flowchart LR
   WORKER -.->|Phase 2| OLLAMA
 ```
 
-> **Security note:** The web app currently has **no authentication**. All dashboard pages and API routes are open. See [phases.md](./phases.md) Step 8 before shared deployment.
+> **Security:** Auth is disabled by default locally (`AUTH_DISABLED=true`). Set `AUTH_DISABLED=false` and configure OAuth before exposing the app to a network. See [Authentication](./running-the-app.md#authentication).
 
 ---
 
@@ -175,14 +175,21 @@ Exports:
 
 ---
 
-## Authentication (planned — Step 8)
+## Authentication
 
-Not implemented. Current architecture exposes all routes without session checks.
+OAuth login via **Auth.js v5** with HTTP-only session cookies (Prisma adapter). Disabled by default for local dev (`AUTH_DISABLED=true`).
 
-Planned approach (to be decided during implementation):
-- Next.js middleware protecting `/api/*` and dashboard routes
-- Session provider (e.g. NextAuth.js / Auth.js) with GitHub or GitLab OAuth
-- Optional `userId` / `workspaceId` on `VcsConnection` for multi-user isolation
+| Concern | Implementation |
+|---------|----------------|
+| Providers | GitHub and/or GitLab OAuth (`AUTH_PROVIDERS`) |
+| Route protection | `proxy.ts` + `requireApiSession()` in API handlers |
+| On-prem profile | `AUTH_PROVIDERS=gitlab`, `AUTH_DATA_SCOPE=shared`, email/domain allowlist |
+| Hosted profile | `AUTH_PROVIDERS=github`, `AUTH_DATA_SCOPE=per_user` |
+| Data ownership | `VcsConnection.userId` — filtered when `per_user`, shared when `shared` |
+| Login page | `/login` with provider buttons |
+| VCS sync tokens | Separate from login OAuth — users still add PATs per connection |
+
+See [Running the App](./running-the-app.md) for OAuth app setup and env vars.
 
 ---
 
@@ -193,7 +200,7 @@ Planned approach (to be decided during implementation):
 - **Locations:**
   - `apps/worker/src/**/*.test.ts` — VCS clients, locks, sync helpers (35 tests)
   - `packages/metrics/src/**/*.test.ts` — metric functions (17 tests)
-  - `apps/web/lib/**/*.test.ts` — API validation helpers (7 tests)
+  - `apps/web/lib/**/*.test.ts` — API validation + auth helpers
 - **TDD rule:** Write test contract before implementing core utilities
 
 See [Development Guide](./development-guide.md) for the full TDD checklist.

@@ -58,7 +58,7 @@ Use this checklist before calling MVP **functionally complete**. A separate **pr
 - [x] Next.js production build succeeds (`npm run build -w @triage-ops/web`)
 - [x] API routes validate input and return appropriate HTTP status codes (400, 404, 500)
 - [x] Connection tokens not returned in GET API responses
-- [ ] API routes return 401 when unauthenticated (after Step 8)
+- [x] API routes return 401 when unauthenticated (when `AUTH_DISABLED=false`)
 
 ### Testing
 
@@ -95,7 +95,7 @@ These are **not** required for MVP functional sign-off:
 
 These are **not** MVP feature-complete items but **must** ship before the app is reachable by others:
 
-- [ ] **Authentication** — login + protected routes (see [phases.md](./phases.md) Step 8)
+- [x] **Authentication** — login + protected routes (see [phases.md](./phases.md) Step 8)
 - [ ] HTTPS termination (reverse proxy or platform)
 - [ ] Secrets not committed to git (`.env` only local)
 

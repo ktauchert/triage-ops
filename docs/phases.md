@@ -78,18 +78,19 @@ Scaffolding and core pipeline infrastructure.
 - [x] Basic CI: lint + test + web build on push (GitHub Actions)
 - [ ] Review [MVP Definition of Done](./mvp-definition-of-done.md) — formal sign-off
 
-### Step 8 — Authentication & access control 🔒 (required before shared deployment)
+### Step 8 — Authentication & access control ✅
 
-> **Not started.** Currently anyone with network access to the app can manage connections, tokens, and sync jobs. This step is a **pre-production gate** — not required for local-only dev, but required before exposing the instance to a team or the internet.
+> OAuth login via Auth.js. Disabled by default locally (`AUTH_DISABLED=true`). Required before exposing the instance beyond local dev.
 
-- [ ] User sign-in (email/password or OAuth — GitHub/GitLab OIDC recommended for this product)
-- [ ] Session management (HTTP-only cookies or JWT with secure storage)
-- [ ] Protect all `/api/*` routes and dashboard pages (middleware)
-- [ ] Optional: per-user or per-workspace ownership of `VcsConnection` records
-- [ ] Document auth setup in `docs/running-the-app.md`
-- [ ] CI smoke test for unauthenticated API access returns 401
+- [x] User sign-in via GitHub or GitLab OAuth (configurable per deployment)
+- [x] Session management (HTTP-only cookies via Auth.js + Prisma adapter)
+- [x] Protect all `/api/*` routes and dashboard pages (proxy)
+- [x] `userId` on `VcsConnection` with `AUTH_DATA_SCOPE=shared|per_user`
+- [x] Email/domain allowlist for on-prem (`ALLOWED_EMAIL_DOMAINS`, `ALLOWED_EMAILS`)
+- [x] Document auth setup in `docs/running-the-app.md`
+- [x] Unit test: unauthenticated API session returns 401 when auth enabled
 
-**Out of scope for Step 8 (Phase 3):** multi-tenant billing, SSO for enterprises, fine-grained RBAC.
+**Out of scope for Step 8 (Phase 3):** multi-tenant billing, enterprise SSO (direct IdP), fine-grained RBAC.
 
 ---
 
@@ -132,8 +133,8 @@ Scaffolding and core pipeline infrastructure.
 
 If you are picking up development now, start here in order:
 
-1. **Step 8 — Authentication** — secure API and dashboard before any shared deployment
-2. **Step 6 — Label sync** — upsert labels during issue sync
+1. **Step 6 — Label sync** — upsert labels during issue sync
+2. **Step 7 — MVP hardening** — Docker full-stack verification + formal sign-off
 3. **Phase 2 — Ollama** — duplicate detection and description drafting
 
 Each step should include tests before or alongside implementation (see [Development Guide](./development-guide.md)).
