@@ -70,7 +70,10 @@ export function AddConnectionForm() {
           <CardTitle>Add connection</CardTitle>
           <CardDescription>
             Connect GitHub or GitLab with a personal access token. Tokens are
-            stored in Postgres for MVP.
+            stored in Postgres for MVP. GitHub needs the{" "}
+            <code className="text-xs">repo</code> scope (or{" "}
+            <code className="text-xs">public_repo</code> for public repos).
+            GitLab needs <code className="text-xs">read_api</code>.
           </CardDescription>
         </CardHeader>
         <CardContent>

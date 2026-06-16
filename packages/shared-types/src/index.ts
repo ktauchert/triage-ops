@@ -108,3 +108,48 @@ export type NormalizedIssue = {
 };
 
 export const DEFAULT_GITHUB_API_URL = "https://api.github.com";
+
+export type RemoteProject = {
+  externalProjectId: number | null;
+  pathWithNamespace: string;
+  name: string;
+};
+
+export type GitHubRepoRaw = {
+  id: number;
+  name: string;
+  full_name: string;
+  private: boolean;
+};
+
+export type FetchGitHubReposParams = {
+  accessToken: string;
+  baseUrl?: string;
+  page?: number;
+  perPage?: number;
+};
+
+export type GitHubReposPage = {
+  repos: GitHubRepoRaw[];
+  hasNextPage: boolean;
+  currentPage: number;
+};
+
+export type GitLabProjectRaw = {
+  id: number;
+  name: string;
+  path_with_namespace: string;
+};
+
+export type FetchGitLabProjectsParams = {
+  baseUrl: string;
+  accessToken: string;
+  page?: number;
+  perPage?: number;
+};
+
+export type GitLabProjectsPage = {
+  projects: GitLabProjectRaw[];
+  totalPages: number;
+  currentPage: number;
+};

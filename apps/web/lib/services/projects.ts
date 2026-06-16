@@ -14,15 +14,21 @@ export type CreateConnectionInput = {
   accessToken: string;
 };
 
+const favoriteFirst = [
+  { isFavorite: "desc" as const },
+  { createdAt: "desc" as const },
+];
+
 export async function listConnections(ctx: AuthContext) {
   return prisma.vcsConnection.findMany({
     where: connectionWhereClause(ctx),
-    orderBy: { createdAt: "desc" },
+    orderBy: favoriteFirst,
     select: {
       id: true,
       name: true,
       provider: true,
       baseUrl: true,
+      isFavorite: true,
       createdAt: true,
       updatedAt: true,
       _count: { select: { projects: true } },
@@ -68,7 +74,7 @@ export type CreateProjectInput = {
 export async function listProjects(ctx: AuthContext) {
   return prisma.project.findMany({
     where: projectWhereClause(ctx),
-    orderBy: { createdAt: "desc" },
+    orderBy: favoriteFirst,
     include: {
       connection: {
         select: { id: true, name: true, baseUrl: true, provider: true },
@@ -169,4 +175,109 @@ export async function triggerProjectSync(ctx: AuthContext, projectId: string) {
       status: "PENDING",
     },
   });
+}
+
+export async function deleteConnection(ctx: AuthContext, connectionId: string) {
+  const connection = await prisma.vcsConnection.findFirst({
+    where: {
+      id: connectionId,
+      ...connectionWhereClause(ctx),
+    },
+    select: { id: true },
+  });
+
+  if (!connection) {
+    return false;
+  }
+
+  await prisma.vcsConnection.delete({ where: { id: connectionId } });
+  return true;
+}
+
+export async function setConnectionFavorite(
+  ctx: AuthContext,
+  connectionId: string,
+  isFavorite: boolean,
+) {
+  const connection = await prisma.vcsConnection.findFirst({
+    where: {
+      id: connectionId,
+      ...connectionWhereClause(ctx),
+    },
+    select: { id: true },
+  });
+
+  if (!connection) {
+    return null;
+  }
+
+  return prisma.vcsConnection.update({
+    where: { id: connectionId },
+    data: { isFavorite },
+    select: {
+      id: true,
+      name: true,
+      provider: true,
+      baseUrl: true,
+      isFavorite: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: { select: { projects: true } },
+    },
+  });
+}
+
+export async function deleteProject(ctx: AuthContext, projectId: string) {
+  const project = await getProjectById(ctx, projectId);
+  if (!project) {
+    return false;
+  }
+
+  await prisma.project.delete({ where: { id: projectId } });
+  return true;
+}
+
+export async function setProjectFavorite(
+  ctx: AuthContext,
+  projectId: string,
+  isFavorite: boolean,
+) {
+  const project = await getProjectById(ctx, projectId);
+  if (!project) {
+    return null;
+  }
+
+  return prisma.project.update({
+    where: { id: projectId },
+    data: { isFavorite },
+    include: {
+      connection: {
+        select: { id: true, name: true, baseUrl: true, provider: true },
+      },
+      syncRuns: {
+        orderBy: { startedAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+}
+
+export function pickFavoriteProjectId<T extends { id: string; isFavorite: boolean }>(
+  projects: T[],
+  preferredId?: string | null,
+): string | null {
+  if (
+    preferredId &&
+    projects.some((project) => project.id === preferredId)
+  ) {
+    return preferredId;
+  }
+
+  return projects.find((project) => project.isFavorite)?.id ?? projects[0]?.id ?? null;
+}
+
+export function pickFavoriteConnectionId<T extends { id: string; isFavorite: boolean }>(
+  connections: T[],
+): string {
+  return connections.find((connection) => connection.isFavorite)?.id ?? connections[0]?.id ?? "";
 }

@@ -8,7 +8,7 @@ export const config = {
     "/",
     "/connections",
     "/projects",
-    "/api/connections",
+    "/api/connections/:path*",
     "/api/projects/:path*",
   ],
 };

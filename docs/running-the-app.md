@@ -14,8 +14,20 @@ Instructions for local development and full Docker deployment.
 | Git | Any recent version |
 
 For real sync testing, you need **one** of:
-- **GitHub** personal access token with `repo` scope (read issues)
-- **GitLab** personal access token with `read_api` scope
+- **GitHub** personal access token with `repo` scope (list repos + read issues)
+- **GitLab** personal access token with `read_api` scope (list projects + read issues)
+
+### Personal access token scopes
+
+TriageOps uses the connection PAT for two things: **listing repos/projects** on the Projects page and **syncing issues** in the worker.
+
+| Provider | Required scope | Notes |
+|----------|----------------|-------|
+| **GitHub** | `repo` | Lists private and public repos you can access, and reads issues |
+| **GitHub** | `public_repo` | Public repos only — insufficient if you need private repositories |
+| **GitLab** | `read_api` | Lists projects and reads issues via the REST API |
+
+If the token lacks list permissions, the Projects page shows an error asking you to update the connection with a token that has the scopes above. Login OAuth is separate and does not replace the sync PAT.
 
 ---
 
@@ -40,6 +52,8 @@ npm run db:migrate
 # 5. (Optional) Seed sample data
 npm run db:seed
 ```
+
+> **Note:** `db:seed` creates placeholder connections named **Local GitLab** and **My GitHub** with dummy tokens (`replace-me-with-real-token`). They are safe to delete from the **Connections** page. Only run seed when you want sample data; skip it if you are adding your own connections.
 
 Verify containers are healthy:
 
@@ -91,7 +105,7 @@ WORKER_CONCURRENCY=2
 
 1. Open [http://localhost:3000](http://localhost:3000)
 2. Go to **Connections** → add a GitHub or GitLab connection with your token
-3. Go to **Projects** → register a repo (`owner/repo` for GitHub, project path for GitLab)
+3. Go to **Projects** → pick a connection, select a repo/project from the list (or enter manually)
 4. Click **Sync** and wait for status `COMPLETED`
 5. Open **Dashboard** to see overview counts and triage metrics
 
@@ -189,7 +203,7 @@ docker compose down -v
 | `npm run db:generate` | Regenerate Prisma client after schema changes |
 | `npm run db:migrate` | Create + apply migration (development) |
 | `npm run db:migrate:deploy` | Apply pending migrations (production/CI) |
-| `npm run db:seed` | Insert sample connections and projects |
+| `npm run db:seed` | Insert sample connections and projects (optional; delete placeholders in UI if unused) |
 | `npm run db:push -w @triage-ops/db` | Push schema without migration file (prototyping only) |
 | `npm run db:studio -w @triage-ops/db` | Open Prisma Studio GUI |
 

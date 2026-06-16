@@ -1,5 +1,5 @@
 import { getProjectMetrics } from "@/lib/services/metrics";
-import { listProjects } from "@/lib/services/projects";
+import { listProjects, pickFavoriteProjectId } from "@/lib/services/projects";
 import { getAuthContext } from "@/lib/auth/session";
 import { DashboardMetrics } from "./dashboard-metrics";
 import { ProjectSelector } from "./project-selector";
@@ -14,10 +14,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const authContext = await getAuthContext();
   const projects = await listProjects(authContext);
   const { project: projectParam } = await searchParams;
-  const selectedProjectId =
-    projectParam && projects.some((project) => project.id === projectParam)
-      ? projectParam
-      : (projects[0]?.id ?? null);
+  const selectedProjectId = pickFavoriteProjectId(projects, projectParam);
 
   const metrics = selectedProjectId
     ? await getProjectMetrics(selectedProjectId)
@@ -37,6 +34,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           id: project.id,
           name: project.name,
           pathWithNamespace: project.pathWithNamespace,
+          isFavorite: project.isFavorite,
         }))}
         selectedProjectId={selectedProjectId}
       />

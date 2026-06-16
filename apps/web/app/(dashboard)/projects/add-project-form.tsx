@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +17,13 @@ type ConnectionOption = {
   id: string;
   name: string;
   provider: "GITLAB" | "GITHUB";
+  isFavorite: boolean;
+};
+
+type RemoteProject = {
+  externalProjectId: number | null;
+  pathWithNamespace: string;
+  name: string;
 };
 
 export function AddProjectForm({
@@ -27,6 +34,12 @@ export function AddProjectForm({
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [manualEntry, setManualEntry] = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [remoteProjects, setRemoteProjects] = useState<RemoteProject[]>([]);
+  const [projectSearch, setProjectSearch] = useState("");
+  const [selectedProjectKey, setSelectedProjectKey] = useState("");
   const [form, setForm] = useState({
     connectionId: connections[0]?.id ?? "",
     externalProjectId: "",
@@ -40,6 +53,96 @@ export function AddProjectForm({
   );
 
   const isGitHub = selectedConnection?.provider === "GITHUB";
+
+  const filteredProjects = useMemo(() => {
+    const query = projectSearch.trim().toLowerCase();
+    if (!query) {
+      return remoteProjects;
+    }
+
+    return remoteProjects.filter(
+      (project) =>
+        project.pathWithNamespace.toLowerCase().includes(query) ||
+        project.name.toLowerCase().includes(query),
+    );
+  }, [projectSearch, remoteProjects]);
+
+  useEffect(() => {
+    if (!form.connectionId || manualEntry) {
+      setRemoteProjects([]);
+      setListError(null);
+      setSelectedProjectKey("");
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadProjects() {
+      setLoadingProjects(true);
+      setListError(null);
+      setRemoteProjects([]);
+      setSelectedProjectKey("");
+
+      try {
+        const response = await fetch(
+          `/api/connections/${form.connectionId}/remote-projects`,
+        );
+        const data = (await response.json()) as {
+          error?: string;
+          projects?: RemoteProject[];
+        };
+
+        if (!response.ok) {
+          throw new Error(data.error ?? "Failed to load projects");
+        }
+
+        if (!cancelled) {
+          setRemoteProjects(data.projects ?? []);
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setListError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Failed to load projects",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingProjects(false);
+        }
+      }
+    }
+
+    void loadProjects();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form.connectionId, manualEntry]);
+
+  function handleProjectSelect(projectKey: string) {
+    setSelectedProjectKey(projectKey);
+
+    const project = remoteProjects.find(
+      (entry) =>
+        `${entry.pathWithNamespace}:${entry.externalProjectId ?? ""}` ===
+        projectKey,
+    );
+
+    if (!project) {
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      pathWithNamespace: project.pathWithNamespace,
+      name: project.name,
+      externalProjectId: project.externalProjectId
+        ? String(project.externalProjectId)
+        : "",
+    }));
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -78,6 +181,8 @@ export function AddProjectForm({
         pathWithNamespace: "",
         name: "",
       }));
+      setSelectedProjectKey("");
+      setProjectSearch("");
       router.refresh();
     } catch (submitError) {
       setError(
@@ -96,9 +201,8 @@ export function AddProjectForm({
         <CardHeader>
           <CardTitle>Add project</CardTitle>
           <CardDescription>
-            {isGitHub
-              ? "Use owner/repo (e.g. octocat/Hello-World)."
-              : "Use the numeric GitLab project ID and path with namespace."}
+            Pick a repository or project from your connection token, or enter
+            details manually.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -124,61 +228,153 @@ export function AddProjectForm({
                 >
                   {connections.map((connection) => (
                     <option key={connection.id} value={connection.id}>
+                      {connection.isFavorite ? "★ " : ""}
                       {connection.name} ({connection.provider})
                     </option>
                   ))}
                 </select>
               </div>
-              {!isGitHub ? (
+
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  {manualEntry
+                    ? "Enter project details manually."
+                    : "Load repositories from the connection token."}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setManualEntry((current) => !current)}
+                >
+                  {manualEntry ? "Use project list" : "Enter manually"}
+                </Button>
+              </div>
+
+              {!manualEntry ? (
                 <div className="grid gap-2">
-                  <Label htmlFor="externalProjectId">GitLab project ID</Label>
-                  <Input
-                    id="externalProjectId"
-                    value={form.externalProjectId}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        externalProjectId: event.target.value,
-                      }))
-                    }
-                    placeholder="12345678"
-                    required
-                  />
+                  <Label htmlFor="projectSearch">
+                    {isGitHub ? "Repository" : "Project"}
+                  </Label>
+                  {loadingProjects ? (
+                    <p className="text-sm text-muted-foreground">
+                      Loading {isGitHub ? "repositories" : "projects"}...
+                    </p>
+                  ) : listError ? (
+                    <p className="text-sm text-destructive">{listError}</p>
+                  ) : remoteProjects.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No {isGitHub ? "repositories" : "projects"} found for this
+                      token.
+                    </p>
+                  ) : (
+                    <>
+                      <Input
+                        id="projectSearch"
+                        value={projectSearch}
+                        onChange={(event) => setProjectSearch(event.target.value)}
+                        placeholder="Filter by name or path..."
+                      />
+                      <select
+                        value={selectedProjectKey}
+                        onChange={(event) =>
+                          handleProjectSelect(event.target.value)
+                        }
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        required
+                      >
+                        <option value="">Select a project...</option>
+                        {filteredProjects.map((project) => {
+                          const key = `${project.pathWithNamespace}:${project.externalProjectId ?? ""}`;
+                          return (
+                            <option key={key} value={key}>
+                              {project.pathWithNamespace}
+                              {project.name !== project.pathWithNamespace
+                                ? ` — ${project.name}`
+                                : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {!isGitHub ? (
+                    <div className="grid gap-2">
+                      <Label htmlFor="externalProjectId">GitLab project ID</Label>
+                      <Input
+                        id="externalProjectId"
+                        value={form.externalProjectId}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            externalProjectId: event.target.value,
+                          }))
+                        }
+                        placeholder="12345678"
+                        required
+                      />
+                    </div>
+                  ) : null}
+                  <div className="grid gap-2">
+                    <Label htmlFor="pathWithNamespace">
+                      {isGitHub ? "Repository (owner/repo)" : "Path with namespace"}
+                    </Label>
+                    <Input
+                      id="pathWithNamespace"
+                      value={form.pathWithNamespace}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          pathWithNamespace: event.target.value,
+                        }))
+                      }
+                      placeholder={
+                        isGitHub ? "octocat/Hello-World" : "group/my-project"
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Display name</Label>
+                    <Input
+                      id="name"
+                      value={form.name}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="My Project"
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              {!manualEntry && selectedProjectKey ? (
+                <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
+                  <p className="font-medium">{form.name || "Selected project"}</p>
+                  <p className="text-muted-foreground">
+                    {form.pathWithNamespace}
+                    {!isGitHub && form.externalProjectId
+                      ? ` · ID ${form.externalProjectId}`
+                      : ""}
+                  </p>
                 </div>
               ) : null}
-              <div className="grid gap-2">
-                <Label htmlFor="pathWithNamespace">
-                  {isGitHub ? "Repository (owner/repo)" : "Path with namespace"}
-                </Label>
-                <Input
-                  id="pathWithNamespace"
-                  value={form.pathWithNamespace}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      pathWithNamespace: event.target.value,
-                    }))
-                  }
-                  placeholder={isGitHub ? "octocat/Hello-World" : "group/my-project"}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="name">Display name</Label>
-                <Input
-                  id="name"
-                  value={form.name}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      name: event.target.value,
-                    }))
-                  }
-                  placeholder="My Project"
-                  required
-                />
-              </div>
-              <Button type="submit" disabled={submitting}>
+
+              <Button
+                type="submit"
+                disabled={
+                  submitting ||
+                  (!manualEntry &&
+                    (loadingProjects || !selectedProjectKey || Boolean(listError)))
+                }
+              >
                 {submitting ? "Saving..." : "Save project"}
               </Button>
             </form>
