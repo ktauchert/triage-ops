@@ -163,6 +163,17 @@ ALLOWED_EMAILS=alice@company.com,bob@company.com
 
 When both are empty, any authenticated OAuth user may access the instance.
 
+### Production security
+
+Before rolling out on an intranet or exposing the app beyond localhost, complete the checklist in **[Security](./security.md)**. At minimum:
+
+1. Set `AUTH_DISABLED=false` and a strong `AUTH_SECRET`
+2. Terminate HTTPS at a reverse proxy; set `AUTH_URL` to the HTTPS origin
+3. Configure `ALLOWED_EMAIL_DOMAINS` (on-prem)
+4. Change default Postgres credentials in Docker/production
+5. Do not expose Postgres or Redis ports outside the private network
+6. Use VCS PATs with least privilege (`read_api` on GitLab; `repo` or `public_repo` on GitHub)
+
 ---
 
 ## Full Docker deployment

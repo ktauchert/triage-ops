@@ -189,7 +189,7 @@ OAuth login via **Auth.js v5** with HTTP-only session cookies (Prisma adapter). 
 | Login page | `/login` with provider buttons |
 | VCS sync tokens | Separate from login OAuth — users still add PATs per connection |
 
-See [Running the App](./running-the-app.md) for OAuth app setup and env vars.
+See [Running the App](./running-the-app.md) for OAuth app setup and env vars. For production hardening and security review, see [security.md](./security.md).
 
 ---
 

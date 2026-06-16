@@ -22,6 +22,7 @@ Full project documentation lives in **[`docs/`](./docs/README.md)**:
 | [Current State](./docs/current-state.md) | What's built today |
 | [Architecture](./docs/architecture.md) | Monorepo layout, worker, DB, data flow |
 | [Implementation Phases](./docs/phases.md) | Roadmap and next steps |
+| [Security](./docs/security.md) | Auth, credentials, on-prem hardening checklist |
 | [MVP Definition of Done](./docs/mvp-definition-of-done.md) | Phase 1 ship criteria |
 | [Running the App](./docs/running-the-app.md) | Local dev, Docker, troubleshooting |
 | [Development Guide](./docs/development-guide.md) | TDD, conventions, where to put code |
