@@ -215,8 +215,62 @@ docker compose down -v
 | `npm run db:migrate` | Create + apply migration (development) |
 | `npm run db:migrate:deploy` | Apply pending migrations (production/CI) |
 | `npm run db:seed` | Insert sample connections and projects (optional; delete placeholders in UI if unused) |
+| `npm run gitlab:seed` | Create GitLab milestones/issues for local metrics + LLM testing (see below) |
 | `npm run db:push -w @triage-ops/db` | Push schema without migration file (prototyping only) |
 | `npm run db:studio -w @triage-ops/db` | Open Prisma Studio GUI |
+
+---
+
+## Local GitLab test data
+
+Use a self-hosted GitLab (e.g. Docker) to sync real issues into TriageOps. After creating a project and PAT in GitLab, add these to `.env`:
+
+```env
+GITLAB_URL=http://gitlab.local
+GITLAB_TOKEN=glpat-...              # `api` scope (write)
+GITLAB_PROJECT_PATH=triage-test/demo
+GITLAB_CONTAINER=gitlab             # container name for timestamp backdating
+```
+
+Seed milestones and issues (metrics + future LLM scenarios):
+
+```bash
+npm run gitlab:seed
+```
+
+The script creates:
+
+| Category | Count | Purpose |
+|----------|-------|---------|
+| Milestone decay | 1 overdue sprint, 2 open issues | `getMilestoneDecay` |
+| Zombie issues | 2 assigned, no milestone, stale | `countZombieIssues` (>14d) |
+| Ghost issues | 2 unassigned, stale | `countGhostIssues` (>30d) |
+| Duplicate pairs | 3 pairs | similar titles/descriptions for LLM dedup |
+| Empty descriptions | 3 issues | future description drafting |
+
+GitLab’s REST API cannot set historical `updated_at` values. The seed script backdates timestamps via `docker exec … gitlab-rails runner` when `GITLAB_PROJECT_PATH` and the GitLab container are available. Set `GITLAB_BACKDATE=false` to skip that step.
+
+> **Note:** Re-running the seed on the same project creates duplicate milestones/issues. Use a fresh project or delete the old data first.
+
+Then register the project in TriageOps (Connections → Projects) and trigger sync. **Re-sync** after upgrading to pick up labels if issues were seeded before label sync shipped.
+
+---
+
+## Phase 1 exit checklist
+
+Before starting Phase 2 (LLM), confirm:
+
+1. `npm run db:migrate` — applies latest schema (including per-project thresholds)
+2. `npm test` and `npm run lint` pass
+3. Sync a project — labels appear in the **All synced issues** table
+4. Dashboard **Metric thresholds** — change ghost/zombie days and confirm counts update
+5. Optional full Docker stack:
+   ```bash
+   npm run docker:up:all
+   npm run docker:migrate
+   curl -f http://localhost:3000/login || curl -f http://localhost:3000
+   ```
+   Trigger sync via UI; worker container must be running.
 
 ---
 
@@ -242,6 +296,10 @@ The compose file maps Postgres to host port **5433**. Ensure `DATABASE_URL` in `
 ### Port 11434 already in use (Ollama)
 
 Another Ollama instance may be running locally. Stop it or change the host port mapping in `docker-compose.yml`.
+
+### Local GitLab is slow or freezes the machine
+
+GitLab CE is memory-heavy (often 4 GB+ RAM). On a laptop, limit Docker memory in Docker Desktop settings or stop GitLab when not testing (`docker compose -f <your-gitlab-compose>.yml stop`). TriageOps itself only needs Postgres + Redis + worker for sync testing.
 
 ### Worker exits with "Missing required environment variable"
 

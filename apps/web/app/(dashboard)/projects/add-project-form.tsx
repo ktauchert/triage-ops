@@ -223,7 +223,7 @@ export function AddProjectForm({
                       connectionId: event.target.value,
                     }))
                   }
-                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  className="select-field"
                   required
                 >
                   {connections.map((connection) => (
@@ -280,7 +280,7 @@ export function AddProjectForm({
                         onChange={(event) =>
                           handleProjectSelect(event.target.value)
                         }
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        className="select-field"
                         required
                       >
                         <option value="">Select a project...</option>
@@ -356,7 +356,7 @@ export function AddProjectForm({
               )}
 
               {!manualEntry && selectedProjectKey ? (
-                <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
+                <div className="glass-subtle rounded-lg border px-4 py-3 text-sm">
                   <p className="font-medium">{form.name || "Selected project"}</p>
                   <p className="text-muted-foreground">
                     {form.pathWithNamespace}

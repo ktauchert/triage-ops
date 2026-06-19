@@ -12,6 +12,7 @@ import {
   mapMilestoneState,
   parseMilestoneDueDate,
 } from "../lib/milestone.js";
+import { syncIssueLabels } from "../lib/sync-labels.js";
 
 function mapIssueState(state: "open" | "closed"): IssueState {
   return state === "open" ? IssueState.OPEN : IssueState.CLOSED;
@@ -55,10 +56,10 @@ async function resolveMilestoneId(
 async function upsertSyncedIssue(
   projectId: string,
   issue: NormalizedIssue,
-): Promise<void> {
+): Promise<string> {
   const milestoneId = await resolveMilestoneId(projectId, issue.milestone);
 
-  await prisma.issue.upsert({
+  const record = await prisma.issue.upsert({
     where: {
       projectId_gitlabIssueIid: {
         projectId,
@@ -95,6 +96,10 @@ async function upsertSyncedIssue(
       syncedAt: new Date(),
     },
   });
+
+  await syncIssueLabels(projectId, record.id, issue.labels);
+
+  return record.id;
 }
 
 export async function processSyncJob(job: Job<SyncJobPayload>): Promise<void> {

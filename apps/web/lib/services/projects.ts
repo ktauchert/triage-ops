@@ -237,6 +237,16 @@ export async function deleteProject(ctx: AuthContext, projectId: string) {
   return true;
 }
 
+const projectInclude = {
+  connection: {
+    select: { id: true, name: true, baseUrl: true, provider: true },
+  },
+  syncRuns: {
+    orderBy: { startedAt: "desc" as const },
+    take: 1,
+  },
+};
+
 export async function setProjectFavorite(
   ctx: AuthContext,
   projectId: string,
@@ -250,15 +260,73 @@ export async function setProjectFavorite(
   return prisma.project.update({
     where: { id: projectId },
     data: { isFavorite },
-    include: {
-      connection: {
-        select: { id: true, name: true, baseUrl: true, provider: true },
-      },
-      syncRuns: {
-        orderBy: { startedAt: "desc" },
-        take: 1,
-      },
-    },
+    include: projectInclude,
+  });
+}
+
+export type UpdateProjectSettingsInput = {
+  isFavorite?: boolean;
+  ghostThresholdDays?: number;
+  zombieThresholdDays?: number;
+};
+
+function parseNonNegativeInt(value: unknown, field: string): number | Error {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    return new Error(`${field} must be a non-negative integer`);
+  }
+  return value;
+}
+
+export async function updateProjectSettings(
+  ctx: AuthContext,
+  projectId: string,
+  input: UpdateProjectSettingsInput,
+) {
+  const project = await getProjectById(ctx, projectId);
+  if (!project) {
+    return null;
+  }
+
+  const data: {
+    isFavorite?: boolean;
+    ghostThresholdDays?: number;
+    zombieThresholdDays?: number;
+  } = {};
+
+  if (input.isFavorite !== undefined) {
+    data.isFavorite = input.isFavorite;
+  }
+
+  if (input.ghostThresholdDays !== undefined) {
+    const parsed = parseNonNegativeInt(
+      input.ghostThresholdDays,
+      "ghostThresholdDays",
+    );
+    if (parsed instanceof Error) {
+      throw parsed;
+    }
+    data.ghostThresholdDays = parsed;
+  }
+
+  if (input.zombieThresholdDays !== undefined) {
+    const parsed = parseNonNegativeInt(
+      input.zombieThresholdDays,
+      "zombieThresholdDays",
+    );
+    if (parsed instanceof Error) {
+      throw parsed;
+    }
+    data.zombieThresholdDays = parsed;
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new Error("No valid fields to update");
+  }
+
+  return prisma.project.update({
+    where: { id: projectId },
+    data,
+    include: projectInclude,
   });
 }
 

@@ -15,12 +15,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatRelativeDate } from "@/lib/utils";
+import { ThresholdSettings } from "./threshold-settings";
 
 type IssueSummary = {
   id: string;
   gitlabIssueIid: number;
   title: string;
   state?: string;
+  labels?: string[];
   lastActivityAt: Date | null;
 };
 
@@ -75,7 +77,7 @@ export function DashboardMetrics({
       </p>
 
       <section className="space-y-3">
-        <h3 className="text-lg font-semibold">Overview</h3>
+        <h3 className="section-heading">Overview</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <MetricCard title="Total issues" count={metrics.overview.totalIssues} />
           <MetricCard title="Open issues" count={metrics.overview.openIssues} />
@@ -94,8 +96,14 @@ export function DashboardMetrics({
         </div>
       </section>
 
+      <ThresholdSettings
+        projectId={metrics.projectId}
+        ghostThresholdDays={metrics.thresholds.ghostDays}
+        zombieThresholdDays={metrics.thresholds.zombieDays}
+      />
+
       <section className="space-y-3">
-        <h3 className="text-lg font-semibold">Triage signals</h3>
+        <h3 className="section-heading">Triage signals</h3>
         <div className="grid gap-4 md:grid-cols-3">
           <MetricCard
             title="Ghost tickets"
@@ -119,6 +127,7 @@ export function DashboardMetrics({
         title="All synced issues"
         issues={metrics.issues}
         showState
+        showLabels
         emptyMessage="No issues synced yet. Run a sync from the Projects page."
       />
 
@@ -181,13 +190,15 @@ function MetricCard({
   count: number;
 }) {
   return (
-    <Card>
+    <Card className="group hover:border-primary/25 hover:shadow-xl hover:shadow-primary/5">
       <CardHeader className="pb-2">
         {description ? <CardDescription>{description}</CardDescription> : null}
-        <CardTitle className="text-base">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-4xl font-bold">{count}</p>
+        <p className="text-4xl font-bold tracking-tight tabular-nums">{count}</p>
       </CardContent>
     </Card>
   );
@@ -241,12 +252,14 @@ function IssueTable({
   emptyMessage,
   compact = false,
   showState = false,
+  showLabels = false,
 }: {
   title: string;
   issues: IssueSummary[];
   emptyMessage: string;
   compact?: boolean;
   showState?: boolean;
+  showLabels?: boolean;
 }) {
   if (issues.length === 0 && emptyMessage) {
     return (
@@ -281,6 +294,7 @@ function IssueTable({
               <TableHead>#</TableHead>
               <TableHead>Title</TableHead>
               {showState ? <TableHead>State</TableHead> : null}
+              {showLabels ? <TableHead>Labels</TableHead> : null}
               <TableHead>Last activity</TableHead>
             </TableRow>
           </TableHeader>
@@ -292,6 +306,21 @@ function IssueTable({
                 {showState ? (
                   <TableCell>
                     <Badge variant="secondary">{issue.state}</Badge>
+                  </TableCell>
+                ) : null}
+                {showLabels ? (
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {(issue.labels ?? []).length > 0 ? (
+                        issue.labels?.map((label) => (
+                          <Badge key={label} variant="outline">
+                            {label}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </div>
                   </TableCell>
                 ) : null}
                 <TableCell>

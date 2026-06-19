@@ -57,8 +57,28 @@ describe("normalizeGitHubIssue", () => {
       authorUsername: "alice",
       assigneeUsername: "bob",
       weight: null,
+      labels: [],
       milestone: null,
     });
+  });
+
+  it("maps GitHub label names", () => {
+    const normalized = normalizeGitHubIssue({
+      id: 1001,
+      number: 7,
+      title: "Bug",
+      body: "Details",
+      state: "open",
+      created_at: "2025-01-01T00:00:00Z",
+      updated_at: "2025-06-01T00:00:00Z",
+      closed_at: null,
+      user: { login: "alice" },
+      assignee: null,
+      labels: [{ name: "bug" }, { name: "priority::high" }],
+      milestone: null,
+    });
+
+    expect(normalized.labels).toEqual(["bug", "priority::high"]);
   });
 
   it("maps GitHub milestone due date and state", () => {

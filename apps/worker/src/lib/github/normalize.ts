@@ -17,6 +17,7 @@ export function normalizeGitHubIssue(issue: GitHubIssueRaw): NormalizedIssue {
     authorUsername: issue.user.login,
     assigneeUsername: issue.assignee?.login ?? null,
     weight: null,
+    labels: issue.labels.map((label) => label.name),
     milestone: issue.milestone
       ? {
           externalId: issue.milestone.id,

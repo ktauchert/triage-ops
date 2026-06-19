@@ -39,7 +39,7 @@ export function ProjectSelector({
           const projectId = event.target.value;
           router.push(projectId ? `/?project=${projectId}` : "/");
         }}
-        className="h-10 max-w-md rounded-md border border-input bg-background px-3 text-sm"
+        className="select-field max-w-md"
       >
         {projects.map((project) => (
           <option key={project.id} value={project.id}>

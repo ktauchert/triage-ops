@@ -1,6 +1,6 @@
 import {
   deleteProject,
-  setProjectFavorite,
+  updateProjectSettings,
 } from "@/lib/services/projects";
 import {
   errorResponse,
@@ -13,6 +13,21 @@ import { requireApiSession } from "@/lib/auth/session";
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+function parseOptionalNonNegativeInt(
+  value: unknown,
+  field: string,
+): number | undefined | Response {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    return errorResponse(`${field} must be a non-negative integer`, 400);
+  }
+
+  return value;
+}
 
 export async function DELETE(_request: Request, context: RouteContext) {
   const session = await requireApiSession();
@@ -42,14 +57,57 @@ export async function PATCH(request: Request, context: RouteContext) {
     return body;
   }
 
-  if (typeof body.isFavorite !== "boolean") {
+  const ghostThresholdDays = parseOptionalNonNegativeInt(
+    body.ghostThresholdDays,
+    "ghostThresholdDays",
+  );
+  if (ghostThresholdDays instanceof Response) {
+    return ghostThresholdDays;
+  }
+
+  const zombieThresholdDays = parseOptionalNonNegativeInt(
+    body.zombieThresholdDays,
+    "zombieThresholdDays",
+  );
+  if (zombieThresholdDays instanceof Response) {
+    return zombieThresholdDays;
+  }
+
+  if (
+    body.isFavorite !== undefined &&
+    typeof body.isFavorite !== "boolean"
+  ) {
     return errorResponse("isFavorite must be a boolean", 400);
   }
 
-  const project = await setProjectFavorite(session, id, body.isFavorite);
-  if (!project) {
-    return errorResponse("Project not found", 404);
+  if (
+    body.isFavorite === undefined &&
+    ghostThresholdDays === undefined &&
+    zombieThresholdDays === undefined
+  ) {
+    return errorResponse(
+      "Provide isFavorite, ghostThresholdDays, and/or zombieThresholdDays",
+      400,
+    );
   }
 
-  return jsonResponse({ project });
+  try {
+    const project = await updateProjectSettings(session, id, {
+      isFavorite:
+        typeof body.isFavorite === "boolean" ? body.isFavorite : undefined,
+      ghostThresholdDays,
+      zombieThresholdDays,
+    });
+
+    if (!project) {
+      return errorResponse("Project not found", 404);
+    }
+
+    return jsonResponse({ project });
+  } catch (error) {
+    return errorResponse(
+      error instanceof Error ? error.message : "Failed to update project",
+      400,
+    );
+  }
 }

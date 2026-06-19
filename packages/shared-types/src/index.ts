@@ -99,6 +99,7 @@ export type NormalizedIssue = {
   authorUsername: string;
   assigneeUsername: string | null;
   weight: number | null;
+  labels: string[];
   milestone: {
     externalId: number;
     title: string;

@@ -43,13 +43,13 @@ This document describes what is **implemented**, **partially implemented**, and 
 - **VCS router** — `fetchProjectIssues()` dispatches by `VcsProvider`
 - **Redis distributed locks** — per-project sync exclusion
 - **BullMQ queue** — `gitlab-sync` with retry/backoff
-- **Sync worker** — upserts issues, links milestones from issue payload (title, due date, state)
+- **Sync worker** — upserts issues, milestones, and labels from issue payload
 - **esbuild bundle** for production Docker image
-- **35 unit tests** (Vitest + MSW): GitLab client, GitHub client, locks, milestone helpers, normalizers
+- **37+ unit tests** (Vitest + MSW): GitLab/GitHub clients, locks, milestones, labels, normalizers
 
 ### Web (`apps/web`)
 
-- **Dashboard** — overview counts (issues, milestones), triage signals, issue/milestone tables
+- **Dashboard** — overview counts, triage signals, per-project threshold settings, issue labels, milestone tables
 - **Connections** — add/list GitHub or GitLab connections (provider picker)
 - **Projects** — register repo/project, manual sync, last run status
 - **Authentication** — Auth.js OAuth (GitHub/GitLab), proxy route protection, deployment profiles
@@ -86,11 +86,10 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 | Item | Notes |
 |------|-------|
-| Label sync | Schema exists; worker does not upsert labels yet |
 | Milestone sync | Upserted from issue-linked milestones only (no standalone milestones API) |
-| Token security | Access tokens stored as plain strings; documented in UI as MVP limitation |
+| Token security | Access tokens stored as plain strings; deferred to Phase 3 (documented in UI) |
 | API test coverage | Validation helpers tested; route handlers not fully mocked yet |
-| Phase 1 hardening | CI + E2E smoke done; full production compose verification open |
+| Phase 1 hardening | CI + E2E smoke done; full production compose verification documented (manual) |
 
 ---
 

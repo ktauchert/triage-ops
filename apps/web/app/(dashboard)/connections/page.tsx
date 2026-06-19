@@ -12,8 +12,8 @@ export default async function ConnectionsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-semibold tracking-tight">Connections</h2>
-        <p className="text-muted-foreground">
+        <h2 className="page-heading">Connections</h2>
+        <p className="page-subheading">
           Register GitHub or GitLab access tokens for sync jobs.
         </p>
       </div>

@@ -86,7 +86,7 @@ export function AddConnectionForm() {
                 onChange={(event) =>
                   setProvider(event.target.value as Provider)
                 }
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                className="select-field"
               >
                 <option value="GITHUB">GitHub</option>
                 <option value="GITLAB">GitLab</option>

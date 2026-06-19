@@ -23,10 +23,10 @@ export function AppSidebarNav() {
   return (
     <>
       <div className="px-6 py-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">
           TriageOps
         </p>
-        <h1 className="text-lg font-semibold">Issue Triage</h1>
+        <h1 className="text-lg font-semibold tracking-tight">Issue Triage</h1>
       </div>
       <Separator />
       <nav className="flex flex-1 flex-col gap-1 p-4">
@@ -41,10 +41,10 @@ export function AppSidebarNav() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                 active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  ? "border border-primary/20 bg-primary/15 text-primary shadow-sm shadow-primary/10"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               )}
             >
               <Icon className="h-4 w-4" />

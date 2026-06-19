@@ -60,14 +60,15 @@ Scaffolding and core pipeline infrastructure.
 - [x] Page: **Projects** — list registered projects, sync button + last sync status
 - [x] Page: **Dashboard** — overview + triage metric cards + issue/milestone tables
 - [x] Loading and error states for interactive forms
-- [ ] Configurable metric thresholds in UI (API supports query params; no settings UI yet)
+- [x] Configurable metric thresholds in UI (per-project settings on dashboard)
 
-### Step 6 — Developer experience — mostly done
+### Step 6 — Developer experience ✅
 
 - [x] Seed script: sample connections + projects (`packages/db/src/seed.ts`)
+- [x] GitLab seed script: milestones/issues for metrics + LLM test data (`npm run gitlab:seed`)
 - [x] Worker sync upserts milestones from issue payload (title, due date, state)
-- [ ] Worker sync upserts labels
-- [ ] Encrypt `accessToken` at rest (documented as known MVP limitation in UI)
+- [x] Worker sync upserts labels
+- [ ] Encrypt `accessToken` at rest (deferred to Phase 3 — documented as known MVP limitation)
 - [x] Update root `README.md` to point to `docs/`
 - [x] Root `.env` loading for Prisma, web, and worker dev scripts
 
@@ -131,10 +132,9 @@ Scaffolding and core pipeline infrastructure.
 
 ## Suggested immediate next steps
 
-If you are picking up development now, start here in order:
+Phase 1 MVP polish is complete. Pick up **Phase 2 — Ollama** next:
 
-1. **Step 6 — Label sync** — upsert labels during issue sync
-2. **Step 7 — MVP hardening** — Docker full-stack verification + formal sign-off
-3. **Phase 2 — Ollama** — duplicate detection and description drafting
+1. **Step 9 — Ollama integration** — duplicate detection and description drafting
+2. **Step 10 — Safety** — rate limits, audit log for applied suggestions
 
 Each step should include tests before or alongside implementation (see [Development Guide](./development-guide.md)).

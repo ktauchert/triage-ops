@@ -84,6 +84,8 @@ model Project {
   pathWithNamespace   String
   name                String
   isFavorite          Boolean       @default(false)
+  ghostThresholdDays  Int           @default(30)
+  zombieThresholdDays Int           @default(14)
   lastSyncedAt        DateTime?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt

@@ -13,6 +13,7 @@ export function normalizeGitLabIssue(issue: GitLabIssueRaw): NormalizedIssue {
     authorUsername: issue.author.username,
     assigneeUsername: issue.assignee?.username ?? null,
     weight: issue.weight,
+    labels: issue.labels,
     milestone: issue.milestone
       ? {
           externalId: issue.milestone.id,

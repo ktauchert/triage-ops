@@ -23,8 +23,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-semibold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
+        <h2 className="page-heading">Dashboard</h2>
+        <p className="page-subheading">
           Triage metrics from your last issue sync.
         </p>
       </div>

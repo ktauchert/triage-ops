@@ -39,7 +39,7 @@ function buildSmokeIssues() {
       closed_at: null,
       user: { login: "alice" },
       assignee: null,
-      labels: [],
+      labels: [{ name: "bug" }],
       milestone: null,
     },
     {
@@ -53,7 +53,7 @@ function buildSmokeIssues() {
       closed_at: null,
       user: { login: "alice" },
       assignee: { login: "bob" },
-      labels: [],
+      labels: [{ name: "triage" }],
       milestone: null,
     },
     {
@@ -206,5 +206,16 @@ describe("e2e smoke: register → sync → metrics", () => {
     expect(metrics?.zombie.count).toBeGreaterThanOrEqual(1);
     expect(metrics?.milestoneDecay.count).toBeGreaterThanOrEqual(1);
     expect(metrics?.lastSyncedAt).not.toBeNull();
+
+    const labels = await prisma.label.findMany({
+      where: { projectId },
+      orderBy: { name: "asc" },
+    });
+    expect(labels.map((label) => label.name)).toEqual(["bug", "triage"]);
+
+    const issueLabels = await prisma.issueLabel.count({
+      where: { issue: { projectId } },
+    });
+    expect(issueLabels).toBe(2);
   });
 });

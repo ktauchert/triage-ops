@@ -15,7 +15,7 @@ Use this checklist before calling MVP **functionally complete**. A separate **pr
 - [x] User can trigger a manual sync for a project from the UI
 - [x] Sync progress/status is visible (pending → running → completed/failed)
 - [x] Synced issues appear in Postgres with correct title, state, assignee, and dates
-- [ ] Synced labels appear in Postgres (schema ready; worker not wired)
+- [x] Synced labels appear in Postgres (upserted during issue sync)
 
 ### Triage metrics
 
@@ -25,7 +25,7 @@ Use this checklist before calling MVP **functionally complete**. A separate **pr
 - [x] Dashboard displays **Overview** counts (total/open/closed issues, milestones)
 - [x] Each triage metric links to a filterable issue list on the dashboard
 - [x] Metrics reflect last successful sync timestamp
-- [ ] Metric thresholds configurable via UI (API query params exist)
+- [x] Metric thresholds configurable via UI (per-project ghost/zombie days on dashboard)
 
 ### User interface
 
