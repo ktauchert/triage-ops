@@ -1,7 +1,12 @@
 import { Queue, type ConnectionOptions } from "bullmq";
-import { QUEUE_NAMES, type SyncJobPayload } from "@triage-ops/shared-types";
+import {
+  QUEUE_NAMES,
+  type LlmAnalysisJobPayload,
+  type SyncJobPayload,
+} from "@triage-ops/shared-types";
 
 let syncQueue: Queue<SyncJobPayload> | null = null;
+let llmAnalysisQueue: Queue<LlmAnalysisJobPayload> | null = null;
 
 function getQueueConnection(): ConnectionOptions {
   const redisUrl = process.env.REDIS_URL;
@@ -35,4 +40,30 @@ export function getSyncQueue(): Queue<SyncJobPayload> {
 export async function enqueueSyncJob(payload: SyncJobPayload): Promise<void> {
   const queue = getSyncQueue();
   await queue.add("sync", payload);
+}
+
+export function getLlmAnalysisQueue(): Queue<LlmAnalysisJobPayload> {
+  if (!llmAnalysisQueue) {
+    llmAnalysisQueue = new Queue<LlmAnalysisJobPayload>(
+      QUEUE_NAMES.LLM_ANALYSIS,
+      {
+        connection: getQueueConnection(),
+        defaultJobOptions: {
+          attempts: 2,
+          backoff: { type: "exponential", delay: 10000 },
+          removeOnComplete: 100,
+          removeOnFail: 500,
+        },
+      },
+    );
+  }
+
+  return llmAnalysisQueue;
+}
+
+export async function enqueueLlmAnalysisJob(
+  payload: LlmAnalysisJobPayload,
+): Promise<void> {
+  const queue = getLlmAnalysisQueue();
+  await queue.add("llm-analysis", payload);
 }

@@ -7,6 +7,7 @@ export type VcsProvider = (typeof VCS_PROVIDERS)[keyof typeof VCS_PROVIDERS];
 
 export const QUEUE_NAMES = {
   GITLAB_SYNC: "gitlab-sync",
+  LLM_ANALYSIS: "llm-analysis",
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -14,6 +15,11 @@ export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
 export type SyncJobPayload = {
   projectId: string;
   syncRunId: string;
+};
+
+export type LlmAnalysisJobPayload = {
+  projectId: string;
+  analysisRunId: string;
 };
 
 export type GitLabIssueRaw = {

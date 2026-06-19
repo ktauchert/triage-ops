@@ -95,6 +95,8 @@ model Project {
   milestones          Milestone[]
   labels              Label[]
   syncRuns            SyncRun[]
+  issueSuggestions    IssueSuggestion[]
+  llmAnalysisRuns     LlmAnalysisRun[]
 
   @@unique([connectionId, pathWithNamespace])
   @@index([connectionId])
@@ -152,6 +154,8 @@ model Issue {
   milestoneId      String?
   milestone        Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
   labels           IssueLabel[]
+  suggestionsAsPrimary   IssueSuggestion[] @relation("SuggestionPrimaryIssue")
+  suggestionsAsRelated   IssueSuggestion[] @relation("SuggestionRelatedIssue")
 
   @@unique([projectId, gitlabIssueIid])
   @@index([projectId, state])
@@ -184,6 +188,57 @@ model SyncRun {
   @@index([projectId, startedAt])
   @@index([status])
   @@map("sync_runs")
+}
+
+/// LLM-generated triage suggestion awaiting human review.
+model IssueSuggestion {
+  id             String                @id @default(cuid())
+  projectId      String
+  type           IssueSuggestionType
+  status         IssueSuggestionStatus @default(PENDING)
+  issueId        String
+  relatedIssueId String?
+  suggestedText  String?               @db.Text
+  confidence     Float?
+  model          String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  reviewedAt     DateTime?
+  appliedAt      DateTime?
+  project        Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issue          Issue                 @relation("SuggestionPrimaryIssue", fields: [issueId], references: [id], onDelete: Cascade)
+  relatedIssue   Issue?                @relation("SuggestionRelatedIssue", fields: [relatedIssueId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, status])
+  @@index([issueId])
+  @@map("issue_suggestions")
+}
+
+/// Audit trail for LLM analysis jobs per project.
+model LlmAnalysisRun {
+  id                 String     @id @default(cuid())
+  projectId          String
+  status             SyncStatus @default(PENDING)
+  startedAt          DateTime   @default(now())
+  completedAt        DateTime?
+  suggestionsCreated Int        @default(0)
+  errorMessage       String?
+  project            Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, startedAt])
+  @@index([status])
+  @@map("llm_analysis_runs")
+}
+
+enum IssueSuggestionType {
+  DUPLICATE
+  DESCRIPTION
+}
+
+enum IssueSuggestionStatus {
+  PENDING
+  DISMISSED
+  APPLIED
 }
 
 enum VcsProvider {

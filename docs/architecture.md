@@ -17,7 +17,7 @@ flowchart LR
     METRICS[packages/metrics]
     REDIS[(Redis)]
     PG[(PostgreSQL)]
-    OLLAMA[Ollama\nPhase 2]
+    OLLAMA[Ollama\nlocal LLM]
   end
 
   GH -->|REST /issues| WORKER
@@ -26,8 +26,9 @@ flowchart LR
   WORKER <-->|jobs + locks| REDIS
   WEB -->|read| PG
   WEB -->|compute| METRICS
-  WEB -->|enqueue sync| REDIS
-  WORKER -.->|Phase 2| OLLAMA
+  WEB -->|enqueue sync + llm| REDIS
+  WORKER -->|embed + chat| OLLAMA
+  WORKER -->|suggestions| PG
 ```
 
 > **Security:** Auth is disabled by default locally (`AUTH_DISABLED=true`). Set `AUTH_DISABLED=false` and configure OAuth before exposing the app to a network. See [Authentication](./running-the-app.md#authentication).
@@ -79,6 +80,9 @@ flowchart LR
 | Redis locks | `src/lib/lock.ts` | Distributed lock per project (`SET NX` + token-safe release) |
 | Sync queue | `src/queues/sync-queue.ts` | Queue factory and connection config |
 | Sync processor | `src/workers/sync-worker.ts` | Job handler: fetch → upsert issues + milestones → update `SyncRun` |
+| LLM analysis queue | `src/queues/llm-analysis-queue.ts` | `llm-analysis` queue factory |
+| LLM processor | `src/workers/llm-analysis-worker.ts` | Duplicate scan + description drafts → `IssueSuggestion` |
+| Ollama client | `src/lib/ollama/client.ts` | Health check, chat, embeddings against local Ollama |
 | Config | `src/config/env.ts` | Required env var validation |
 
 **Job flow (`gitlab-sync` queue):**
@@ -94,6 +98,19 @@ flowchart LR
 9. Release lock
 
 **Retry policy:** 3 attempts, exponential backoff starting at 5 s.
+
+**Job flow (`llm-analysis` queue):**
+
+1. Job received with payload `{ projectId, analysisRunId }`
+2. Acquire Redis lock for `llm:{projectId}`
+3. Mark `LlmAnalysisRun` as `RUNNING`
+4. Load open issues from Postgres (no VCS API calls)
+5. Embed issue text via Ollama; find duplicate pairs above similarity threshold
+6. Chat-draft descriptions for issues with empty body
+7. Insert `IssueSuggestion` rows (`PENDING`); update `LlmAnalysisRun` as `COMPLETED`
+8. Release lock
+
+**Retry policy (LLM):** 2 attempts, exponential backoff starting at 10 s. Default concurrency `LLM_WORKER_CONCURRENCY=1`.
 
 ---
 
@@ -147,8 +164,8 @@ Used by `apps/web/lib/services/metrics.ts` and exposed via `GET /api/projects/[i
 **Role:** Types and constants shared between worker and web without circular dependencies.
 
 Exports:
-- `QUEUE_NAMES.GITLAB_SYNC`
-- `SyncJobPayload`
+- `QUEUE_NAMES.GITLAB_SYNC`, `QUEUE_NAMES.LLM_ANALYSIS`
+- `SyncJobPayload`, `LlmAnalysisJobPayload`
 - `GitLabIssueRaw`, `GitLabIssuesPage`, `FetchGitLabIssuesParams`
 - `GitHubIssueRaw`, `GitHubIssuesPage`, `FetchGitHubIssuesParams`
 - `NormalizedIssue` — provider-agnostic issue shape after normalization

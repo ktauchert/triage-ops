@@ -60,8 +60,8 @@ triage-ops/
 | Shadcn UI | ✅ Done |
 | CI (test + lint + build) | ✅ Done |
 | **Authentication** | ✅ Auth.js OAuth — [docs](./running-the-app.md#authentication) |
-| Phase 2 LLM (Ollama) | ⏳ Infra only |
-| Label sync | ⏳ Schema only |
+| Phase 2 LLM (Ollama) | ✅ Done — [running-the-app](./running-the-app.md#ollama-llm-analysis-phase-2) |
+| Label sync | ✅ Done |
 | E2E smoke test | ✅ `npm run test:e2e` |
 
 See [Implementation Phases](./phases.md) for the full roadmap.

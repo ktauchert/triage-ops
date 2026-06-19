@@ -83,7 +83,7 @@ Open [http://localhost:3000](http://localhost:3000)
 npm run dev:worker
 ```
 
-The worker connects to Redis and listens on the `gitlab-sync` queue.
+The worker connects to Redis and listens on the `gitlab-sync` and `llm-analysis` queues.
 
 ### Environment (.env)
 
@@ -91,9 +91,12 @@ The worker connects to Redis and listens on the `gitlab-sync` queue.
 DATABASE_URL=postgresql://triage_ops:triage_ops@localhost:5433/triage_ops
 REDIS_URL=redis://localhost:6379
 OLLAMA_HOST=http://localhost:11434
+OLLAMA_CHAT_MODEL=llama3.2:3b
+OLLAMA_EMBED_MODEL=nomic-embed-text
 PORT=3000
 NODE_ENV=development
 WORKER_CONCURRENCY=2
+LLM_WORKER_CONCURRENCY=1
 ```
 
 > Postgres uses host port **5433** (mapped from container 5432).  
@@ -108,8 +111,37 @@ WORKER_CONCURRENCY=2
 3. Go to **Projects** → pick a connection, select a repo/project from the list (or enter manually)
 4. Click **Sync** and wait for status `COMPLETED`
 5. Open **Dashboard** to see overview counts and triage metrics
+6. (Optional) **Run analysis** on the dashboard for AI duplicate/description suggestions
 
 > **Security:** Auth is **disabled by default** locally (`AUTH_DISABLED=true`). Before exposing the app to a network, enable auth — see [Authentication](#authentication) below.
+
+---
+
+## Ollama LLM analysis (Phase 2)
+
+After syncing issues, the dashboard **AI suggestions** panel can run local analysis via Ollama.
+
+### Pull models (first time)
+
+With Ollama running (`npm run docker:up`):
+
+```bash
+docker exec triage-ops-ollama ollama pull llama3.2:3b
+docker exec triage-ops-ollama ollama pull nomic-embed-text
+```
+
+### Workflow
+
+1. Sync a project (**Projects** → **Sync**)
+2. Open **Dashboard** → click **Run analysis**
+3. Review pending suggestions (duplicate pairs + description drafts)
+4. **Dismiss** or **Apply** — Apply updates TriageOps only (no GitLab/GitHub write-back in Phase 2)
+
+Verify Ollama is reachable:
+
+```bash
+curl http://localhost:11434/api/tags
+```
 
 ---
 

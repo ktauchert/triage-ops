@@ -368,6 +368,32 @@ const ISSUES: IssueSeed[] = [
     ageDays: 2,
     labels: ["enhancement", "metrics"],
   },
+
+  // Negative controls — similar topics but should not pair as duplicates
+  {
+    key: "neg-login-a",
+    title: "Improve login page loading spinner",
+    description: reproductionBody({
+      area: "Login UI",
+      symptom: "spinner flashes too briefly on fast networks",
+      expected: "Smooth loading indicator during auth check",
+      actual: "Spinner disappears before content paints",
+    }),
+    ageDays: 5,
+    labels: ["ux", "auth"],
+  },
+  {
+    key: "neg-export-a",
+    title: "Add PDF export for issue reports",
+    description: reproductionBody({
+      area: "Issues → Export",
+      symptom: "users request printable summaries",
+      expected: "PDF export option alongside CSV",
+      actual: "Only CSV export is available today",
+    }),
+    ageDays: 8,
+    labels: ["enhancement", "export"],
+  },
 ];
 
 type GitLabProject = {
@@ -670,9 +696,10 @@ async function main(): Promise<void> {
   console.log(`  zombie issues:   2 (assigned, no milestone, >${ZOMBIE_DAYS}d stale)`);
   console.log(`  ghost issues:    2 (unassigned, >${GHOST_DAYS}d stale)`);
   console.log(`  labels:          synced from GitLab on re-sync`);
-  console.log("\nLLM test data (no UI yet — Phase 2):");
+  console.log("\nLLM test data (dashboard → Run analysis):");
   console.log(`  duplicate pairs: 3 pairs with similar titles/descriptions`);
-  console.log(`  empty desc:      3 issues for future description drafting`);
+  console.log(`  negative ctrl:   2 similar-topic issues that should not pair`);
+  console.log(`  empty desc:      3 issues for description drafting`);
   console.log("\nRegister the project in TriageOps and run sync to import issues and labels.");
 }
 

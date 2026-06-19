@@ -95,26 +95,26 @@ Scaffolding and core pipeline infrastructure.
 
 ---
 
-## Phase 2 — LLM-assisted triage
+## Phase 2 — LLM-assisted triage ✅
 
 **Goal:** Privacy-first local LLMs identify duplicates and draft missing descriptions.
 
-> Ollama container starts with `npm run docker:up`. Application code is not wired yet.
+> Ollama container starts with `npm run docker:up`. Analysis runs via dashboard **Run analysis**; suggestions are reviewed before apply.
 
-### Step 9 — Ollama integration
+### Step 9 — Ollama integration ✅
 
-- [ ] Ollama client wrapper with health check and model pull helper
-- [ ] New BullMQ queue: `llm-analysis`
-- [ ] Job: scan open issues for likely duplicates (embedding or prompt-based)
-- [ ] Job: draft description text for issues with empty `description`
-- [ ] Store LLM suggestions in new `IssueSuggestion` table (human review required before apply)
-- [ ] Dashboard panel: review / dismiss / apply suggestions
+- [x] Ollama client wrapper with health check (`/api/tags`, `/api/chat`, `/api/embed`)
+- [x] New BullMQ queue: `llm-analysis`
+- [x] Job: scan open issues for likely duplicates (embedding cosine similarity ~0.82)
+- [x] Job: draft description text for issues with empty `description`
+- [x] Store LLM suggestions in new `IssueSuggestion` table (human review required before apply)
+- [x] Dashboard panel: review / dismiss / apply suggestions
 
-### Step 10 — Safety & isolation
+### Step 10 — Safety & isolation ✅
 
-- [ ] LLM jobs run only against local DB copies (never send raw tokens to Ollama)
-- [ ] Rate limiting on LLM queue concurrency
-- [ ] Audit log for applied suggestions
+- [x] LLM jobs run only against local DB copies (never send raw tokens to Ollama)
+- [x] Rate limiting on LLM queue concurrency (`LLM_WORKER_CONCURRENCY=1` default)
+- [x] Audit fields on applied suggestions (`reviewedAt`, `appliedAt`, `LlmAnalysisRun` history)
 
 ---
 
@@ -132,9 +132,8 @@ Scaffolding and core pipeline infrastructure.
 
 ## Suggested immediate next steps
 
-Phase 1 MVP polish is complete. Pick up **Phase 2 — Ollama** next:
+Phase 2 LLM triage is complete. Next options:
 
-1. **Step 9 — Ollama integration** — duplicate detection and description drafting
-2. **Step 10 — Safety** — rate limits, audit log for applied suggestions
-
-Each step should include tests before or alongside implementation (see [Development Guide](./development-guide.md)).
+1. **Phase 3 — Production & growth** — scheduled sync, webhooks, token encryption
+2. **Phase 2.5 — VCS write-back** — push applied description drafts to GitLab/GitHub
+3. **MVP hardening** — full Docker compose verification, formal DoD sign-off

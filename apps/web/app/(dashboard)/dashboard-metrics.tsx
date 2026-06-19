@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { formatRelativeDate } from "@/lib/utils";
 import { ThresholdSettings } from "./threshold-settings";
+import { SuggestionsPanel } from "./suggestions-panel";
 
 type IssueSummary = {
   id: string;
@@ -57,6 +58,30 @@ type MetricsPayload = {
       openIssueCount: number;
       issues: IssueSummary[];
     }>;
+  };
+  suggestions: {
+    pendingCount: number;
+    items: Array<{
+      id: string;
+      type: "DUPLICATE" | "DESCRIPTION";
+      status: "PENDING" | "DISMISSED" | "APPLIED";
+      suggestedText: string | null;
+      confidence: number | null;
+      issue: { id: string; gitlabIssueIid: number; title: string };
+      relatedIssue: {
+        id: string;
+        gitlabIssueIid: number;
+        title: string;
+      } | null;
+    }>;
+    latestAnalysisRun: {
+      id: string;
+      status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+      startedAt: Date;
+      completedAt: Date | null;
+      suggestionsCreated: number;
+      errorMessage: string | null;
+    } | null;
   };
 };
 
@@ -100,6 +125,24 @@ export function DashboardMetrics({
         projectId={metrics.projectId}
         ghostThresholdDays={metrics.thresholds.ghostDays}
         zombieThresholdDays={metrics.thresholds.zombieDays}
+      />
+
+      <SuggestionsPanel
+        projectId={metrics.projectId}
+        suggestions={metrics.suggestions.items}
+        pendingCount={metrics.suggestions.pendingCount}
+        latestAnalysisRun={
+          metrics.suggestions.latestAnalysisRun
+            ? {
+                ...metrics.suggestions.latestAnalysisRun,
+                startedAt:
+                  metrics.suggestions.latestAnalysisRun.startedAt.toISOString(),
+                completedAt: metrics.suggestions.latestAnalysisRun.completedAt
+                  ? metrics.suggestions.latestAnalysisRun.completedAt.toISOString()
+                  : null,
+              }
+            : null
+        }
       />
 
       <section className="space-y-3">

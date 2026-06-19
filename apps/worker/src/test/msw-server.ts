@@ -62,3 +62,34 @@ export function githubErrorHandler(
     () => new HttpResponse(body, { status }),
   );
 }
+
+const OLLAMA_HOST = "http://localhost:11434";
+
+export function ollamaTagsHandler(modelNames: string[]) {
+  return http.get(`${OLLAMA_HOST}/api/tags`, () =>
+    HttpResponse.json({
+      models: modelNames.map((name) => ({ name })),
+    }),
+  );
+}
+
+export function ollamaChatHandler(content: string) {
+  return http.post(`${OLLAMA_HOST}/api/chat`, () =>
+    HttpResponse.json({
+      message: { role: "assistant", content },
+    }),
+  );
+}
+
+export function ollamaEmbedHandler(embeddings: number[][]) {
+  return http.post(`${OLLAMA_HOST}/api/embed`, () =>
+    HttpResponse.json({ embeddings }),
+  );
+}
+
+export function ollamaErrorHandler(path: string, status: number, body: string) {
+  const method = path === "/api/tags" ? http.get : http.post;
+  return method(`${OLLAMA_HOST}${path}`, () =>
+    new HttpResponse(body, { status }),
+  );
+}

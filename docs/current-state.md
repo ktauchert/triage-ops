@@ -19,15 +19,15 @@ This document describes what is **implemented**, **partially implemented**, and 
 - **Prisma schema** with relational models:
   - `VcsConnection` — GitLab or GitHub credentials (`provider`, `baseUrl`, `accessToken`)
   - `Project` — registered repo/project (`externalProjectId`, `pathWithNamespace`)
-  - `Issue`, `Milestone`, `Label`, `IssueLabel`, `SyncRun`
+  - `Issue`, `Milestone`, `Label`, `IssueLabel`, `SyncRun`, `IssueSuggestion`, `LlmAnalysisRun`
 - **Migrations applied:** `init`, `vcs_provider` (GitHub + rename), `github_issue_id_bigint`
 - **Prisma client singleton** with monorepo root `.env` discovery
 - **Seed script** (`npm run db:seed`) for GitLab and/or GitHub sample data
 
 ### Shared types (`packages/shared-types`)
 
-- Queue name constants (`gitlab-sync`)
-- Job payload types (`SyncJobPayload`)
+- Queue name constants (`gitlab-sync`, `llm-analysis`)
+- Job payload types (`SyncJobPayload`, `LlmAnalysisJobPayload`)
 - GitLab and GitHub issue DTOs
 - `NormalizedIssue` contract for provider-agnostic sync
 
@@ -41,15 +41,18 @@ This document describes what is **implemented**, **partially implemented**, and 
 - **GitLab API client** — paginated issue fetch, validation, error types
 - **GitHub API client** — paginated issues, PR filtering, Link-header pagination
 - **VCS router** — `fetchProjectIssues()` dispatches by `VcsProvider`
-- **Redis distributed locks** — per-project sync exclusion
-- **BullMQ queue** — `gitlab-sync` with retry/backoff
+- **Ollama client** — health check, chat, embeddings (MSW-tested)
+- **LLM analysis** — duplicate detection (cosine similarity), description drafting
+- **Redis distributed locks** — per-project sync and LLM exclusion
+- **BullMQ queues** — `gitlab-sync` and `llm-analysis` with retry/backoff
 - **Sync worker** — upserts issues, milestones, and labels from issue payload
+- **LLM worker** — reads Postgres only; writes `IssueSuggestion` + `LlmAnalysisRun`
 - **esbuild bundle** for production Docker image
-- **37+ unit tests** (Vitest + MSW): GitLab/GitHub clients, locks, milestones, labels, normalizers
+- **50+ unit tests** (Vitest + MSW): VCS clients, Ollama, LLM logic, locks, milestones, labels, normalizers
 
 ### Web (`apps/web`)
 
-- **Dashboard** — overview counts, triage signals, per-project threshold settings, issue labels, milestone tables
+- **Dashboard** — overview counts, triage signals, per-project threshold settings, issue labels, milestone tables, **AI suggestions panel**
 - **Connections** — add/list GitHub or GitLab connections (provider picker)
 - **Projects** — register repo/project, manual sync, last run status
 - **Authentication** — Auth.js OAuth (GitHub/GitLab), proxy route protection, deployment profiles
@@ -59,6 +62,9 @@ This document describes what is **implemented**, **partially implemented**, and 
   - `POST /api/projects/[id]/sync`
   - `GET /api/projects/[id]/sync-runs`
   - `GET /api/projects/[id]/metrics`
+  - `POST /api/projects/[id]/analyze`
+  - `GET /api/projects/[id]/suggestions`
+  - `PATCH /api/projects/[id]/suggestions/[suggestionId]`
 - **Shadcn-style UI** — sidebar layout, cards, tables, badges
 - **BullMQ enqueue** from web via Redis
 - **7+ API/auth unit tests**
@@ -93,11 +99,21 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ---
 
+### Phase 2 — LLM-assisted triage ✅
+
+- Ollama client (`healthCheck`, `chat`, `embed`) with env config
+- `IssueSuggestion` + `LlmAnalysisRun` Prisma models
+- `llm-analysis` BullMQ worker (Postgres-only reads, Redis lock per project)
+- Dashboard: run analysis, review/dismiss/apply suggestions (local-only apply)
+- Unit tests for Ollama client, duplicate detection, description drafting, worker processor
+
+---
+
 ## Not started
 
 - Multi-tenant workspace isolation
 - Token encryption at rest
-- Phase 2 LLM jobs (duplicate detection, description drafting)
+- VCS write-back on applied suggestions (Phase 2.5)
 - Scheduled auto-sync, webhooks
 - Helm chart / production install guide
 - SaaS billing
@@ -108,7 +124,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 | Package | Framework | Tests | Scope |
 |---------|-----------|-------|-------|
-| `@triage-ops/worker` | Vitest + MSW | 35 | GitLab/GitHub clients, locks, milestones, normalizers |
+| `@triage-ops/worker` | Vitest + MSW | 50+ | VCS clients, Ollama, LLM logic, locks, milestones, normalizers |
 | `@triage-ops/metrics` | Vitest | 17 | Ghost, zombie, milestone decay |
 | `@triage-ops/web` | Vitest | 14+ | API validation + auth helpers |
 | `@triage-ops/e2e` | Vitest | 1 | Register → sync → metrics smoke |
@@ -127,8 +143,11 @@ npm test
 |----------|-------------|-----------------|
 | `DATABASE_URL` | db, worker, web | `postgresql://triage_ops:triage_ops@localhost:5433/triage_ops` |
 | `REDIS_URL` | worker, web | `redis://localhost:6379` |
-| `OLLAMA_HOST` | worker (Phase 2) | `http://localhost:11434` |
+| `OLLAMA_HOST` | worker | `http://localhost:11434` |
+| `OLLAMA_CHAT_MODEL` | worker | `llama3.2:3b` |
+| `OLLAMA_EMBED_MODEL` | worker | `nomic-embed-text` |
 | `WORKER_CONCURRENCY` | worker | `2` |
+| `LLM_WORKER_CONCURRENCY` | worker | `1` |
 | `AUTH_DISABLED` | web | `true` (local dev) |
 | `AUTH_SECRET` | web | — (required when auth enabled) |
 | `AUTH_PROVIDERS` | web | `github,gitlab` |
