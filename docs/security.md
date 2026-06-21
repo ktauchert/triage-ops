@@ -171,7 +171,7 @@ Use this before exposing TriageOps beyond a single developer machine:
 - [ ] OAuth apps registered with HTTPS callback URLs only
 - [ ] **HTTPS termination** via reverse proxy (nginx, Caddy, Traefik, load balancer)
 - [ ] `ALLOWED_EMAIL_DOMAINS` or `ALLOWED_EMAILS` set for on-prem (if not using other network controls)
-- [ ] Change default Postgres password in `docker-compose.yml` / `DATABASE_URL`
+- [ ] Change default Postgres password in `.env` (`POSTGRES_PASSWORD`; Compose substitutes into all services)
 - [ ] Do **not** expose Postgres (`5433`) or Redis (`6379`) to the internet or guest Wi‑Fi
 
 #### Strongly recommended
@@ -192,7 +192,7 @@ Use this before exposing TriageOps beyond a single developer machine:
 
 ### Default Docker Compose (development)
 
-The bundled `docker-compose.yml` uses **default passwords** (`triage_ops` / `triage_ops`) and **published ports** for local dev. This is **not** production-ready without changes.
+The bundled `docker-compose.yml` falls back to **default passwords** (`triage_ops`) when `POSTGRES_PASSWORD` is unset in `.env`, and **published ports** for local dev. Set `POSTGRES_PASSWORD` in `.env` for production — Compose substitutes it into Postgres, web, worker, and migrate.
 
 ---
 
@@ -215,7 +215,10 @@ AUTH_GITLAB_ID=<oauth-app-id>
 AUTH_GITLAB_SECRET=<oauth-app-secret>
 AUTH_GITLAB_ISSUER=https://gitlab.company.internal
 
-DATABASE_URL=postgresql://triage_ops:<strong-password>@postgres:5432/triage_ops
+POSTGRES_USER=triage_ops
+POSTGRES_PASSWORD=<strong-password>
+POSTGRES_DB=triage_ops
+
 REDIS_URL=redis://redis:6379
 NODE_ENV=production
 ```

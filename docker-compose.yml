@@ -4,15 +4,15 @@ services:
     container_name: triage-ops-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: triage_ops
-      POSTGRES_PASSWORD: triage_ops
-      POSTGRES_DB: triage_ops
+      POSTGRES_USER: ${POSTGRES_USER:-triage_ops}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-triage_ops}
+      POSTGRES_DB: ${POSTGRES_DB:-triage_ops}
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U triage_ops -d triage_ops"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-triage_ops} -d ${POSTGRES_DB:-triage_ops}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -53,7 +53,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://triage_ops:triage_ops@postgres:5432/triage_ops
+      DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD:-triage_ops}@postgres:5432/${POSTGRES_DB:-triage_ops}
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
     depends_on:
@@ -73,7 +73,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://triage_ops:triage_ops@postgres:5432/triage_ops
+      DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD:-triage_ops}@postgres:5432/${POSTGRES_DB:-triage_ops}
       REDIS_URL: redis://redis:6379
       OLLAMA_HOST: http://ollama:11434
       NODE_ENV: production
@@ -91,7 +91,7 @@ services:
     profiles:
       - migrate
     environment:
-      DATABASE_URL: postgresql://triage_ops:triage_ops@postgres:5432/triage_ops
+      DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD:-triage_ops}@postgres:5432/${POSTGRES_DB:-triage_ops}
     depends_on:
       postgres:
         condition: service_healthy

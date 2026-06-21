@@ -100,11 +100,19 @@ cp .env.example .env
 
 ### 1.3 Produktions-`.env` (Beispiel Intranet + GitLab)
 
-Passe Hostnamen, Secrets und Passwörter an:
+Docker Compose liest die Root-`.env` **automatisch** für `${VAR}`-Substitution in `docker-compose.yml`. Web und Worker laden dieselbe Datei zusätzlich per `env_file`. Ein Passwort reicht in `.env` — Compose setzt es für Postgres-Container und `DATABASE_URL` in web/worker/migrate.
+
+Passe Hostnamen und Secrets an:
 
 ```env
-# ── Datenbank & Queue (Compose-Service-Namen) ─────────────────────────────
-DATABASE_URL=postgresql://triage_ops:<STARKES-PASSWORT>@postgres:5432/triage_ops
+# ── Postgres (Compose substituiert in docker-compose.yml) ───────────────────
+POSTGRES_USER=triage_ops
+POSTGRES_PASSWORD=<STARKES-PASSWORT>
+POSTGRES_DB=triage_ops
+
+# Nur nötig für Host-Dev (npm run dev); reiner Docker-Betrieb ignoriert Host/Port.
+DATABASE_URL=postgresql://triage_ops:<STARKES-PASSWORT>@localhost:5433/triage_ops
+
 REDIS_URL=redis://redis:6379
 
 # ── Ollama (Worker spricht Container-Namen an) ──────────────────────────────
@@ -144,20 +152,19 @@ openssl rand -base64 32   # für AUTH_SECRET
 openssl rand -base64 32   # für TOKEN_ENCRYPTION_KEY
 ```
 
-### 1.4 Postgres-Passwort in Compose anpassen
+### 1.4 Postgres-Passwort (nur `.env`, nicht `docker-compose.yml`)
 
-Die mitgelieferte `docker-compose.yml` nutzt Dev-Defaults (`triage_ops` / `triage_ops`). Für Produktion **Passwort ändern** und konsistent in `DATABASE_URL` sowie `postgres.environment` setzen:
+Für Produktion `POSTGRES_PASSWORD` in `.env` setzen. `docker-compose.yml` referenziert `${POSTGRES_PASSWORD:-triage_ops}` — Postgres, web, worker und migrate bekommen dasselbe Passwort automatisch.
 
-```yaml
-environment:
-  POSTGRES_USER: triage_ops
-  POSTGRES_PASSWORD: <STARKES-PASSWORT>
-  POSTGRES_DB: triage_ops
+```env
+POSTGRES_PASSWORD=<STARKES-PASSWORT>
 ```
 
-Gleiches Passwort in `web`, `worker` und `migrate` unter `environment.DATABASE_URL` verwenden.
+Ohne `.env`-Eintrag bleiben die Dev-Defaults (`triage_ops`) aktiv.
 
-Optional: Postgres- und Redis-**Port-Mappings** (`5433:5432`, `6379:6379`) in Produktion entfernen, damit die Dienste nur im Docker-Netz erreichbar sind.
+Optional: Postgres- und Redis-**Port-Mappings** (`5433:5432`, `6379:6379`) in `docker-compose.yml` entfernen, damit die Dienste nur im Docker-Netz erreichbar sind.
+
+> **Hinweis:** Spezielle Zeichen im Passwort (`@`, `:`, `/`, `#`) können `DATABASE_URL` brechen — URL-encoden oder ein alphanumerisches Passwort wählen.
 
 ---
 
@@ -341,7 +348,7 @@ Kurzablauf für Endnutzer:
 # 1. Klonen & konfigurieren
 git clone <repo-url> triage-ops && cd triage-ops
 cp .env.example .env
-# → .env und docker-compose.yml Postgres-Passwort anpassen
+# → .env anpassen (POSTGRES_PASSWORD, Auth, TOKEN_ENCRYPTION_KEY, …)
 
 # 2. Stack starten
 npm run docker:up:all

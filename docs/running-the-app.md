@@ -89,6 +89,12 @@ The worker connects to Redis and listens on the `gitlab-sync`, `llm-analysis`, a
 ### Environment (.env)
 
 ```env
+# Postgres — docker-compose.yml reads POSTGRES_* for container setup
+POSTGRES_USER=triage_ops
+POSTGRES_PASSWORD=triage_ops
+POSTGRES_DB=triage_ops
+
+# Host dev (npm run dev / db:migrate): keep password in sync with POSTGRES_PASSWORD
 DATABASE_URL=postgresql://triage_ops:triage_ops@localhost:5433/triage_ops
 REDIS_URL=redis://localhost:6379
 OLLAMA_HOST=http://localhost:11434
