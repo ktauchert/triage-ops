@@ -1,5 +1,8 @@
 import { expect, vi } from "vitest";
+import { USER_ROLES } from "@/lib/auth/roles";
 import type { AuthContext } from "@/lib/auth/session";
+
+export const ALL_ROLES = USER_ROLES;
 
 export const testAuthContext: AuthContext = {
   userId: "user-test",
@@ -53,4 +56,10 @@ export function unauthorizedResponse(): Response {
     status: 401,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+export async function expectForbidden(response: Response): Promise<void> {
+  expect(response.status).toBe(403);
+  const data = await response.json();
+  expect(data).toEqual({ error: "Forbidden" });
 }

@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserRole } from "@triage-ops/db";
 import {
+  expectForbidden,
   readJson,
   routeContext,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -52,6 +55,17 @@ describe("GET /api/connections/[id]/remote-projects", () => {
       404,
     );
     expect(data.error).toContain("not found");
+  });
+
+  it("returns 403 for OPERATOR", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.OPERATOR),
+    );
+
+    await expectForbidden(
+      await GET(new Request("http://localhost"), ctx),
+    );
+    expect(listRemoteProjectsMock).not.toHaveBeenCalled();
   });
 
   it("returns remote projects", async () => {

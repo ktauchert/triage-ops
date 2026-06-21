@@ -3,6 +3,7 @@ import {
   readJson,
   routeContext,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -45,6 +46,25 @@ describe("GET /api/projects/[id]/suggestions", () => {
       ctx,
     );
     expect(response.status).toBe(401);
+  });
+
+  it("allows VIEWER to list suggestions", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole("VIEWER"),
+    );
+    listSuggestionsMock.mockResolvedValue([
+      { id: "suggestion-1", status: "PENDING" },
+    ]);
+
+    const data = await readJson<{ suggestions: { id: string }[] }>(
+      await GET(
+        new Request("http://localhost/api/projects/project-1/suggestions"),
+        ctx,
+      ),
+      200,
+    );
+
+    expect(data.suggestions).toHaveLength(1);
   });
 
   it("returns 400 for invalid status filter", async () => {

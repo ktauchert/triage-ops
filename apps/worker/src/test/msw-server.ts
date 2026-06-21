@@ -71,6 +71,19 @@ export function githubIssuePatchHandler(owner: string, repo: string, issueNumber
   );
 }
 
+export function githubIssuePatchErrorHandler(
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  status: number,
+  body: string,
+) {
+  return http.patch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`,
+    () => new HttpResponse(body, { status }),
+  );
+}
+
 export function githubIssueCommentHandler(
   owner: string,
   repo: string,
@@ -79,6 +92,19 @@ export function githubIssueCommentHandler(
   return http.post(
     `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
     () => HttpResponse.json({ id: 1 }),
+  );
+}
+
+export function githubIssueCommentErrorHandler(
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  status: number,
+  body: string,
+) {
+  return http.post(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
+    () => new HttpResponse(body, { status }),
   );
 }
 

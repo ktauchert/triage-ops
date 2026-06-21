@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserRole } from "@triage-ops/db";
 import {
+  expectForbidden,
   readJson,
   routeContext,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -77,6 +80,15 @@ describe("POST /api/projects/[id]/analyze", () => {
     requireApiSessionMock.mockResolvedValue(testAuthContext);
   });
 
+  it("returns 403 for OPERATOR", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.OPERATOR),
+    );
+
+    await expectForbidden(await POST(new Request("http://localhost"), ctx));
+    expect(triggerLlmAnalysisMock).not.toHaveBeenCalled();
+  });
+
   it("returns 409 when analysis already running", async () => {
     triggerLlmAnalysisMock.mockResolvedValue({
       analysisRun: {
@@ -130,12 +142,49 @@ describe("POST /api/projects/[id]/analyze", () => {
       analysisRunId: "run-2",
     });
   });
+
+  it("allows LEAD to start analysis", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.LEAD),
+    );
+    triggerLlmAnalysisMock.mockResolvedValue({
+      analysisRun: {
+        id: "run-3",
+        projectId: "project-1",
+        status: "PENDING",
+        startedAt: new Date(),
+        completedAt: null,
+        suggestionsCreated: 0,
+        totalSteps: 0,
+        completedSteps: 0,
+        progressLabel: null,
+        errorMessage: null,
+      },
+      alreadyRunning: false,
+    });
+
+    const data = await readJson<{ analysisRun: { id: string } }>(
+      await POST(new Request("http://localhost"), ctx),
+      202,
+    );
+
+    expect(data.analysisRun.id).toBe("run-3");
+  });
 });
 
 describe("DELETE /api/projects/[id]/analyze", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireApiSessionMock.mockResolvedValue(testAuthContext);
+  });
+
+  it("returns 403 for OPERATOR", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.OPERATOR),
+    );
+
+    await expectForbidden(await DELETE(new Request("http://localhost"), ctx));
+    expect(clearProjectAnalysisMock).not.toHaveBeenCalled();
   });
 
   it("returns 409 when apply is in progress", async () => {
@@ -165,5 +214,23 @@ describe("DELETE /api/projects/[id]/analyze", () => {
 
     expect(data.cleared).toBe(true);
     expect(data.suggestionsDeleted).toBe(3);
+  });
+
+  it("allows LEAD to clear analysis", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.LEAD),
+    );
+    clearProjectAnalysisMock.mockResolvedValue({
+      cleared: true,
+      suggestionsDeleted: 1,
+      runsDeleted: 1,
+    });
+
+    const data = await readJson<{ cleared: boolean }>(
+      await DELETE(new Request("http://localhost"), ctx),
+      200,
+    );
+
+    expect(data.cleared).toBe(true);
   });
 });

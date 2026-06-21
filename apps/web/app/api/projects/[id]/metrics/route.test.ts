@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserRole } from "@triage-ops/db";
 import {
   readJson,
   routeContext,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -54,6 +56,30 @@ describe("GET /api/projects/[id]/metrics", () => {
       404,
     );
     expect(data.error).toContain("not found");
+  });
+
+  it("allows VIEWER to read metrics", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.VIEWER),
+    );
+    getProjectMetricsMock.mockResolvedValue({
+      overview: { totalIssues: 5, openIssues: 3 },
+      ghost: { count: 1 },
+      zombie: { count: 0 },
+      milestoneDecay: { count: 0 },
+    });
+
+    const data = await readJson<{
+      metrics: { overview: { totalIssues: number } };
+    }>(
+      await GET(
+        new Request("http://localhost/api/projects/project-1/metrics"),
+        ctx,
+      ),
+      200,
+    );
+
+    expect(data.metrics.overview.totalIssues).toBe(5);
   });
 
   it("returns metrics payload", async () => {

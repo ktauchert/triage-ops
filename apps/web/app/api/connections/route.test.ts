@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserRole } from "@triage-ops/db";
 import {
+  expectForbidden,
   jsonRequest,
   readJson,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -62,6 +65,23 @@ describe("POST /api/connections", () => {
       jsonRequest("POST", "http://localhost/api/connections", {}),
     );
     expect(response.status).toBe(401);
+  });
+
+  it("returns 403 for VIEWER", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.VIEWER),
+    );
+
+    await expectForbidden(
+      await POST(
+        jsonRequest("POST", "http://localhost/api/connections", {
+          name: "GitHub",
+          provider: "GITHUB",
+          accessToken: "ghp_test",
+        }),
+      ),
+    );
+    expect(createConnectionMock).not.toHaveBeenCalled();
   });
 
   it("returns 400 when GitLab connection has no baseUrl", async () => {

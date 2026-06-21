@@ -8,7 +8,7 @@ Instructions for local development and full Docker deployment.
 
 | Tool | Version |
 |------|---------|
-| Node.js | ≥ 20 |
+| Node.js | ≥ 24 |
 | npm | ≥ 10 |
 | Docker + Docker Compose | Latest stable |
 | Git | Any recent version |

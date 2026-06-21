@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserRole } from "@triage-ops/db";
 import {
+  expectForbidden,
   jsonRequest,
   readJson,
   routeContext,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -28,6 +31,17 @@ describe("DELETE /api/projects/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireApiSessionMock.mockResolvedValue(testAuthContext);
+  });
+
+  it("returns 403 for LEAD", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.LEAD),
+    );
+
+    await expectForbidden(
+      await DELETE(new Request("http://localhost"), ctx),
+    );
+    expect(deleteProjectMock).not.toHaveBeenCalled();
   });
 
   it("returns 404 when project not found", async () => {
@@ -73,6 +87,41 @@ describe("PATCH /api/projects/[id]", () => {
       400,
     );
     expect(data.error).toContain("Provide");
+  });
+
+  it("returns 403 for OPERATOR when updating settings", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.OPERATOR),
+    );
+
+    await expectForbidden(
+      await PATCH(
+        jsonRequest("PATCH", "http://localhost", { ghostThresholdDays: 30 }),
+        ctx,
+      ),
+    );
+    expect(updateProjectSettingsMock).not.toHaveBeenCalled();
+  });
+
+  it("allows LEAD to update favorite without settings permission", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.LEAD),
+    );
+    updateProjectSettingsMock.mockResolvedValue({
+      id: "project-1",
+      isFavorite: true,
+    });
+
+    const data = await readJson<{ project: { isFavorite: boolean } }>(
+      await PATCH(
+        jsonRequest("PATCH", "http://localhost", { isFavorite: true }),
+        ctx,
+      ),
+      200,
+    );
+
+    expect(data.project.isFavorite).toBe(true);
+    expect(updateProjectSettingsMock).toHaveBeenCalled();
   });
 
   it("updates metric thresholds", async () => {

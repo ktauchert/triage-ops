@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  expectForbidden,
   jsonRequest,
   readJson,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -63,6 +65,23 @@ describe("POST /api/projects", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireApiSessionMock.mockResolvedValue(testAuthContext);
+  });
+
+  it("returns 403 for VIEWER", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole("VIEWER"),
+    );
+
+    await expectForbidden(
+      await POST(
+        jsonRequest("POST", "http://localhost/api/projects", {
+          connectionId: "conn-1",
+          pathWithNamespace: "org/repo",
+          name: "Repo",
+        }),
+      ),
+    );
+    expect(createProjectMock).not.toHaveBeenCalled();
   });
 
   it("returns 404 when connection not found", async () => {

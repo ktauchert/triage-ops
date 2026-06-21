@@ -25,7 +25,7 @@
     "docker:verify": "bash scripts/verify-docker-stack.sh"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "postinstall": "npm run db:generate"
 }

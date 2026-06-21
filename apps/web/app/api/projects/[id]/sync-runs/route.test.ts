@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserRole } from "@triage-ops/db";
 import {
   readJson,
   routeContext,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -45,6 +47,22 @@ describe("GET /api/projects/[id]/sync-runs", () => {
       404,
     );
     expect(data.error).toContain("not found");
+  });
+
+  it("allows VIEWER to read sync runs", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.VIEWER),
+    );
+    listSyncRunsMock.mockResolvedValue([
+      { id: "run-1", status: "COMPLETED" },
+    ]);
+
+    const data = await readJson<{ syncRuns: { id: string }[] }>(
+      await GET(new Request("http://localhost"), ctx),
+      200,
+    );
+
+    expect(data.syncRuns).toHaveLength(1);
   });
 
   it("returns sync run history", async () => {

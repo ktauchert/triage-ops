@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserRole } from "@triage-ops/db";
 import {
+  expectForbidden,
   jsonRequest,
   readJson,
   routeContext,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -38,6 +41,17 @@ describe("DELETE /api/connections/[id]", () => {
       ctx,
     );
     expect(response.status).toBe(401);
+  });
+
+  it("returns 403 for LEAD", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.LEAD),
+    );
+
+    await expectForbidden(
+      await DELETE(new Request("http://localhost"), ctx),
+    );
+    expect(deleteConnectionMock).not.toHaveBeenCalled();
   });
 
   it("returns 404 when connection not found", async () => {

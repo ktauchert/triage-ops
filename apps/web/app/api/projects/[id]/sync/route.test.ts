@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserRole } from "@triage-ops/db";
 import {
+  expectForbidden,
   readJson,
   routeContext,
   testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -42,6 +45,15 @@ describe("POST /api/projects/[id]/sync", () => {
     expect(response.status).toBe(401);
   });
 
+  it("returns 403 for VIEWER", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.VIEWER),
+    );
+
+    await expectForbidden(await POST(new Request("http://localhost"), ctx));
+    expect(triggerProjectSyncMock).not.toHaveBeenCalled();
+  });
+
   it("returns 404 when project not found", async () => {
     getProjectByIdMock.mockResolvedValue(null);
 
@@ -68,5 +80,22 @@ describe("POST /api/projects/[id]/sync", () => {
       projectId: "project-1",
       syncRunId: "run-1",
     });
+  });
+
+  it("allows LEAD to trigger sync", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.LEAD),
+    );
+    triggerProjectSyncMock.mockResolvedValue({
+      id: "run-2",
+      status: "PENDING",
+    });
+
+    const data = await readJson<{ syncRun: { id: string } }>(
+      await POST(new Request("http://localhost"), ctx),
+      202,
+    );
+
+    expect(data.syncRun.id).toBe("run-2");
   });
 });

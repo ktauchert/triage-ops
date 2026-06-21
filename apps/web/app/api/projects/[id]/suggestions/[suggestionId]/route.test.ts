@@ -79,6 +79,26 @@ describe("PATCH /api/projects/[id]/suggestions/[suggestionId]", () => {
     expect(response.status).toBe(202);
   });
 
+  it("allows LEAD to dismiss", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.LEAD),
+    );
+    updateSuggestionStatusMock.mockResolvedValue({
+      suggestion: { id: "suggestion-1", status: "DISMISSED" },
+      queued: false,
+    });
+
+    const data = await readJson<{ suggestion: { status: string } }>(
+      await PATCH(
+        jsonRequest("PATCH", "http://localhost", { status: "DISMISSED" }),
+        ctx,
+      ),
+      200,
+    );
+
+    expect(data.suggestion.status).toBe("DISMISSED");
+  });
+
   it("returns 400 for invalid status", async () => {
     const data = await readJson<{ error: string }>(
       await PATCH(
