@@ -67,11 +67,14 @@ export function AddProjectForm({
     );
   }, [projectSearch, remoteProjects]);
 
+  function resetProjectList() {
+    setRemoteProjects([]);
+    setListError(null);
+    setSelectedProjectKey("");
+  }
+
   useEffect(() => {
     if (!form.connectionId || manualEntry) {
-      setRemoteProjects([]);
-      setListError(null);
-      setSelectedProjectKey("");
       return;
     }
 
@@ -217,12 +220,13 @@ export function AddProjectForm({
                 <select
                   id="connectionId"
                   value={form.connectionId}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    resetProjectList();
                     setForm((current) => ({
                       ...current,
                       connectionId: event.target.value,
-                    }))
-                  }
+                    }));
+                  }}
                   className="select-field"
                   required
                 >
@@ -245,7 +249,14 @@ export function AddProjectForm({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setManualEntry((current) => !current)}
+                  onClick={() => {
+                    setManualEntry((current) => {
+                      if (!current) {
+                        resetProjectList();
+                      }
+                      return !current;
+                    });
+                  }}
                 >
                   {manualEntry ? "Use project list" : "Enter manually"}
                 </Button>

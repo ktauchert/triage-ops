@@ -1,4 +1,4 @@
-import { prisma, VcsProvider, sealAccessToken, openAccessToken } from "@triage-ops/db";
+import { prisma, VcsProvider, sealAccessToken } from "@triage-ops/db";
 import { DEFAULT_GITHUB_API_URL } from "@triage-ops/shared-types";
 import {
   canAccessConnection,

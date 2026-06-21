@@ -185,16 +185,23 @@ export function SuggestionsPanel({
   const [liveAnalysisRun, setLiveAnalysisRun] =
     useState<AnalysisRunSummary>(latestAnalysisRun);
   const previousStatusRef = useRef(liveAnalysisRun?.status);
+  const [syncedProps, setSyncedProps] = useState({
+    suggestions,
+    pendingCount,
+    latestAnalysisRun,
+  });
 
-  useEffect(() => {
-    if (isAnalysisInProgress(latestAnalysisRun)) {
-      return;
-    }
-
+  if (
+    !isAnalysisInProgress(latestAnalysisRun) &&
+    (suggestions !== syncedProps.suggestions ||
+      pendingCount !== syncedProps.pendingCount ||
+      latestAnalysisRun !== syncedProps.latestAnalysisRun)
+  ) {
+    setSyncedProps({ suggestions, pendingCount, latestAnalysisRun });
     setLiveSuggestions(suggestions);
     setLivePendingCount(pendingCount);
     setLiveAnalysisRun(latestAnalysisRun);
-  }, [suggestions, pendingCount, latestAnalysisRun]);
+  }
 
   const analysisInProgress = isAnalysisInProgress(liveAnalysisRun);
   const applyInProgress = hasApplyingSuggestions(liveSuggestions);
