@@ -89,6 +89,7 @@ flowchart LR
 | LLM processor | `src/workers/llm-analysis-worker.ts` | Duplicate scan + description drafts → `IssueSuggestion` |
 | Write-back queue | `src/queues/vcs-writeback-queue.ts` | `vcs-writeback` queue factory |
 | Write-back processor | `src/workers/vcs-writeback-worker.ts` | Apply suggestion to VCS + patch local `Issue` rows |
+| Auto-sync processor | `src/workers/auto-sync-worker.ts` | Repeatable tick → enqueue sync for due projects |
 | Ollama client | `src/lib/ollama/client.ts` | Health check, chat, embeddings against local Ollama |
 | Config | `src/config/env.ts` | Required env var validation |
 
@@ -188,8 +189,8 @@ Used by `apps/web/lib/services/metrics.ts` and exposed via `GET /api/projects/[i
 **Role:** Types and constants shared between worker and web without circular dependencies.
 
 Exports:
-- `QUEUE_NAMES.GITLAB_SYNC`, `QUEUE_NAMES.LLM_ANALYSIS`, `QUEUE_NAMES.VCS_WRITEBACK`
-- `SyncJobPayload`, `LlmAnalysisJobPayload`, `WriteBackJobPayload`
+- `QUEUE_NAMES.GITLAB_SYNC`, `QUEUE_NAMES.LLM_ANALYSIS`, `QUEUE_NAMES.VCS_WRITEBACK`, `QUEUE_NAMES.AUTO_SYNC`
+- `SyncJobPayload`, `LlmAnalysisJobPayload`, `WriteBackJobPayload`, `AutoSyncJobPayload`
 - `GitLabIssueRaw`, `GitLabIssuesPage`, `FetchGitLabIssuesParams`
 - `GitHubIssueRaw`, `GitHubIssuesPage`, `FetchGitHubIssuesParams`
 - `NormalizedIssue` — provider-agnostic issue shape after normalization

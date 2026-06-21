@@ -1,6 +1,7 @@
 import {
   IssueState,
   SyncStatus,
+  openAccessToken,
   prisma,
 } from "@triage-ops/db";
 import type { NormalizedIssue, SyncJobPayload } from "@triage-ops/shared-types";
@@ -130,7 +131,7 @@ export async function processSyncJob(job: Job<SyncJobPayload>): Promise<void> {
       const result = await fetchProjectIssues({
         provider: project.connection.provider,
         baseUrl: project.connection.baseUrl,
-        accessToken: project.connection.accessToken,
+        accessToken: openAccessToken(project.connection.accessToken),
         externalProjectId: project.externalProjectId,
         pathWithNamespace: project.pathWithNamespace,
         page,

@@ -199,7 +199,7 @@ When both are empty, any authenticated OAuth user may access the instance.
 
 ### Production security
 
-Before rolling out on an intranet or exposing the app beyond localhost, complete the checklist in **[Security](./security.md)**. At minimum:
+Before rolling out on an intranet or exposing the app beyond localhost, follow **[Intranet Rollout](./intranet-rollout.md)** (install steps + acceptance checklist) and **[Security](./security.md)**. At minimum:
 
 1. Set `AUTH_DISABLED=false` and a strong `AUTH_SECRET`
 2. Terminate HTTPS at a reverse proxy; set `AUTH_URL` to the HTTPS origin
@@ -209,6 +209,25 @@ Before rolling out on an intranet or exposing the app beyond localhost, complete
 6. Use VCS PATs with least privilege (`api` on GitLab for write-back; `repo` or fine-grained **Issues: Read and write** on GitHub)
 
 For **multi-user deployments** with separated duties (admin vs operator vs viewer), plan [Phase 4 — Governance](./phases.md#phase-4--governance-admin--operations-planned) (RBAC, audit log, reporting, rollback).
+
+### Phase 3 production options
+
+**PAT encryption (3a)** — recommended for any shared deployment:
+
+```bash
+openssl rand -base64 32   # add to .env as TOKEN_ENCRYPTION_KEY
+```
+
+Restart web and worker after setting the key. Re-add connections if you need to re-seal legacy plain tokens.
+
+**Auto-sync (3b)** — on the worker:
+
+```env
+AUTO_SYNC_SCHEDULER_ENABLED=true
+AUTO_SYNC_TICK_MINUTES=15   # how often the scheduler checks projects
+```
+
+Enable per project on the **Projects** page (Auto-sync column). Default interval per project: 60 minutes (minimum 15).
 
 ---
 

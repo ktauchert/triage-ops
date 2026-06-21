@@ -11,6 +11,7 @@ This folder is the single source of truth for project direction, architecture, a
 | [Current State](./current-state.md) | What exists today, what is stubbed, test coverage |
 | [Architecture](./architecture.md) | Monorepo layout, services, data flow, package roles |
 | [Security](./security.md) | Auth, credentials, on-prem hardening, reviewer FAQ |
+| [Intranet Rollout](./intranet-rollout.md) | Production install checklist (Docker Compose; Helm planned) |
 | [Implementation Phases](./phases.md) | Phase roadmap with step-by-step plan |
 | [MVP Definition of Done](./mvp-definition-of-done.md) | Checklist that marks Phase 1 MVP as shippable |
 | [Running the App](./running-the-app.md) | Local dev, Docker, migrations, troubleshooting |

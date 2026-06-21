@@ -44,7 +44,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 - **Ollama client** — health check, chat, embeddings (MSW-tested)
 - **LLM analysis** — duplicate detection (cosine similarity), description drafting
 - **Redis distributed locks** — per-project sync and LLM exclusion
-- **BullMQ queues** — `gitlab-sync`, `llm-analysis`, and `vcs-writeback` with retry/backoff
+- **BullMQ queues** — `gitlab-sync`, `llm-analysis`, `vcs-writeback`, `auto-sync` with retry/backoff
 - **Sync worker** — upserts issues, milestones, and labels from issue payload
 - **LLM worker** — reads Postgres only; writes `IssueSuggestion` + `LlmAnalysisRun`
 - **Write-back worker** — applies suggestions to VCS; patches local `Issue` rows; `APPLYING` / `APPLY_FAILED` statuses
@@ -94,8 +94,10 @@ This document describes what is **implemented**, **partially implemented**, and 
 | Item | Notes |
 |------|-------|
 | Milestone sync | Upserted from issue-linked milestones only (no standalone milestones API) |
-| Token security | Access tokens stored as plain strings; deferred to Phase 3 (documented in UI) |
-| Phase 3 infrastructure | Auto-sync, webhooks, token encryption, Helm — [phases](./phases.md) |
+| Token security | Optional AES-256-GCM via `TOKEN_ENCRYPTION_KEY` (Phase 3a); legacy plain tokens supported |
+| Auto-sync | Per-project toggle; worker `auto-sync` queue when `AUTO_SYNC_SCHEDULER_ENABLED=true` |
+| Phase 3b | Webhooks not started |
+| Phase 3c | Helm, multi-tenant, billing not started |
 | Phase 4 governance | RBAC, admin UI, audit, reporting, rollback — [phases](./phases.md) |
 
 ---
@@ -110,16 +112,17 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ---
 
+### Phase 3 — Production infrastructure (partial)
+
+- **3a:** PAT encryption (`sealAccessToken` / `openAccessToken`, `TOKEN_ENCRYPTION_KEY`)
+- **3b:** Per-project auto-sync + BullMQ scheduler (`AUTO_SYNC_SCHEDULER_ENABLED`)
+- **Open:** webhooks, rate limiting, Helm, multi-tenant — see [phases.md](./phases.md)
+
+---
+
 ## Not started
 
-### Phase 3 — Production infrastructure
-
-- Token encryption at rest
-- Scheduled auto-sync, webhooks
-- Helm chart / production install guide
-- Enterprise SSO (direct IdP), API rate limiting
-- Multi-tenant orgs (optional; overlaps Phase 4 project membership)
-- SaaS billing
+### Phase 3 — remaining
 
 ### Phase 4 — Governance, admin & operations
 
@@ -163,6 +166,9 @@ npm test
 | `WORKER_CONCURRENCY` | worker | `2` |
 | `LLM_WORKER_CONCURRENCY` | worker | `1` |
 | `WRITEBACK_WORKER_CONCURRENCY` | worker | `2` |
+| `TOKEN_ENCRYPTION_KEY` | web, worker | — (optional; encrypt PATs at rest) |
+| `AUTO_SYNC_SCHEDULER_ENABLED` | worker | `false` |
+| `AUTO_SYNC_TICK_MINUTES` | worker | `15` |
 | `AUTH_DISABLED` | web | `true` (local dev) |
 | `AUTH_SECRET` | web | — (required when auth enabled) |
 | `AUTH_PROVIDERS` | web | `github,gitlab` |

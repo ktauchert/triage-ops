@@ -1,5 +1,10 @@
 export { prisma } from "./client.js";
 export {
+  isEncryptedAccessToken,
+  openAccessToken,
+  sealAccessToken,
+} from "./token-crypto.js";
+export {
   IssueState,
   IssueSuggestionStatus,
   IssueSuggestionType,

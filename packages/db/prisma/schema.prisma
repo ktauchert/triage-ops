@@ -86,6 +86,8 @@ model Project {
   isFavorite          Boolean       @default(false)
   ghostThresholdDays  Int           @default(30)
   zombieThresholdDays Int           @default(14)
+  autoSyncEnabled     Boolean       @default(false)
+  autoSyncIntervalMinutes Int       @default(60)
   lastSyncedAt        DateTime?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt

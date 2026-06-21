@@ -83,12 +83,37 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (
     body.isFavorite === undefined &&
     ghostThresholdDays === undefined &&
-    zombieThresholdDays === undefined
+    zombieThresholdDays === undefined &&
+    body.autoSyncEnabled === undefined &&
+    body.autoSyncIntervalMinutes === undefined
   ) {
     return errorResponse(
-      "Provide isFavorite, ghostThresholdDays, and/or zombieThresholdDays",
+      "Provide isFavorite, ghostThresholdDays, zombieThresholdDays, autoSyncEnabled, and/or autoSyncIntervalMinutes",
       400,
     );
+  }
+
+  if (
+    body.autoSyncEnabled !== undefined &&
+    typeof body.autoSyncEnabled !== "boolean"
+  ) {
+    return errorResponse("autoSyncEnabled must be a boolean", 400);
+  }
+
+  const autoSyncIntervalMinutes = parseOptionalNonNegativeInt(
+    body.autoSyncIntervalMinutes,
+    "autoSyncIntervalMinutes",
+  );
+  if (autoSyncIntervalMinutes instanceof Response) {
+    return autoSyncIntervalMinutes;
+  }
+
+  if (
+    autoSyncIntervalMinutes !== undefined &&
+    autoSyncIntervalMinutes > 0 &&
+    autoSyncIntervalMinutes < 15
+  ) {
+    return errorResponse("autoSyncIntervalMinutes must be at least 15", 400);
   }
 
   try {
@@ -97,6 +122,11 @@ export async function PATCH(request: Request, context: RouteContext) {
         typeof body.isFavorite === "boolean" ? body.isFavorite : undefined,
       ghostThresholdDays,
       zombieThresholdDays,
+      autoSyncEnabled:
+        typeof body.autoSyncEnabled === "boolean"
+          ? body.autoSyncEnabled
+          : undefined,
+      autoSyncIntervalMinutes,
     });
 
     if (!project) {

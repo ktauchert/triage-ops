@@ -37,6 +37,7 @@ vi.mock("@triage-ops/db", () => ({
     GITHUB: "GITHUB",
   },
   prisma: prismaMock,
+  openAccessToken: (value: string) => value,
 }));
 
 vi.mock("../lib/redis.js", () => ({

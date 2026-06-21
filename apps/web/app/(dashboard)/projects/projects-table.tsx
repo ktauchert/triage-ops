@@ -35,6 +35,8 @@ type ProjectRow = {
   name: string;
   pathWithNamespace: string;
   isFavorite: boolean;
+  autoSyncEnabled: boolean;
+  autoSyncIntervalMinutes: number;
   lastSyncedAt: Date | string | null;
   connection: { id: string; name: string; baseUrl: string };
   syncRuns: SyncRun[];
@@ -86,6 +88,36 @@ export function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
   const [busyProjectId, setBusyProjectId] = useState<string | null>(null);
   const [liveRunStatus, setLiveRunStatus] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+
+  async function handleAutoSyncToggle(project: ProjectRow) {
+    setBusyProjectId(project.id);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          autoSyncEnabled: !project.autoSyncEnabled,
+        }),
+      });
+
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(data.error ?? "Failed to update auto-sync");
+      }
+
+      router.refresh();
+    } catch (toggleError) {
+      setError(
+        toggleError instanceof Error
+          ? toggleError.message
+          : "Failed to update auto-sync",
+      );
+    } finally {
+      setBusyProjectId(null);
+    }
+  }
 
   async function handleFavorite(project: ProjectRow) {
     setBusyProjectId(project.id);
@@ -230,6 +262,7 @@ export function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
                   <TableHead>Project</TableHead>
                   <TableHead>Connection</TableHead>
                   <TableHead>Last sync</TableHead>
+                  <TableHead>Auto-sync</TableHead>
                   <TableHead>Latest run</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -277,6 +310,19 @@ export function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
                       <TableCell>{project.connection.name}</TableCell>
                       <TableCell>
                         {formatRelativeDate(project.lastSyncedAt)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={project.autoSyncEnabled ? "default" : "outline"}
+                          disabled={rowBusy}
+                          onClick={() => handleAutoSyncToggle(project)}
+                        >
+                          {project.autoSyncEnabled
+                            ? `Every ${project.autoSyncIntervalMinutes}m`
+                            : "Off"}
+                        </Button>
                       </TableCell>
                       <TableCell>
                         {displayStatus ? (

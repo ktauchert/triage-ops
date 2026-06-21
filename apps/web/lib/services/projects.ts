@@ -1,4 +1,4 @@
-import { prisma, VcsProvider } from "@triage-ops/db";
+import { prisma, VcsProvider, sealAccessToken, openAccessToken } from "@triage-ops/db";
 import { DEFAULT_GITHUB_API_URL } from "@triage-ops/shared-types";
 import {
   canAccessConnection,
@@ -50,7 +50,7 @@ export async function createConnection(
       name: input.name,
       provider: input.provider,
       baseUrl,
-      accessToken: input.accessToken,
+      accessToken: sealAccessToken(input.accessToken),
       userId: ctx.userId,
     },
     select: {
@@ -268,6 +268,8 @@ export type UpdateProjectSettingsInput = {
   isFavorite?: boolean;
   ghostThresholdDays?: number;
   zombieThresholdDays?: number;
+  autoSyncEnabled?: boolean;
+  autoSyncIntervalMinutes?: number;
 };
 
 function parseNonNegativeInt(value: unknown, field: string): number | Error {
@@ -291,6 +293,8 @@ export async function updateProjectSettings(
     isFavorite?: boolean;
     ghostThresholdDays?: number;
     zombieThresholdDays?: number;
+    autoSyncEnabled?: boolean;
+    autoSyncIntervalMinutes?: number;
   } = {};
 
   if (input.isFavorite !== undefined) {
@@ -317,6 +321,24 @@ export async function updateProjectSettings(
       throw parsed;
     }
     data.zombieThresholdDays = parsed;
+  }
+
+  if (input.autoSyncEnabled !== undefined) {
+    data.autoSyncEnabled = input.autoSyncEnabled;
+  }
+
+  if (input.autoSyncIntervalMinutes !== undefined) {
+    const parsed = parseNonNegativeInt(
+      input.autoSyncIntervalMinutes,
+      "autoSyncIntervalMinutes",
+    );
+    if (parsed instanceof Error) {
+      throw parsed;
+    }
+    if (parsed > 0 && parsed < 15) {
+      throw new Error("autoSyncIntervalMinutes must be at least 15");
+    }
+    data.autoSyncIntervalMinutes = parsed;
   }
 
   if (Object.keys(data).length === 0) {

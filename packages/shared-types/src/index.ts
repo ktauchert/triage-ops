@@ -9,6 +9,7 @@ export const QUEUE_NAMES = {
   GITLAB_SYNC: "gitlab-sync",
   LLM_ANALYSIS: "llm-analysis",
   VCS_WRITEBACK: "vcs-writeback",
+  AUTO_SYNC: "auto-sync",
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -26,6 +27,10 @@ export type LlmAnalysisJobPayload = {
 export type WriteBackJobPayload = {
   projectId: string;
   suggestionId: string;
+};
+
+export type AutoSyncJobPayload = {
+  tick: true;
 };
 
 export type GitLabIssueRaw = {

@@ -7,6 +7,8 @@ import { getQueueConnection } from "./queues/sync-queue.js";
 import { processSyncJob } from "./workers/sync-worker.js";
 import { processLlmAnalysisJob } from "./workers/llm-analysis-worker.js";
 import { processVcsWriteBackJob } from "./workers/vcs-writeback-worker.js";
+import { processAutoSyncJob } from "./workers/auto-sync-worker.js";
+import { registerAutoSyncSchedule } from "./queues/auto-sync-queue.js";
 
 const syncConcurrency = parseInt(
   getOptionalEnv("WORKER_CONCURRENCY", "2"),
@@ -37,6 +39,15 @@ const writeBackWorker = new Worker(
   {
     connection: getQueueConnection(),
     concurrency: writeBackConcurrency,
+  },
+);
+
+const autoSyncWorker = new Worker(
+  QUEUE_NAMES.AUTO_SYNC,
+  processAutoSyncJob,
+  {
+    connection: getQueueConnection(),
+    concurrency: 1,
   },
 );
 
@@ -77,12 +88,20 @@ writeBackWorker.on("failed", (job, error) => {
   );
 });
 
+autoSyncWorker.on("failed", (job, error) => {
+  console.error(
+    `[auto-sync] Job ${job?.id ?? "unknown"} failed:`,
+    error.message,
+  );
+});
+
 async function shutdown(): Promise<void> {
   console.log("[worker] Shutting down...");
   await Promise.all([
     syncWorker.close(),
     llmWorker.close(),
     writeBackWorker.close(),
+    autoSyncWorker.close(),
   ]);
   await closeRedis();
   process.exit(0);
@@ -96,6 +115,8 @@ if (recoveredRuns > 0) {
   console.log(`[llm] Recovered ${recoveredRuns} interrupted analysis run(s)`);
 }
 
+await registerAutoSyncSchedule();
+
 console.log(
   `[worker] Sync worker listening on "${QUEUE_NAMES.GITLAB_SYNC}" (concurrency=${syncConcurrency})`,
 );
@@ -104,5 +125,8 @@ console.log(
 );
 console.log(
   `[worker] Write-back worker listening on "${QUEUE_NAMES.VCS_WRITEBACK}" (concurrency=${writeBackConcurrency})`,
+);
+console.log(
+  `[worker] Auto-sync worker listening on "${QUEUE_NAMES.AUTO_SYNC}"`,
 );
 console.log(`[worker] Redis connected: ${getRedis().status}`);

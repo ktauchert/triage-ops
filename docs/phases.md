@@ -68,7 +68,7 @@ Scaffolding and core pipeline infrastructure.
 - [x] GitLab seed script: milestones/issues for metrics + LLM test data (`npm run gitlab:seed`)
 - [x] Worker sync upserts milestones from issue payload (title, due date, state)
 - [x] Worker sync upserts labels
-- [ ] Encrypt `accessToken` at rest (deferred to Phase 3 — documented as known MVP limitation)
+- [ ] Encrypt `accessToken` at rest — **shipped Phase 3a** (`TOKEN_ENCRYPTION_KEY`); Step 6 checkbox kept for historical trace
 - [x] Update root `README.md` to point to `docs/`
 - [x] Root `.env` loading for Prisma, web, and worker dev scripts
 
@@ -137,16 +137,63 @@ Scaffolding and core pipeline infrastructure.
 
 ## Phase 3 — Production infrastructure (post-MVP)
 
-**Goal:** Harden and automate the platform for long-running deployments. Focus on **infra and integration**, not product RBAC (see Phase 4).
+**Goal:** Harden and automate deployments for long-running intranet/production use. Split into three coherent tracks — implement **3a + 3b** first for most teams; **3c** only when you need Kubernetes or SaaS.
 
-- [ ] Token encryption at rest (if not done in Step 6)
-- [ ] Scheduled auto-sync (cron jobs via BullMQ repeatable jobs)
-- [ ] Webhook-triggered sync on GitHub/GitLab issue events
-- [ ] Self-hosted install guide + Helm chart
-- [ ] Multi-tenant workspace isolation (orgs, teams) — optional; overlaps Phase 4 project membership
-- [ ] Billing / license tier (if SaaS)
-- [ ] Enterprise SSO (SAML/OIDC beyond Step 8 GitHub/GitLab OAuth)
-- [ ] API rate limiting
+```mermaid
+flowchart LR
+  subgraph p3a [3a Security]
+    enc[PAT encryption]
+    rate[Rate limiting]
+  end
+  subgraph p3b [3b Automation]
+    cron[Auto-sync]
+    hooks[Webhooks]
+  end
+  subgraph p3c [3c Scale and SaaS]
+    helm[Helm chart]
+    mt[Multi-tenant]
+    bill[Billing]
+  end
+  p3a --> p3b
+  p3b --> p3c
+```
+
+### Phase 3a — Security & ops minimum ✅ (shipped June 2026)
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Token encryption at rest | ✅ | `TOKEN_ENCRYPTION_KEY` + `sealAccessToken` / `openAccessToken` in `@triage-ops/db`; legacy plain tokens still readable |
+| HTTPS + auth checklist | ✅ | Documented in [security.md](./security.md) — ops, not code |
+
+| Item | Status | Effort |
+|------|--------|--------|
+| API rate limiting | [ ] | **~2–3 days** — middleware on `/api/*` |
+
+| Item | Status | Effort |
+|------|--------|--------|
+| Enterprise SSO (direct SAML/OIDC) | [ ] | **~1–2 weeks** — only if GitLab/GitHub OAuth upstream is insufficient |
+
+### Phase 3b — Sync automation ✅ partial (June 2026)
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Per-project auto-sync | ✅ | `autoSyncEnabled` + `autoSyncIntervalMinutes` on `Project`; BullMQ repeatable `auto-sync` queue; toggle on Projects page |
+| Scheduler env | ✅ | `AUTO_SYNC_SCHEDULER_ENABLED`, `AUTO_SYNC_TICK_MINUTES` |
+
+| Item | Status | Effort |
+|------|--------|--------|
+| Webhook-triggered sync | [ ] | **~3–5 days** — GitHub/GitLab issue events → enqueue sync; signature verification |
+
+### Phase 3c — Deployment & scale (optional)
+
+| Item | Status | Effort | When you need it |
+|------|--------|--------|------------------|
+| Self-hosted install guide (Compose) | [ ] partial | **~1 day** — extend [running-the-app.md](./running-the-app.md) | Any production deploy |
+| **Helm chart** (Kubernetes) | [ ] | **~1–2 weeks** | K8s cluster, GitOps, multiple envs — *not needed for Docker Compose intranet* |
+| Multi-tenant (orgs, teams) | [ ] | **~2–4 weeks** | Shared instance for many teams; overlaps [Phase 4](./phases.md#phase-4--governance-admin--operations-planned) |
+| Billing / license tier | [ ] | **~2+ weeks** | SaaS product only |
+
+**Helm in one sentence:** A packaged install for Kubernetes (like `docker-compose.yml`, but for K8s). Skip until you actually run on K8s.
 
 ---
 
@@ -213,7 +260,7 @@ Scaffolding and core pipeline infrastructure.
 
 Phases 0–2.5 and Phase 1 MVP are complete (June 2026). Choose by deployment maturity:
 
-1. **Small intranet team** — ship with auth + allowlist; optional Phase 3 infra items as needed
-2. **Phase 3 — Production infrastructure** — webhooks, auto-sync, token encryption, Helm
-3. **Phase 4 — Governance** — RBAC, admin dashboard, audit, reporting, rollback (when multiple roles matter)
-4. **P2 hardening** from [code review](./code-review-2026-06-21.md) — duplicate write-back edge cases
+1. **Small intranet team** — enable `TOKEN_ENCRYPTION_KEY`, auth + allowlist; optional `AUTO_SYNC_SCHEDULER_ENABLED=true`
+2. **Phase 3b** — webhooks when near-real-time sync matters
+3. **Phase 4 — Governance** — RBAC, admin dashboard, audit, reporting, rollback
+4. **Phase 3c** — Helm/K8s or multi-tenant only when required

@@ -1,4 +1,4 @@
-import { prisma } from "@triage-ops/db";
+import { openAccessToken, prisma } from "@triage-ops/db";
 import { connectionWhereClause } from "@/lib/auth/access";
 import type { AuthContext } from "@/lib/auth/session";
 
@@ -6,7 +6,7 @@ export async function getConnectionCredentials(
   ctx: AuthContext,
   connectionId: string,
 ) {
-  return prisma.vcsConnection.findFirst({
+  const connection = await prisma.vcsConnection.findFirst({
     where: {
       id: connectionId,
       ...connectionWhereClause(ctx),
@@ -18,4 +18,13 @@ export async function getConnectionCredentials(
       accessToken: true,
     },
   });
+
+  if (!connection) {
+    return null;
+  }
+
+  return {
+    ...connection,
+    accessToken: openAccessToken(connection.accessToken),
+  };
 }

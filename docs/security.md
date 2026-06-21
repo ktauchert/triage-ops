@@ -100,9 +100,21 @@ Use **fine-grained** or **classic** PATs with the narrowest scope your organizat
 
 ### Known limitation: PAT storage at rest
 
-**VCS PATs are stored as plain strings in Postgres** (MVP). This is tracked for a future release (encryption at rest or vault integration).
+**When `TOKEN_ENCRYPTION_KEY` is set**, new PATs are encrypted with AES-256-GCM (`enc:v1:…` prefix). Legacy plain-text rows remain readable until re-saved. **When the key is unset** (local dev), tokens are stored as plain strings.
 
-**Mitigations today:**
+Generate a key:
+
+```bash
+openssl rand -base64 32
+```
+
+Set in `.env`:
+
+```env
+TOKEN_ENCRYPTION_KEY=<output>
+```
+
+**Mitigations when encryption is off:**
 
 - Run Postgres on a private network segment; no public port exposure
 - Restrict database access to web/worker service accounts only
@@ -186,6 +198,8 @@ The bundled `docker-compose.yml` uses **default passwords** (`triage_ops` / `tri
 
 ## On-prem reference configuration
 
+For a full step-by-step install checklist (Docker Compose, OAuth, HTTPS, acceptance tests), see **[Intranet Rollout](./intranet-rollout.md)**. Kubernetes deployments via Helm are planned (Phase 3c) but not available yet.
+
 Example `.env` for an intranet GitLab deployment:
 
 ```env
@@ -251,7 +265,9 @@ Cascade delete removes projects, issues, and sync history for that connection. P
 |------|--------|
 | OAuth login + proxy protection | Shipped |
 | Email/domain allowlist | Shipped |
-| Encrypt `accessToken` at rest | Planned (Phase 3) |
+| Encrypt `accessToken` at rest | Shipped (Phase 3a) — set `TOKEN_ENCRYPTION_KEY` in production |
+| Per-project auto-sync | Shipped (Phase 3b) — `AUTO_SYNC_SCHEDULER_ENABLED` on worker |
+| Webhook-triggered sync | Planned (Phase 3b) |
 | RBAC (admin / operator / viewer) | Planned (Phase 4) |
 | Audit log + admin dashboard | Planned (Phase 4) |
 | Write-back rollback | Planned (Phase 4) |

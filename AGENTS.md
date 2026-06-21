@@ -104,7 +104,7 @@ Never edit applied migration SQL — add a new migration.
 | 1 MVP (sync, metrics, dashboard, auth, labels, thresholds) | ✅ |
 | 2 LLM triage (Ollama, suggestions, progress, clear) | ✅ |
 | 2.5 VCS write-back (apply → GitLab/GitHub) | ✅ |
-| 3 Production infrastructure (encryption, webhooks, Helm) | Not started |
+| 3 Production infrastructure | Partial (3a encryption, 3b auto-sync) |
 | 4 Governance (RBAC, admin, audit, reporting, rollback) | Not started |
 
 See [`docs/phases.md`](docs/phases.md) for the full checklist.

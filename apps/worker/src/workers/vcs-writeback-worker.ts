@@ -1,6 +1,7 @@
 import {
   IssueState,
   IssueSuggestionStatus,
+  openAccessToken,
   prisma,
 } from "@triage-ops/db";
 import type { WriteBackJobPayload } from "@triage-ops/shared-types";
@@ -68,7 +69,7 @@ export async function processVcsWriteBackJob(
       {
         provider: connection.provider,
         baseUrl: connection.baseUrl,
-        accessToken: connection.accessToken,
+        accessToken: openAccessToken(connection.accessToken),
         externalProjectId: suggestion.project.externalProjectId,
         pathWithNamespace: suggestion.project.pathWithNamespace,
         type: suggestion.type,
