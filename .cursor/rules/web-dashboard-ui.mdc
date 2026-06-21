@@ -1,0 +1,31 @@
+---
+description: Dashboard pages, Shadcn UI, client components
+globs: apps/web/app/(dashboard)/**,apps/web/components/**
+alwaysApply: false
+---
+
+# Dashboard UI
+
+## Stack
+
+- Next.js 16 App Router — read `node_modules/next/dist/docs/` before assuming APIs from training data.
+- Tailwind v4 + Shadcn primitives in `components/ui/`.
+- Server pages fetch data; interactive pieces are `"use client"` components.
+
+## Conventions
+
+- Page headings: `page-heading`, `page-subheading`, `section-heading` (see `globals.css`).
+- Forms: call API routes via `fetch`, show errors inline, `router.refresh()` after mutations.
+- Prefer Shadcn `Card`, `Table`, `Badge`, `Button` over bespoke markup.
+- New Shadcn component: `cd apps/web && npx shadcn@latest add <name>`
+
+## Data flow
+
+- Dashboard metrics: server component loads `getProjectMetrics()` → passes props to client panels.
+- LLM panel polls `GET /api/projects/[id]/analyze` while status is `PENDING`/`RUNNING`.
+- Hide stale suggestions during an active run; show progress bar with `completedSteps / totalSteps`.
+
+## Don't
+
+- Import `lib/api.ts` or `@triage-ops/db` from client components (use API routes).
+- Parse markdown to HTML for issue descriptions — show raw markdown in `<pre>` for previews.

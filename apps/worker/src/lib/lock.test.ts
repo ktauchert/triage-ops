@@ -1,15 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { acquireLock, releaseLock } from "./lock.js";
+import { acquireLock, isLockHeld, releaseLock } from "./lock.js";
 
 type MockRedis = {
   set: ReturnType<typeof vi.fn>;
   eval: ReturnType<typeof vi.fn>;
+  exists: ReturnType<typeof vi.fn>;
+  del: ReturnType<typeof vi.fn>;
 };
 
 function createMockRedis(): MockRedis {
   return {
     set: vi.fn(),
     eval: vi.fn(),
+    exists: vi.fn(),
+    del: vi.fn(),
   };
 }
 
@@ -42,6 +46,16 @@ describe("acquireLock", () => {
     const lock = await acquireLock(redis as never, "project:abc");
 
     expect(lock).toBeNull();
+  });
+});
+
+describe("isLockHeld", () => {
+  it("returns true when the lock key exists", async () => {
+    const redis = createMockRedis();
+    redis.exists = vi.fn().mockResolvedValue(1);
+
+    await expect(isLockHeld(redis as never, "llm:project-1")).resolves.toBe(true);
+    expect(redis.exists).toHaveBeenCalledWith("triage-ops:lock:llm:project-1");
   });
 });
 

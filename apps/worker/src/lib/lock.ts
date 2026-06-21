@@ -2,6 +2,10 @@ import type { Redis } from "ioredis";
 
 const LOCK_PREFIX = "triage-ops:lock:";
 
+export function lockKey(resource: string): string {
+  return `${LOCK_PREFIX}${resource}`;
+}
+
 export type LockHandle = {
   key: string;
   token: string;
@@ -17,7 +21,7 @@ export async function acquireLock(
   resource: string,
   ttlSeconds = 300,
 ): Promise<LockHandle | null> {
-  const key = `${LOCK_PREFIX}${resource}`;
+  const key = lockKey(resource);
   const token = crypto.randomUUID();
   const acquired = await redis.set(key, token, "EX", ttlSeconds, "NX");
 
@@ -47,4 +51,20 @@ export async function releaseLock(
   `;
   const result = await redis.eval(script, 1, key, token);
   return result === 1;
+}
+
+export async function isLockHeld(
+  redis: Redis,
+  resource: string,
+): Promise<boolean> {
+  const exists = await redis.exists(lockKey(resource));
+  return exists === 1;
+}
+
+/** Dev recovery when a worker dies mid-job and cannot release its lock. */
+export async function forceReleaseLock(
+  redis: Redis,
+  resource: string,
+): Promise<void> {
+  await redis.del(lockKey(resource));
 }

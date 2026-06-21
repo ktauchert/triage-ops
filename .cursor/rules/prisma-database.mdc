@@ -1,0 +1,25 @@
+---
+description: Prisma schema, migrations, and DB client
+globs: packages/db/**
+alwaysApply: false
+---
+
+# Database (`@triage-ops/db`)
+
+## Workflow
+
+1. Edit `prisma/schema.prisma`
+2. `npm run db:migrate` (creates migration + generates client)
+3. Export new enums/types from `packages/db/src/index.ts` if needed
+
+**Never** edit SQL in already-applied migrations — add a new migration.
+
+## Conventions
+
+- Prefer `onDelete: Cascade` from `Project` downward for owned data.
+- Index columns used in filters: `projectId`, `status`, foreign keys on hot queries.
+- Root `.env` is loaded by Prisma scripts (`dotenv -e ../../.env`).
+
+## After changing models
+
+If TypeScript reports unknown fields on Prisma types, run `npm run db:generate` and restart `npm run dev` / `npm run dev:worker` (global Prisma singleton caches in dev).

@@ -5,6 +5,7 @@ import {
   requireString,
   requireVcsProvider,
 } from "./api";
+import { readResponseJson } from "./fetch-json";
 
 describe("requireString", () => {
   it("returns trimmed string for valid input", () => {
@@ -52,5 +53,21 @@ describe("requireVcsProvider", () => {
         error: "provider must be GITLAB or GITHUB",
       });
     }
+  });
+});
+
+describe("readResponseJson", () => {
+  it("returns null for an empty body", async () => {
+    const response = new Response("", { status: 500 });
+    await expect(readResponseJson(response)).resolves.toBeNull();
+  });
+
+  it("parses valid JSON", async () => {
+    const response = new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+    });
+    await expect(readResponseJson<{ ok: boolean }>(response)).resolves.toEqual({
+      ok: true,
+    });
   });
 });

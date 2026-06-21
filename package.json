@@ -25,5 +25,6 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "postinstall": "npm run db:generate"
 }

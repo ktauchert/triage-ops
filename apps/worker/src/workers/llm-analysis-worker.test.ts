@@ -113,7 +113,10 @@ describe("processLlmAnalysisJob", () => {
     expect(prismaMock.llmAnalysisRun.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "run-1" },
-        data: expect.objectContaining({ status: "RUNNING" }),
+        data: expect.objectContaining({
+          status: "RUNNING",
+          totalSteps: 3,
+        }),
       }),
     );
 
@@ -124,6 +127,25 @@ describe("processLlmAnalysisJob", () => {
         data: expect.objectContaining({
           status: "COMPLETED",
           suggestionsCreated: 2,
+        }),
+      }),
+    );
+  });
+
+  it("marks run failed when the project lock is not acquired", async () => {
+    lockMock.acquireLock.mockResolvedValue(null);
+
+    await processLlmAnalysisJob(
+      createJob({ projectId: "project-1", analysisRunId: "run-1" }),
+    );
+
+    expect(prismaMock.issue.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.llmAnalysisRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "run-1" },
+        data: expect.objectContaining({
+          status: "FAILED",
+          errorMessage: expect.stringContaining("lock"),
         }),
       }),
     );

@@ -1,0 +1,37 @@
+---
+description: BullMQ workers, queues, VCS clients, Redis locks
+globs: apps/worker/**
+alwaysApply: false
+---
+
+# Worker (`@triage-ops/worker`)
+
+## Layout
+
+- `src/workers/` — job processors (business logic)
+- `src/queues/` — BullMQ queue factories
+- `src/lib/github/`, `src/lib/gitlab/` — VCS REST clients (+ MSW tests)
+- `src/lib/lock.ts` — Redis locks (`triage-ops:lock:{resource}`)
+- `src/index.ts` — register workers, startup recovery
+
+## Adding a queue
+
+1. Constant + payload in `packages/shared-types`
+2. Queue factory in `src/queues/`
+3. Processor in `src/workers/`
+4. Register `Worker` in `src/index.ts`
+5. Enqueue helper in `apps/web/lib/queue.ts` if triggered from web
+
+## Patterns
+
+- Acquire per-project lock before mutating project data; release in `finally`.
+- VCS HTTP: use existing clients; mock with MSW in `*.test.ts`.
+- Processor tests: mock Prisma + external clients; avoid real Redis/VCS in unit tests.
+- Production bundle: esbuild in `package.json` build script.
+
+## Queues today
+
+| Queue | Processor | Lock key |
+|-------|-----------|----------|
+| `gitlab-sync` | `sync-worker.ts` | `sync:{projectId}` |
+| `llm-analysis` | `llm-analysis-worker.ts` | `llm:{projectId}` |

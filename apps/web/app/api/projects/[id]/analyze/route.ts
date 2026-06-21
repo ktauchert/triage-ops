@@ -1,36 +1,132 @@
 import { enqueueLlmAnalysisJob } from "@/lib/queue";
 import { errorResponse, jsonResponse } from "@/lib/api";
-import { triggerLlmAnalysis } from "@/lib/services/suggestions";
+import {
+  clearProjectAnalysis,
+  getAnalysisPanelData,
+  triggerLlmAnalysis,
+} from "@/lib/services/suggestions";
 import { requireApiSession } from "@/lib/auth/session";
+import type { LlmAnalysisRun } from "@prisma/client";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function POST(_request: Request, context: RouteContext) {
-  const session = await requireApiSession();
-  if (session instanceof Response) {
-    return session;
-  }
+function serializeAnalysisRun(run: LlmAnalysisRun) {
+  return {
+    id: run.id,
+    projectId: run.projectId,
+    status: run.status,
+    startedAt: run.startedAt.toISOString(),
+    completedAt: run.completedAt?.toISOString() ?? null,
+    suggestionsCreated: run.suggestionsCreated,
+    totalSteps: run.totalSteps,
+    completedSteps: run.completedSteps,
+    progressLabel: run.progressLabel,
+    errorMessage: run.errorMessage,
+  };
+}
 
-  const { id: projectId } = await context.params;
-  const result = await triggerLlmAnalysis(session, projectId);
+export async function GET(_request: Request, context: RouteContext) {
+  try {
+    const session = await requireApiSession();
+    if (session instanceof Response) {
+      return session;
+    }
 
-  if (!result) {
-    return errorResponse("Project not found", 404);
-  }
+    const { id: projectId } = await context.params;
+    const data = await getAnalysisPanelData(session, projectId);
 
-  if (result.alreadyRunning) {
-    return jsonResponse(
-      { analysisRun: result.analysisRun, message: "Analysis already in progress" },
-      409,
+    if (!data) {
+      return errorResponse("Project not found", 404);
+    }
+
+    return jsonResponse({
+      analysisRun: data.analysisRun
+        ? serializeAnalysisRun(data.analysisRun)
+        : null,
+      pendingCount: data.pendingCount,
+      suggestions: data.suggestions,
+    });
+  } catch (error) {
+    console.error("[analyze] GET failed:", error);
+    return errorResponse(
+      error instanceof Error ? error.message : "Failed to load analysis status",
+      503,
     );
   }
+}
 
-  await enqueueLlmAnalysisJob({
-    projectId,
-    analysisRunId: result.analysisRun.id,
-  });
+export async function POST(_request: Request, context: RouteContext) {
+  try {
+    const session = await requireApiSession();
+    if (session instanceof Response) {
+      return session;
+    }
 
-  return jsonResponse({ analysisRun: result.analysisRun }, 202);
+    const { id: projectId } = await context.params;
+    const result = await triggerLlmAnalysis(session, projectId);
+
+    if (!result) {
+      return errorResponse("Project not found", 404);
+    }
+
+    if (result.alreadyRunning) {
+      return jsonResponse(
+        {
+          analysisRun: serializeAnalysisRun(result.analysisRun),
+          message: "Analysis already in progress",
+        },
+        409,
+      );
+    }
+
+    await enqueueLlmAnalysisJob({
+      projectId,
+      analysisRunId: result.analysisRun.id,
+    });
+
+    return jsonResponse(
+      { analysisRun: serializeAnalysisRun(result.analysisRun) },
+      202,
+    );
+  } catch (error) {
+    console.error("[analyze] POST failed:", error);
+    return errorResponse(
+      error instanceof Error ? error.message : "Failed to start analysis",
+      503,
+    );
+  }
+}
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  try {
+    const session = await requireApiSession();
+    if (session instanceof Response) {
+      return session;
+    }
+
+    const { id: projectId } = await context.params;
+    const result = await clearProjectAnalysis(session, projectId);
+
+    if (!result) {
+      return errorResponse("Project not found", 404);
+    }
+
+    if (!result.cleared) {
+      return errorResponse(result.reason, 409);
+    }
+
+    return jsonResponse({
+      cleared: true,
+      suggestionsDeleted: result.suggestionsDeleted,
+      runsDeleted: result.runsDeleted,
+    });
+  } catch (error) {
+    console.error("[analyze] DELETE failed:", error);
+    return errorResponse(
+      error instanceof Error ? error.message : "Failed to clear analysis",
+      503,
+    );
+  }
 }

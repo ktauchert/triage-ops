@@ -1,0 +1,33 @@
+---
+description: Ollama client, LLM analysis, suggestions — Postgres only
+globs: apps/worker/src/lib/llm/**,apps/worker/src/lib/ollama/**,apps/worker/src/workers/llm-*,apps/web/**/suggestions*,apps/web/lib/services/suggestions.ts,apps/web/app/api/projects/**/analyze/**
+alwaysApply: false
+---
+
+# LLM / Ollama
+
+## Security (non-negotiable)
+
+- LLM jobs read **Postgres copies only** — never pass `accessToken` or raw VCS payloads to Ollama.
+- Apply/dismiss suggestions updates TriageOps DB only (no GitLab/GitHub write-back in Phase 2).
+
+## Worker flow
+
+1. Load open issues from DB → plan progress steps (`analysis-progress.ts`)
+2. Embed issue text in batches → duplicate pairs (cosine ≥ 0.82)
+3. Chat drafts for empty descriptions → insert `IssueSuggestion` rows
+4. Update `LlmAnalysisRun` progress fields for dashboard polling
+
+## Web API
+
+| Method | Route | Purpose |
+|--------|-------|---------|
+| `POST` | `/api/projects/[id]/analyze` | Start run + enqueue job |
+| `GET` | same | Poll progress + pending suggestions |
+| `DELETE` | same | Clear all suggestions + run history |
+
+## Dev notes
+
+- Env: `OLLAMA_HOST`, `OLLAMA_CHAT_MODEL`, `OLLAMA_EMBED_MODEL`, `LLM_WORKER_CONCURRENCY=1`
+- Don't Ctrl+C `dev:worker` mid-run; restart worker to recover stale runs.
+- Description previews in UI: raw markdown, 3-line plain-text preview (no HTML rendering).

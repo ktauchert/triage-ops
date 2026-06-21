@@ -10,32 +10,55 @@ import type { Job } from "bullmq";
 import { getOllamaConfig, chat, embed } from "../lib/ollama/client.js";
 import { acquireLock } from "../lib/lock.js";
 import { getRedis } from "../lib/redis.js";
-import { embedIssues } from "../lib/llm/embeddings.js";
+import { planAnalysisProgress } from "../lib/llm/analysis-progress.js";
+import { embedIssuesBatched } from "../lib/llm/embeddings.js";
 import {
   canonicalPairKey,
   findDuplicateCandidates,
 } from "../lib/llm/duplicate-detection.js";
-import { draftDescriptions } from "../lib/llm/description-draft.js";
+import {
+  draftDescriptions,
+  filterIssuesNeedingDescription,
+} from "../lib/llm/description-draft.js";
+
+async function updateRunProgress(
+  analysisRunId: string,
+  data: {
+    completedSteps: number;
+    progressLabel: string;
+    totalSteps?: number;
+  },
+): Promise<void> {
+  await prisma.llmAnalysisRun.update({
+    where: { id: analysisRunId },
+    data,
+  });
+}
 
 export async function processLlmAnalysisJob(
   job: Job<LlmAnalysisJobPayload>,
 ): Promise<void> {
   const { projectId, analysisRunId } = job.data;
   const redis = getRedis();
-  const lock = await acquireLock(redis, `llm:${projectId}`);
+  const lock = await acquireLock(redis, `llm:${projectId}`, 1800);
 
   if (!lock) {
-    throw new Error(`LLM analysis already in progress for project ${projectId}`);
+    await prisma.llmAnalysisRun.update({
+      where: { id: analysisRunId },
+      data: {
+        status: SyncStatus.FAILED,
+        completedAt: new Date(),
+        errorMessage:
+          "Could not acquire analysis lock — another run may still be active.",
+        progressLabel: "Interrupted",
+      },
+    });
+    return;
   }
 
   const ollamaConfig = getOllamaConfig();
 
   try {
-    await prisma.llmAnalysisRun.update({
-      where: { id: analysisRunId },
-      data: { status: SyncStatus.RUNNING },
-    });
-
     const openIssues = await prisma.issue.findMany({
       where: { projectId, state: IssueState.OPEN },
       include: {
@@ -46,15 +69,60 @@ export async function processLlmAnalysisJob(
       orderBy: { gitlabIssueIid: "asc" },
     });
 
+    const issuesForDescription = openIssues.map((issue) => ({
+      id: issue.id,
+      gitlabIssueIid: issue.gitlabIssueIid,
+      title: issue.title,
+      description: issue.description,
+      labels: issue.labels.map((entry) => entry.label.name),
+    }));
+
+    const descriptionTargets =
+      filterIssuesNeedingDescription(issuesForDescription);
+    const progressPlan = planAnalysisProgress(
+      openIssues.length,
+      descriptionTargets.length,
+    );
+
+    await prisma.llmAnalysisRun.update({
+      where: { id: analysisRunId },
+      data: {
+        status: SyncStatus.RUNNING,
+        totalSteps: progressPlan.totalSteps,
+        completedSteps: 0,
+        progressLabel:
+          openIssues.length > 0
+            ? "Embedding issues"
+            : "Scanning for duplicates",
+      },
+    });
+
     const issuesForEmbedding = openIssues.map((issue) => ({
       id: issue.id,
       title: issue.title,
       description: issue.description,
     }));
 
-    const embeddings = await embedIssues(issuesForEmbedding, async (texts) =>
-      embed({ input: texts }),
+    const embeddings = await embedIssuesBatched(
+      issuesForEmbedding,
+      async (texts) => embed({ input: texts }),
+      {
+        onBatchComplete: async (completedBatches, totalBatches) => {
+          await updateRunProgress(analysisRunId, {
+            completedSteps: completedBatches,
+            progressLabel:
+              totalBatches > 1
+                ? `Embedding issues (${completedBatches}/${totalBatches})`
+                : "Embedding issues",
+          });
+        },
+      },
     );
+
+    await updateRunProgress(analysisRunId, {
+      completedSteps: progressPlan.embedBatches,
+      progressLabel: "Finding duplicates",
+    });
 
     const existingDuplicateSuggestions = await prisma.issueSuggestion.findMany({
       where: {
@@ -83,18 +151,32 @@ export async function processLlmAnalysisJob(
       existingPairs,
     );
 
+    const duplicateStep = progressPlan.embedBatches + 1;
+    await updateRunProgress(analysisRunId, {
+      completedSteps: duplicateStep,
+      progressLabel:
+        descriptionTargets.length > 0
+          ? "Drafting descriptions"
+          : "Saving suggestions",
+    });
+
     const descriptionDrafts = await draftDescriptions(
-      openIssues.map((issue) => ({
-        id: issue.id,
-        gitlabIssueIid: issue.gitlabIssueIid,
-        title: issue.title,
-        description: issue.description,
-        labels: issue.labels.map((entry) => entry.label.name),
-      })),
+      issuesForDescription,
       async (prompt) =>
         chat({
           messages: [{ role: "user", content: prompt }],
         }),
+      {
+        onDraftComplete: async (completedDrafts, totalDrafts) => {
+          await updateRunProgress(analysisRunId, {
+            completedSteps: duplicateStep + completedDrafts,
+            progressLabel:
+              totalDrafts > 0
+                ? `Drafting descriptions (${completedDrafts}/${totalDrafts})`
+                : "Saving suggestions",
+          });
+        },
+      },
     );
 
     let suggestionsCreated = 0;
@@ -135,6 +217,8 @@ export async function processLlmAnalysisJob(
         status: SyncStatus.COMPLETED,
         completedAt: new Date(),
         suggestionsCreated,
+        completedSteps: progressPlan.totalSteps,
+        progressLabel: "Complete",
       },
     });
   } catch (error) {

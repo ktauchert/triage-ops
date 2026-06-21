@@ -38,20 +38,33 @@ export function parseDescriptionDraft(raw: string): string {
 
 export type ChatFn = (prompt: string) => Promise<string>;
 
+export type DraftProgress = (
+  completedDrafts: number,
+  totalDrafts: number,
+) => void | Promise<void>;
+
 export async function draftDescriptions(
   issues: IssueForDescriptionDraft[],
   chatFn: ChatFn,
+  options?: { onDraftComplete?: DraftProgress },
 ): Promise<Array<{ issueId: string; suggestedText: string }>> {
   const targets = filterIssuesNeedingDescription(issues);
   const drafts: Array<{ issueId: string; suggestedText: string }> = [];
 
-  for (const issue of targets) {
+  for (let index = 0; index < targets.length; index += 1) {
+    const issue = targets[index];
+    if (!issue) {
+      continue;
+    }
+
     const prompt = buildDescriptionDraftPrompt(issue);
     const raw = await chatFn(prompt);
     const suggestedText = parseDescriptionDraft(raw);
     if (suggestedText) {
       drafts.push({ issueId: issue.id, suggestedText });
     }
+
+    await options?.onDraftComplete?.(index + 1, targets.length);
   }
 
   return drafts;

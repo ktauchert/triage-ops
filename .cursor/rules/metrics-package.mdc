@@ -1,0 +1,27 @@
+---
+description: Pure triage metric functions — no I/O
+globs: packages/metrics/**
+alwaysApply: false
+---
+
+# Metrics (`@triage-ops/metrics`)
+
+Pure functions only — **no Prisma, no fetch, no env vars**.
+
+## Functions
+
+| Module | Export |
+|--------|--------|
+| `ghost.ts` | `countGhostIssues(issues, thresholdDays, now?)` |
+| `zombie.ts` | `countZombieIssues(issues, thresholdDays, now?)` |
+| `milestone-decay.ts` | `getMilestoneDecay(milestones, issues, now?)` |
+
+## TDD required
+
+- Add `*.test.ts` beside each module before or with implementation.
+- Cover: empty input, boundary dates (exactly N days stale), zero matches, mixed states.
+- Accept plain issue/milestone shapes — don't depend on Prisma types in this package.
+
+## Usage
+
+`apps/web/lib/services/metrics.ts` loads DB rows, maps to metric inputs, calls these functions.

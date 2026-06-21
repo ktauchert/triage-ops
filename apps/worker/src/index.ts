@@ -1,6 +1,7 @@
 import { QUEUE_NAMES } from "@triage-ops/shared-types";
 import { Worker } from "bullmq";
 import { getOptionalEnv } from "./config/env.js";
+import { recoverInterruptedLlmRuns } from "./lib/llm/recover.js";
 import { closeRedis, getRedis } from "./lib/redis.js";
 import { getQueueConnection } from "./queues/sync-queue.js";
 import { processSyncJob } from "./workers/sync-worker.js";
@@ -58,6 +59,11 @@ async function shutdown(): Promise<void> {
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+
+const recoveredRuns = await recoverInterruptedLlmRuns();
+if (recoveredRuns > 0) {
+  console.log(`[llm] Recovered ${recoveredRuns} interrupted analysis run(s)`);
+}
 
 console.log(
   `[worker] Sync worker listening on "${QUEUE_NAMES.GITLAB_SYNC}" (concurrency=${syncConcurrency})`,

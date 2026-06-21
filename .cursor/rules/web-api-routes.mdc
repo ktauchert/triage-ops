@@ -1,0 +1,37 @@
+---
+description: Next.js API routes, services, auth, enqueue
+globs: apps/web/app/api/**,apps/web/lib/services/**,apps/web/lib/queue.ts,apps/web/lib/auth/**
+alwaysApply: false
+---
+
+# Web API (`apps/web`)
+
+## Route pattern
+
+```typescript
+export async function POST(_request: Request, context: RouteContext) {
+  const session = await requireApiSession();
+  if (session instanceof Response) return session;
+
+  const { id } = await context.params;
+  // delegate to lib/services/ — keep routes thin
+  return jsonResponse({ ... });
+}
+```
+
+- Use `errorResponse(message, status)` and `jsonResponse(data, status)` from `lib/api.ts`.
+- Business logic belongs in `lib/services/`, not route files.
+- `params` is a `Promise` — always `await context.params`.
+
+## Auth
+
+- `requireApiSession()` for API routes; returns `401` Response when auth enabled.
+- `AUTH_DISABLED=true` locally uses dev user via `ensureDevUser()`.
+
+## Jobs from web
+
+Enqueue via `lib/queue.ts` (BullMQ `Queue` + `REDIS_URL`). Create audit row first (`SyncRun`, `LlmAnalysisRun`), then enqueue with its id.
+
+## Client fetch
+
+Dashboard client components: use `readResponseJson` from `lib/fetch-json.ts` (not `lib/api.ts` — server-only imports).

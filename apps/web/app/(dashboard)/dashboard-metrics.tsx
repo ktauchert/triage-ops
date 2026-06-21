@@ -80,6 +80,9 @@ type MetricsPayload = {
       startedAt: Date;
       completedAt: Date | null;
       suggestionsCreated: number;
+      totalSteps: number;
+      completedSteps: number;
+      progressLabel: string | null;
       errorMessage: string | null;
     } | null;
   };

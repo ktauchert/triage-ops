@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { previewMarkdownLines } from "@/lib/markdown-preview";
+import { readResponseJson } from "@/lib/fetch-json";
 
 type SuggestionIssue = {
   id: string;
@@ -42,6 +44,9 @@ type AnalysisRunSummary = {
   startedAt: string;
   completedAt: string | null;
   suggestionsCreated: number;
+  totalSteps: number;
+  completedSteps: number;
+  progressLabel: string | null;
   errorMessage: string | null;
 } | null;
 
@@ -52,6 +57,107 @@ type SuggestionsPanelProps = {
   latestAnalysisRun: AnalysisRunSummary;
 };
 
+type AnalysisPanelResponse = {
+  analysisRun: {
+    id: string;
+    status: AnalysisRunSummary extends null ? never : NonNullable<AnalysisRunSummary>["status"];
+    startedAt: string;
+    completedAt: string | null;
+    suggestionsCreated: number;
+    totalSteps: number;
+    completedSteps: number;
+    progressLabel: string | null;
+    errorMessage: string | null;
+  } | null;
+  pendingCount: number;
+  suggestions: SuggestionRow[];
+};
+
+const POLL_INTERVAL_MS = 1500;
+
+function isAnalysisInProgress(run: AnalysisRunSummary): boolean {
+  return run?.status === "PENDING" || run?.status === "RUNNING";
+}
+
+function serializeAnalysisRun(
+  run: AnalysisPanelResponse["analysisRun"],
+): AnalysisRunSummary {
+  if (!run) {
+    return null;
+  }
+
+  return {
+    id: run.id,
+    status: run.status,
+    startedAt:
+      typeof run.startedAt === "string"
+        ? run.startedAt
+        : new Date(run.startedAt).toISOString(),
+    completedAt: run.completedAt
+      ? typeof run.completedAt === "string"
+        ? run.completedAt
+        : new Date(run.completedAt).toISOString()
+      : null,
+    suggestionsCreated: run.suggestionsCreated,
+    totalSteps: run.totalSteps ?? 0,
+    completedSteps: run.completedSteps ?? 0,
+    progressLabel: run.progressLabel ?? null,
+    errorMessage: run.errorMessage,
+  };
+}
+
+function AnalysisProgressBar({
+  completed,
+  total,
+  label,
+}: {
+  completed: number;
+  total: number;
+  label: string | null;
+}) {
+  const percent =
+    total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
+
+  return (
+    <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
+      <div className="flex items-center justify-between gap-4 text-sm">
+        <span className="font-medium">{label ?? "Analyzing…"}</span>
+        <span className="tabular-nums text-muted-foreground">
+          {completed} / {total}
+        </span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SuggestionTextCell({
+  type,
+  text,
+}: {
+  type: SuggestionRow["type"];
+  text: string | null;
+}) {
+  if (!text) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  if (type === "DESCRIPTION") {
+    return (
+      <pre className="max-w-md whitespace-pre-wrap font-mono text-xs leading-relaxed text-foreground">
+        {previewMarkdownLines(text, 3)}
+      </pre>
+    );
+  }
+
+  return <span className="block max-w-md truncate text-sm">{text}</span>;
+}
+
 export function SuggestionsPanel({
   projectId,
   suggestions,
@@ -60,12 +166,80 @@ export function SuggestionsPanel({
 }: SuggestionsPanelProps) {
   const router = useRouter();
   const [running, setRunning] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [liveSuggestions, setLiveSuggestions] = useState(suggestions);
+  const [livePendingCount, setLivePendingCount] = useState(pendingCount);
+  const [liveAnalysisRun, setLiveAnalysisRun] =
+    useState<AnalysisRunSummary>(latestAnalysisRun);
+  const previousStatusRef = useRef(liveAnalysisRun?.status);
 
-  const analysisInProgress =
-    latestAnalysisRun?.status === "PENDING" ||
-    latestAnalysisRun?.status === "RUNNING";
+  useEffect(() => {
+    if (isAnalysisInProgress(latestAnalysisRun)) {
+      return;
+    }
+
+    setLiveSuggestions(suggestions);
+    setLivePendingCount(pendingCount);
+    setLiveAnalysisRun(latestAnalysisRun);
+  }, [suggestions, pendingCount, latestAnalysisRun]);
+
+  const analysisInProgress = isAnalysisInProgress(liveAnalysisRun);
+
+  useEffect(() => {
+    if (!analysisInProgress) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function pollAnalysisPanel() {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/analyze`);
+        if (!response.ok || cancelled) {
+          return;
+        }
+
+        const data = await readResponseJson<AnalysisPanelResponse>(response);
+        if (!data || cancelled) {
+          return;
+        }
+
+        setLiveAnalysisRun(serializeAnalysisRun(data.analysisRun));
+        if (!isAnalysisInProgress(serializeAnalysisRun(data.analysisRun))) {
+          setLiveSuggestions(data.suggestions);
+          setLivePendingCount(data.pendingCount);
+        }
+      } catch {
+        // Ignore transient network errors while polling.
+      }
+    }
+
+    void pollAnalysisPanel();
+    const interval = setInterval(() => {
+      void pollAnalysisPanel();
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [analysisInProgress, projectId]);
+
+  useEffect(() => {
+    const previousStatus = previousStatusRef.current;
+    const currentStatus = liveAnalysisRun?.status;
+
+    if (
+      previousStatus !== currentStatus &&
+      (currentStatus === "COMPLETED" || currentStatus === "FAILED")
+    ) {
+      router.refresh();
+    }
+
+    previousStatusRef.current = currentStatus;
+  }, [liveAnalysisRun?.status, router]);
 
   async function runAnalysis() {
     setRunning(true);
@@ -75,19 +249,73 @@ export function SuggestionsPanel({
       const response = await fetch(`/api/projects/${projectId}/analyze`, {
         method: "POST",
       });
-      const data = (await response.json()) as { error?: string };
+      const data = await readResponseJson<{
+        error?: string;
+        analysisRun?: AnalysisPanelResponse["analysisRun"];
+      }>(response);
+
+      if (!data) {
+        throw new Error(
+          "Empty response from server. Check that npm run dev and Redis are running.",
+        );
+      }
 
       if (!response.ok && response.status !== 409) {
         throw new Error(data.error ?? "Failed to start analysis");
       }
 
-      router.refresh();
+      if (data.analysisRun) {
+        setLiveAnalysisRun(serializeAnalysisRun(data.analysisRun));
+        setLiveSuggestions([]);
+        setLivePendingCount(0);
+      }
     } catch (runError) {
       setError(
         runError instanceof Error ? runError.message : "Failed to start analysis",
       );
     } finally {
       setRunning(false);
+    }
+  }
+
+  async function clearAnalysis() {
+    if (
+      !window.confirm(
+        "Clear all AI suggestions and analysis history for this project?",
+      )
+    ) {
+      return;
+    }
+
+    setClearing(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/analyze`, {
+        method: "DELETE",
+      });
+      const data = await readResponseJson<{ error?: string }>(response);
+
+      if (!data && !response.ok) {
+        throw new Error("Failed to clear analysis");
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? "Failed to clear analysis");
+      }
+
+      setLiveSuggestions([]);
+      setLivePendingCount(0);
+      setLiveAnalysisRun(null);
+      router.refresh();
+    } catch (clearError) {
+      setError(
+        clearError instanceof Error
+          ? clearError.message
+          : "Failed to clear analysis",
+      );
+    } finally {
+      setClearing(false);
     }
   }
 
@@ -107,7 +335,11 @@ export function SuggestionsPanel({
           body: JSON.stringify({ status }),
         },
       );
-      const data = (await response.json()) as { error?: string };
+      const data = await readResponseJson<{ error?: string }>(response);
+
+      if (!data) {
+        throw new Error("Empty response from server");
+      }
 
       if (!response.ok) {
         throw new Error(data.error ?? "Failed to update suggestion");
@@ -131,8 +363,8 @@ export function SuggestionsPanel({
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2">
             AI suggestions
-            {pendingCount > 0 ? (
-              <Badge variant="secondary">{pendingCount} pending</Badge>
+            {livePendingCount > 0 ? (
+              <Badge variant="secondary">{livePendingCount} pending</Badge>
             ) : null}
           </CardTitle>
           <CardDescription>
@@ -140,22 +372,31 @@ export function SuggestionsPanel({
             reviewed in TriageOps only — no GitLab or GitHub write-back.
           </CardDescription>
         </div>
-        <Button
-          onClick={runAnalysis}
-          disabled={running || analysisInProgress}
-        >
-          {running || analysisInProgress ? "Analyzing…" : "Run analysis"}
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          <Button
+            variant="outline"
+            onClick={clearAnalysis}
+            disabled={clearing || running || analysisInProgress}
+          >
+            {clearing ? "Clearing…" : "Clear analysis"}
+          </Button>
+          <Button
+            onClick={runAnalysis}
+            disabled={running || clearing || analysisInProgress}
+          >
+            {running || analysisInProgress ? "Analyzing…" : "Run analysis"}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {latestAnalysisRun ? (
+        {liveAnalysisRun ? (
           <p className="text-sm text-muted-foreground">
-            Last run: {latestAnalysisRun.status.toLowerCase()}
-            {latestAnalysisRun.suggestionsCreated > 0
-              ? ` · ${latestAnalysisRun.suggestionsCreated} suggestion(s) created`
+            Last run: {liveAnalysisRun.status.toLowerCase()}
+            {!analysisInProgress && liveAnalysisRun.suggestionsCreated > 0
+              ? ` · ${liveAnalysisRun.suggestionsCreated} suggestion(s) created`
               : ""}
-            {latestAnalysisRun.errorMessage
-              ? ` · ${latestAnalysisRun.errorMessage}`
+            {liveAnalysisRun.errorMessage
+              ? ` · ${liveAnalysisRun.errorMessage}`
               : ""}
           </p>
         ) : (
@@ -164,13 +405,23 @@ export function SuggestionsPanel({
           </p>
         )}
 
+        {analysisInProgress ? (
+          <AnalysisProgressBar
+            completed={liveAnalysisRun?.completedSteps ?? 0}
+            total={liveAnalysisRun?.totalSteps ?? 0}
+            label={liveAnalysisRun?.progressLabel ?? "Starting analysis…"}
+          />
+        ) : null}
+
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-        {suggestions.length === 0 ? (
+        {!analysisInProgress && liveSuggestions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No pending suggestions. Run analysis after syncing open issues.
           </p>
-        ) : (
+        ) : null}
+
+        {!analysisInProgress && liveSuggestions.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -182,7 +433,7 @@ export function SuggestionsPanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {suggestions.map((suggestion) => (
+              {liveSuggestions.map((suggestion) => (
                 <TableRow key={suggestion.id}>
                   <TableCell>
                     <Badge variant="outline">{suggestion.type}</Badge>
@@ -199,8 +450,11 @@ export function SuggestionsPanel({
                       </p>
                     ) : null}
                   </TableCell>
-                  <TableCell className="max-w-md truncate text-sm">
-                    {suggestion.suggestedText ?? "—"}
+                  <TableCell>
+                    <SuggestionTextCell
+                      type={suggestion.type}
+                      text={suggestion.suggestedText}
+                    />
                   </TableCell>
                   <TableCell>
                     {suggestion.confidence != null
@@ -234,7 +488,7 @@ export function SuggestionsPanel({
               ))}
             </TableBody>
           </Table>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );
