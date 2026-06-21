@@ -205,6 +205,7 @@ model IssueSuggestion {
   updatedAt      DateTime              @updatedAt
   reviewedAt     DateTime?
   appliedAt      DateTime?
+  writeBackError String?
   project        Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
   issue          Issue                 @relation("SuggestionPrimaryIssue", fields: [issueId], references: [id], onDelete: Cascade)
   relatedIssue   Issue?                @relation("SuggestionRelatedIssue", fields: [relatedIssueId], references: [id], onDelete: SetNull)
@@ -240,6 +241,8 @@ enum IssueSuggestionType {
 
 enum IssueSuggestionStatus {
   PENDING
+  APPLYING
+  APPLY_FAILED
   DISMISSED
   APPLIED
 }

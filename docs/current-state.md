@@ -26,8 +26,8 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ### Shared types (`packages/shared-types`)
 
-- Queue name constants (`gitlab-sync`, `llm-analysis`)
-- Job payload types (`SyncJobPayload`, `LlmAnalysisJobPayload`)
+- Queue name constants (`gitlab-sync`, `llm-analysis`, `vcs-writeback`)
+- Job payload types (`SyncJobPayload`, `LlmAnalysisJobPayload`, `WriteBackJobPayload`)
 - GitLab and GitHub issue DTOs
 - `NormalizedIssue` contract for provider-agnostic sync
 
@@ -38,15 +38,16 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ### Worker (`apps/worker`)
 
-- **GitLab API client** — paginated issue fetch, validation, error types
-- **GitHub API client** — paginated issues, PR filtering, Link-header pagination
+- **GitLab API client** — paginated issue fetch, validation, error types; **write** (description, notes, close)
+- **GitHub API client** — paginated issues, PR filtering, Link-header pagination; **write** (body, comments, close)
 - **VCS router** — `fetchProjectIssues()` dispatches by `VcsProvider`
 - **Ollama client** — health check, chat, embeddings (MSW-tested)
 - **LLM analysis** — duplicate detection (cosine similarity), description drafting
 - **Redis distributed locks** — per-project sync and LLM exclusion
-- **BullMQ queues** — `gitlab-sync` and `llm-analysis` with retry/backoff
+- **BullMQ queues** — `gitlab-sync`, `llm-analysis`, and `vcs-writeback` with retry/backoff
 - **Sync worker** — upserts issues, milestones, and labels from issue payload
 - **LLM worker** — reads Postgres only; writes `IssueSuggestion` + `LlmAnalysisRun`
+- **Write-back worker** — applies suggestions to VCS; patches local `Issue` rows; `APPLYING` / `APPLY_FAILED` statuses
 - **esbuild bundle** for production Docker image
 - **50+ unit tests** (Vitest + MSW): VCS clients, Ollama, LLM logic, locks, milestones, labels, normalizers
 
@@ -64,10 +65,10 @@ This document describes what is **implemented**, **partially implemented**, and 
   - `GET /api/projects/[id]/metrics`
   - `POST /api/projects/[id]/analyze`
   - `GET /api/projects/[id]/suggestions`
-  - `PATCH /api/projects/[id]/suggestions/[suggestionId]`
+  - `PATCH /api/projects/[id]/suggestions/[suggestionId]` — dismiss (200) or apply (202 + async write-back)
 - **Shadcn-style UI** — sidebar layout, cards, tables, badges
 - **BullMQ enqueue** from web via Redis
-- **7+ API/auth unit tests**
+- **7+ API/auth unit tests**; **51 route-handler tests** across 11 API routes (`app/api/**/*.test.ts`)
 - Production build verified (`npm run build -w @triage-ops/web`)
 
 ### Infrastructure
@@ -94,8 +95,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 |------|-------|
 | Milestone sync | Upserted from issue-linked milestones only (no standalone milestones API) |
 | Token security | Access tokens stored as plain strings; deferred to Phase 3 (documented in UI) |
-| API test coverage | Validation helpers tested; route handlers not fully mocked yet |
-| Phase 1 hardening | CI + E2E smoke done; full production compose verification documented (manual) |
+| Phase 3 | Multi-tenant, auto-sync, webhooks, token encryption, Helm chart |
 
 ---
 
@@ -104,7 +104,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 - Ollama client (`healthCheck`, `chat`, `embed`) with env config
 - `IssueSuggestion` + `LlmAnalysisRun` Prisma models
 - `llm-analysis` BullMQ worker (Postgres-only reads, Redis lock per project)
-- Dashboard: run analysis, review/dismiss/apply suggestions (local-only apply)
+- Dashboard: run analysis, review/dismiss/apply suggestions with VCS write-back on apply
 - Unit tests for Ollama client, duplicate detection, description drafting, worker processor
 
 ---
@@ -113,7 +113,6 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 - Multi-tenant workspace isolation
 - Token encryption at rest
-- VCS write-back on applied suggestions (Phase 2.5)
 - Scheduled auto-sync, webhooks
 - Helm chart / production install guide
 - SaaS billing
@@ -126,7 +125,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 |---------|-----------|-------|-------|
 | `@triage-ops/worker` | Vitest + MSW | 50+ | VCS clients, Ollama, LLM logic, locks, milestones, normalizers |
 | `@triage-ops/metrics` | Vitest | 17 | Ghost, zombie, milestone decay |
-| `@triage-ops/web` | Vitest | 14+ | API validation + auth helpers |
+| `@triage-ops/web` | Vitest | 92+ | API validation, auth helpers, route handlers, suggestion services |
 | `@triage-ops/e2e` | Vitest | 1 | Register → sync → metrics smoke |
 
 Run all tests:
@@ -148,6 +147,7 @@ npm test
 | `OLLAMA_EMBED_MODEL` | worker | `nomic-embed-text` |
 | `WORKER_CONCURRENCY` | worker | `2` |
 | `LLM_WORKER_CONCURRENCY` | worker | `1` |
+| `WRITEBACK_WORKER_CONCURRENCY` | worker | `2` |
 | `AUTH_DISABLED` | web | `true` (local dev) |
 | `AUTH_SECRET` | web | — (required when auth enabled) |
 | `AUTH_PROVIDERS` | web | `github,gitlab` |

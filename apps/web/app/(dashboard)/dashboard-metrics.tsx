@@ -64,9 +64,10 @@ type MetricsPayload = {
     items: Array<{
       id: string;
       type: "DUPLICATE" | "DESCRIPTION";
-      status: "PENDING" | "DISMISSED" | "APPLIED";
+      status: "PENDING" | "APPLYING" | "APPLY_FAILED" | "DISMISSED" | "APPLIED";
       suggestedText: string | null;
       confidence: number | null;
+      writeBackError?: string | null;
       issue: { id: string; gitlabIssueIid: number; title: string };
       relatedIssue: {
         id: string;

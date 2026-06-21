@@ -23,9 +23,10 @@ TriageOps uses the connection PAT for two things: **listing repos/projects** on 
 
 | Provider | Required scope | Notes |
 |----------|----------------|-------|
-| **GitHub** | `repo` | Lists private and public repos you can access, and reads issues |
+| **GitHub** | `repo` | Lists private and public repos, reads issues, and **writes** applied suggestions (issue body, comments, close) |
 | **GitHub** | `public_repo` | Public repos only — insufficient if you need private repositories |
-| **GitLab** | `read_api` | Lists projects and reads issues via the REST API |
+| **GitLab** | `api` | Lists projects, reads issues, and **writes** applied suggestions (description, notes, close) |
+| **GitLab** | `read_api` | Read-only — sufficient for sync only; Apply will fail with 403 until token is upgraded |
 
 If the token lacks list permissions, the Projects page shows an error asking you to update the connection with a token that has the scopes above. Login OAuth is separate and does not replace the sync PAT.
 
@@ -83,7 +84,7 @@ Open [http://localhost:3000](http://localhost:3000)
 npm run dev:worker
 ```
 
-The worker connects to Redis and listens on the `gitlab-sync` and `llm-analysis` queues.
+The worker connects to Redis and listens on the `gitlab-sync`, `llm-analysis`, and `vcs-writeback` queues.
 
 ### Environment (.env)
 
@@ -97,6 +98,7 @@ PORT=3000
 NODE_ENV=development
 WORKER_CONCURRENCY=2
 LLM_WORKER_CONCURRENCY=1
+WRITEBACK_WORKER_CONCURRENCY=2
 ```
 
 > Postgres uses host port **5433** (mapped from container 5432).  
@@ -135,7 +137,7 @@ docker exec triage-ops-ollama ollama pull nomic-embed-text
 1. Sync a project (**Projects** → **Sync**)
 2. Open **Dashboard** → click **Run analysis**
 3. Review pending suggestions (duplicate pairs + description drafts)
-4. **Dismiss** or **Apply** — Apply updates TriageOps only (no GitLab/GitHub write-back in Phase 2)
+4. **Dismiss** or **Apply** — Apply queues a write-back job that updates GitLab/GitHub (description body or duplicate comment + close) and patches local issue rows
 
 Verify Ollama is reachable:
 
@@ -204,7 +206,7 @@ Before rolling out on an intranet or exposing the app beyond localhost, complete
 3. Configure `ALLOWED_EMAIL_DOMAINS` (on-prem)
 4. Change default Postgres credentials in Docker/production
 5. Do not expose Postgres or Redis ports outside the private network
-6. Use VCS PATs with least privilege (`read_api` on GitLab; `repo` or `public_repo` on GitHub)
+6. Use VCS PATs with least privilege (`api` on GitLab for write-back; `repo` or fine-grained **Issues: Read and write** on GitHub)
 
 ---
 
@@ -214,6 +216,12 @@ Build and run all services including web and worker:
 
 ```bash
 cp .env.example .env
+npm run docker:verify   # build, start full stack, migrate, health checks
+```
+
+Or step by step:
+
+```bash
 npm run docker:up:all    # postgres + redis + ollama + web + worker
 npm run docker:migrate
 ```
@@ -298,11 +306,9 @@ Before starting Phase 2 (LLM), confirm:
 4. Dashboard **Metric thresholds** — change ghost/zombie days and confirm counts update
 5. Optional full Docker stack:
    ```bash
-   npm run docker:up:all
-   npm run docker:migrate
-   curl -f http://localhost:3000/login || curl -f http://localhost:3000
+   npm run docker:verify
    ```
-   Trigger sync via UI; worker container must be running.
+   Builds images, starts postgres/redis/ollama/web/worker, runs migrations, and checks HTTP endpoints. Trigger sync via UI; worker container must be running.
 
 ---
 

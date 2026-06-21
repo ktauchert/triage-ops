@@ -6,6 +6,7 @@ import { closeRedis, getRedis } from "./lib/redis.js";
 import { getQueueConnection } from "./queues/sync-queue.js";
 import { processSyncJob } from "./workers/sync-worker.js";
 import { processLlmAnalysisJob } from "./workers/llm-analysis-worker.js";
+import { processVcsWriteBackJob } from "./workers/vcs-writeback-worker.js";
 
 const syncConcurrency = parseInt(
   getOptionalEnv("WORKER_CONCURRENCY", "2"),
@@ -13,6 +14,10 @@ const syncConcurrency = parseInt(
 );
 const llmConcurrency = parseInt(
   getOptionalEnv("LLM_WORKER_CONCURRENCY", "1"),
+  10,
+);
+const writeBackConcurrency = parseInt(
+  getOptionalEnv("WRITEBACK_WORKER_CONCURRENCY", "2"),
   10,
 );
 
@@ -25,6 +30,15 @@ const llmWorker = new Worker(QUEUE_NAMES.LLM_ANALYSIS, processLlmAnalysisJob, {
   connection: getQueueConnection(),
   concurrency: llmConcurrency,
 });
+
+const writeBackWorker = new Worker(
+  QUEUE_NAMES.VCS_WRITEBACK,
+  processVcsWriteBackJob,
+  {
+    connection: getQueueConnection(),
+    concurrency: writeBackConcurrency,
+  },
+);
 
 syncWorker.on("completed", (job) => {
   console.log(`[sync] Job ${job.id} completed for project ${job.data.projectId}`);
@@ -50,9 +64,26 @@ llmWorker.on("failed", (job, error) => {
   );
 });
 
+writeBackWorker.on("completed", (job) => {
+  console.log(
+    `[writeback] Job ${job.id} completed for suggestion ${job.data.suggestionId}`,
+  );
+});
+
+writeBackWorker.on("failed", (job, error) => {
+  console.error(
+    `[writeback] Job ${job?.id ?? "unknown"} failed:`,
+    error.message,
+  );
+});
+
 async function shutdown(): Promise<void> {
   console.log("[worker] Shutting down...");
-  await Promise.all([syncWorker.close(), llmWorker.close()]);
+  await Promise.all([
+    syncWorker.close(),
+    llmWorker.close(),
+    writeBackWorker.close(),
+  ]);
   await closeRedis();
   process.exit(0);
 }
@@ -70,5 +101,8 @@ console.log(
 );
 console.log(
   `[worker] LLM worker listening on "${QUEUE_NAMES.LLM_ANALYSIS}" (concurrency=${llmConcurrency})`,
+);
+console.log(
+  `[worker] Write-back worker listening on "${QUEUE_NAMES.VCS_WRITEBACK}" (concurrency=${writeBackConcurrency})`,
 );
 console.log(`[worker] Redis connected: ${getRedis().status}`);

@@ -75,7 +75,7 @@ Use this checklist before calling MVP **functionally complete**. A separate **pr
 - [x] `npm run docker:migrate` applies migrations inside Docker
 - [x] `.env.example` documents required variables
 - [x] Documentation in `docs/` reflects current implementation (June 2026)
-- [ ] `npm run docker:up:all` verified end-to-end
+- [x] `npm run docker:up:all` verified end-to-end — use `npm run docker:verify` (2026-06-21)
 
 ---
 
@@ -124,8 +124,8 @@ A reviewer should be able to perform this flow without assistance:
 
 | Field | Value |
 |-------|-------|
-| Date | |
-| Version / commit | |
-| Reviewer | |
-| Provider tested (GitHub / GitLab) | |
-| Notes | |
+| Date | 2026-06-21 |
+| Version / commit | 644ffe7 (+ Phase 1 closure work) |
+| Reviewer | Karsten / Cursor Agent |
+| Provider tested (GitHub / GitLab) | GitHub (e2e smoke + MSW); GitLab (manual dev) |
+| Notes | Phase 1 MVP functionally complete. Route-handler tests (11 API routes, 51 cases). Docker full stack verified via `npm run docker:verify`. Worker Docker image fixed (esbuild bundles shared-types; `@triage-ops/db` compiles to ESM dist). Production hardening (HTTPS, auth enabled) documented in security.md — not blockers for intranet MVP. |

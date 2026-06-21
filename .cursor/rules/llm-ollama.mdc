@@ -9,7 +9,15 @@ alwaysApply: false
 ## Security (non-negotiable)
 
 - LLM jobs read **Postgres copies only** — never pass `accessToken` or raw VCS payloads to Ollama.
-- Apply/dismiss suggestions updates TriageOps DB only (no GitLab/GitHub write-back in Phase 2).
+- Apply enqueues `vcs-writeback` (worker performs VCS writes with stored PATs). Dismiss is local DB only.
+
+## Write-back flow
+
+1. `PATCH` suggestion with `status: APPLIED` → `APPLYING` + enqueue `vcs-writeback`
+2. Worker acquires `sync:{projectId}` lock, calls `applySuggestionToVcs`
+3. DESCRIPTION → update issue body on VCS + local `Issue.description`
+4. DUPLICATE → comment both issues, close higher IID, local `Issue.state = CLOSED`
+5. Success → `APPLIED` + `appliedAt`; failure → `APPLY_FAILED` + `writeBackError` (retry allowed)
 
 ## Worker flow
 

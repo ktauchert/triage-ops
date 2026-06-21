@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { loadEnvFromMonorepoRoot } from "./load-env";
+import { loadEnvFromMonorepoRoot } from "./load-env.js";
 
 loadEnvFromMonorepoRoot();
 

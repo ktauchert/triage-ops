@@ -3,10 +3,12 @@ import {
   QUEUE_NAMES,
   type LlmAnalysisJobPayload,
   type SyncJobPayload,
+  type WriteBackJobPayload,
 } from "@triage-ops/shared-types";
 
 let syncQueue: Queue<SyncJobPayload> | null = null;
 let llmAnalysisQueue: Queue<LlmAnalysisJobPayload> | null = null;
+let vcsWriteBackQueue: Queue<WriteBackJobPayload> | null = null;
 
 function getQueueConnection(): ConnectionOptions {
   const redisUrl = process.env.REDIS_URL;
@@ -66,4 +68,30 @@ export async function enqueueLlmAnalysisJob(
 ): Promise<void> {
   const queue = getLlmAnalysisQueue();
   await queue.add("llm-analysis", payload);
+}
+
+export function getVcsWriteBackQueue(): Queue<WriteBackJobPayload> {
+  if (!vcsWriteBackQueue) {
+    vcsWriteBackQueue = new Queue<WriteBackJobPayload>(
+      QUEUE_NAMES.VCS_WRITEBACK,
+      {
+        connection: getQueueConnection(),
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+          removeOnComplete: 100,
+          removeOnFail: 500,
+        },
+      },
+    );
+  }
+
+  return vcsWriteBackQueue;
+}
+
+export async function enqueueWriteBackJob(
+  payload: WriteBackJobPayload,
+): Promise<void> {
+  const queue = getVcsWriteBackQueue();
+  await queue.add("vcs-writeback", payload);
 }

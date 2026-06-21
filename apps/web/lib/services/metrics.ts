@@ -6,6 +6,7 @@ import {
   type MetricMilestone,
 } from "@triage-ops/metrics";
 import { IssueSuggestionStatus, prisma } from "@triage-ops/db";
+import { PANEL_SUGGESTION_STATUSES } from "@/lib/services/suggestions";
 
 export type MetricsQuery = {
   ghostDays?: number;
@@ -108,12 +109,12 @@ export async function getProjectMetrics(
   const zombie = countZombieIssues(issues, zombieDays, now);
   const milestoneDecay = getMilestoneDecay(milestones, issues, now);
 
-  const [pendingSuggestions, pendingCount, latestAnalysisRun] =
+  const [panelSuggestions, pendingCount, latestAnalysisRun] =
     await Promise.all([
       prisma.issueSuggestion.findMany({
         where: {
           projectId,
-          status: IssueSuggestionStatus.PENDING,
+          status: { in: [...PANEL_SUGGESTION_STATUSES] },
         },
         orderBy: { createdAt: "desc" },
         include: {
@@ -195,7 +196,7 @@ export async function getProjectMetrics(
     },
     suggestions: {
       pendingCount,
-      items: pendingSuggestions,
+      items: panelSuggestions,
       latestAnalysisRun,
     },
   };

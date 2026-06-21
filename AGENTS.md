@@ -23,7 +23,7 @@ npm install                  # runs prisma generate via postinstall
 npm run docker:up            # Postgres :5433, Redis, Ollama
 npm run db:migrate
 npm run dev                  # web → :3000
-npm run dev:worker           # BullMQ sync + llm-analysis workers
+npm run dev:worker           # BullMQ sync + llm-analysis + vcs-writeback workers
 ```
 
 GitLab test data (optional): `npm run gitlab:seed` then sync from Projects page.
@@ -50,7 +50,8 @@ GitLab test data (optional): `npm run gitlab:seed` then sync from Projects page.
 
 - **Sync worker** (`gitlab-sync` queue): fetches VCS APIs, upserts issues/milestones/labels.
 - **LLM worker** (`llm-analysis` queue): reads **Postgres only**; never send tokens to Ollama.
-- **Apply suggestions**: local DB only in Phase 2 — no GitLab/GitHub write-back yet.
+- **Write-back worker** (`vcs-writeback` queue): applies suggestions to GitHub/GitLab using stored PATs; patches local `Issue` rows.
+- **Apply suggestions**: sets `APPLYING`, enqueues write-back; worker sets `APPLIED` or `APPLY_FAILED` + `writeBackError`.
 - **Redis locks**: per-project `sync:{id}` and `llm:{id}`; worker recovers interrupted LLM runs on startup.
 - **Auth**: disabled locally via `AUTH_DISABLED=true`; API routes use `requireApiSession()`.
 
@@ -102,7 +103,7 @@ Never edit applied migration SQL — add a new migration.
 | 0 Foundation | ✅ |
 | 1 MVP (sync, metrics, dashboard, auth, labels, thresholds) | ✅ |
 | 2 LLM triage (Ollama, suggestions, progress, clear) | ✅ |
-| 2.5 VCS write-back | Not started |
+| 2.5 VCS write-back (apply → GitLab/GitHub) | ✅ |
 | 3 Production (encryption, webhooks, multi-tenant) | Not started |
 
 See [`docs/phases.md`](docs/phases.md) for the full checklist.

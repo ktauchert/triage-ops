@@ -13,6 +13,7 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run db:generate -w @triage-ops/db
+RUN npm run build -w @triage-ops/db
 RUN npm run build -w @triage-ops/worker
 
 FROM base AS runner

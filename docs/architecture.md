@@ -20,13 +20,13 @@ flowchart LR
     OLLAMA[Ollama\nlocal LLM]
   end
 
-  GH -->|REST /issues| WORKER
-  GL -->|REST /issues| WORKER
+  GH <-->|read + write| WORKER
+  GL <-->|read + write| WORKER
   WORKER -->|upsert| PG
   WORKER <-->|jobs + locks| REDIS
   WEB -->|read| PG
   WEB -->|compute| METRICS
-  WEB -->|enqueue sync + llm| REDIS
+  WEB -->|enqueue sync, llm, write-back| REDIS
   WORKER -->|embed + chat| OLLAMA
   WORKER -->|suggestions| PG
 ```
@@ -54,6 +54,8 @@ flowchart LR
 - Display overview counts and triage metrics (ghost, zombie, milestone decay)
 - Manage VCS connections (GitHub or GitLab) and registered projects
 - Trigger sync jobs by enqueueing to BullMQ via Redis
+- Run LLM analysis and review AI suggestions (dismiss / apply)
+- Enqueue `vcs-writeback` jobs when the user applies a suggestion (async VCS update)
 
 **Key paths:**
 
@@ -73,15 +75,20 @@ flowchart LR
 
 | Module | Path | Purpose |
 |--------|------|---------|
-| Entry point | `src/index.ts` | Starts BullMQ worker, handles graceful shutdown |
+| Entry point | `src/index.ts` | Starts BullMQ workers, handles graceful shutdown |
 | GitLab client | `src/lib/gitlab/client.ts` | Paginated fetch of project issues via GitLab REST API |
+| GitLab write | `src/lib/gitlab/write.ts` | Update description, add notes, close issues |
 | GitHub client | `src/lib/github/client.ts` | Paginated fetch via GitHub REST API |
-| VCS router | `src/lib/vcs/fetch-project-issues.ts` | Dispatches by `VcsProvider` |
+| GitHub write | `src/lib/github/write.ts` | Update body, add comments, close as duplicate |
+| VCS router (read) | `src/lib/vcs/fetch-project-issues.ts` | Dispatches fetch by `VcsProvider` |
+| VCS router (write) | `src/lib/vcs/apply-suggestion.ts` | Apply DESCRIPTION / DUPLICATE suggestions to VCS |
 | Redis locks | `src/lib/lock.ts` | Distributed lock per project (`SET NX` + token-safe release) |
-| Sync queue | `src/queues/sync-queue.ts` | Queue factory and connection config |
-| Sync processor | `src/workers/sync-worker.ts` | Job handler: fetch → upsert issues + milestones → update `SyncRun` |
+| Sync queue | `src/queues/sync-queue.ts` | `gitlab-sync` queue factory |
+| Sync processor | `src/workers/sync-worker.ts` | Fetch → upsert issues + milestones → update `SyncRun` |
 | LLM analysis queue | `src/queues/llm-analysis-queue.ts` | `llm-analysis` queue factory |
 | LLM processor | `src/workers/llm-analysis-worker.ts` | Duplicate scan + description drafts → `IssueSuggestion` |
+| Write-back queue | `src/queues/vcs-writeback-queue.ts` | `vcs-writeback` queue factory |
+| Write-back processor | `src/workers/vcs-writeback-worker.ts` | Apply suggestion to VCS + patch local `Issue` rows |
 | Ollama client | `src/lib/ollama/client.ts` | Health check, chat, embeddings against local Ollama |
 | Config | `src/config/env.ts` | Required env var validation |
 
@@ -111,6 +118,23 @@ flowchart LR
 8. Release lock
 
 **Retry policy (LLM):** 2 attempts, exponential backoff starting at 10 s. Default concurrency `LLM_WORKER_CONCURRENCY=1`.
+
+**Job flow (`vcs-writeback` queue):**
+
+1. Job received with payload `{ projectId, suggestionId }`
+2. Acquire Redis lock for `sync:{projectId}` (same key as sync — excludes concurrent VCS mutation)
+3. Load `IssueSuggestion` with issue, related issue, project, and connection
+4. Skip if status is not `APPLYING` (idempotent)
+5. Route to `applySuggestionToVcs()` by provider:
+   - **DESCRIPTION** — update issue body/description on VCS
+   - **DUPLICATE** — comment both issues, close the higher IID as duplicate
+6. Patch local `Issue` rows (description and/or `CLOSED` state)
+7. Mark suggestion `APPLIED` (or `APPLY_FAILED` + `writeBackError` on error)
+8. Release lock
+
+Triggered from web when user clicks **Apply** on a suggestion (`PATCH` → `APPLYING` + enqueue). HTTP **202** indicates async write-back.
+
+**Retry policy (write-back):** 3 attempts, exponential backoff starting at 5 s. Default concurrency `WRITEBACK_WORKER_CONCURRENCY=2`. Lock acquisition failure marks `APPLY_FAILED` without BullMQ retry — user clicks **Retry** in the UI.
 
 ---
 
@@ -164,8 +188,8 @@ Used by `apps/web/lib/services/metrics.ts` and exposed via `GET /api/projects/[i
 **Role:** Types and constants shared between worker and web without circular dependencies.
 
 Exports:
-- `QUEUE_NAMES.GITLAB_SYNC`, `QUEUE_NAMES.LLM_ANALYSIS`
-- `SyncJobPayload`, `LlmAnalysisJobPayload`
+- `QUEUE_NAMES.GITLAB_SYNC`, `QUEUE_NAMES.LLM_ANALYSIS`, `QUEUE_NAMES.VCS_WRITEBACK`
+- `SyncJobPayload`, `LlmAnalysisJobPayload`, `WriteBackJobPayload`
 - `GitLabIssueRaw`, `GitLabIssuesPage`, `FetchGitLabIssuesParams`
 - `GitHubIssueRaw`, `GitHubIssuesPage`, `FetchGitHubIssuesParams`
 - `NormalizedIssue` — provider-agnostic issue shape after normalization
@@ -215,9 +239,9 @@ See [Running the App](./running-the-app.md) for OAuth app setup and env vars. Fo
 - **Framework:** Vitest (TypeScript-native, fast)
 - **HTTP mocking:** MSW (Mock Service Worker) — no real network calls in unit tests
 - **Locations:**
-  - `apps/worker/src/**/*.test.ts` — VCS clients, locks, sync helpers (35 tests)
+  - `apps/worker/src/**/*.test.ts` — VCS clients, locks, sync helpers, write-back (78 tests)
   - `packages/metrics/src/**/*.test.ts` — metric functions (17 tests)
-  - `apps/web/lib/**/*.test.ts` — API validation + auth helpers
+  - `apps/web/lib/**/*.test.ts` — API validation, auth helpers, suggestion services (43+ tests)
 - **TDD rule:** Write test contract before implementing core utilities
 
 See [Development Guide](./development-guide.md) for the full TDD checklist.

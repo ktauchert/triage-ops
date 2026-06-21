@@ -32,6 +32,56 @@ export function gitlabErrorHandler(projectId: number, status: number, body: stri
   );
 }
 
+export function gitlabIssueUpdateHandler(projectId: number, issueIid: number) {
+  return http.put(
+    `https://gitlab.example.com/api/v4/projects/${projectId}/issues/${issueIid}`,
+    () => HttpResponse.json({ iid: issueIid }),
+  );
+}
+
+export function gitlabIssueNoteHandler(projectId: number, issueIid: number) {
+  return http.post(
+    `https://gitlab.example.com/api/v4/projects/${projectId}/issues/${issueIid}/notes`,
+    () => HttpResponse.json({ id: 1 }),
+  );
+}
+
+export function gitlabIssueWriteErrorHandler(
+  projectId: number,
+  issueIid: number,
+  status: number,
+  body: string,
+) {
+  return [
+    http.put(
+      `https://gitlab.example.com/api/v4/projects/${projectId}/issues/${issueIid}`,
+      () => new HttpResponse(body, { status }),
+    ),
+    http.post(
+      `https://gitlab.example.com/api/v4/projects/${projectId}/issues/${issueIid}/notes`,
+      () => new HttpResponse(body, { status }),
+    ),
+  ];
+}
+
+export function githubIssuePatchHandler(owner: string, repo: string, issueNumber: number) {
+  return http.patch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`,
+    () => HttpResponse.json({ number: issueNumber }),
+  );
+}
+
+export function githubIssueCommentHandler(
+  owner: string,
+  repo: string,
+  issueNumber: number,
+) {
+  return http.post(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
+    () => HttpResponse.json({ id: 1 }),
+  );
+}
+
 export function githubIssuesHandler(
   owner: string,
   repo: string,

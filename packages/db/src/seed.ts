@@ -1,4 +1,4 @@
-import { prisma, VcsProvider } from "./index";
+import { prisma, VcsProvider } from "./index.js";
 
 const DEFAULT_GITHUB_API_URL = "https://api.github.com";
 const DEV_USER_ID = "dev-local";

@@ -228,5 +228,6 @@ npm run build
 # Docker
 npm run docker:up
 npm run docker:migrate
+npm run docker:verify
 npm run docker:down
 ```

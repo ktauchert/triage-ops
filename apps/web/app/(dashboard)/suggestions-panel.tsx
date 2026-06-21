@@ -31,9 +31,10 @@ type SuggestionIssue = {
 export type SuggestionRow = {
   id: string;
   type: "DUPLICATE" | "DESCRIPTION";
-  status: "PENDING" | "DISMISSED" | "APPLIED";
+  status: "PENDING" | "APPLYING" | "APPLY_FAILED" | "DISMISSED" | "APPLIED";
   suggestedText: string | null;
   confidence: number | null;
+  writeBackError?: string | null;
   issue: SuggestionIssue;
   relatedIssue: SuggestionIssue | null;
 };
@@ -77,6 +78,10 @@ const POLL_INTERVAL_MS = 1500;
 
 function isAnalysisInProgress(run: AnalysisRunSummary): boolean {
   return run?.status === "PENDING" || run?.status === "RUNNING";
+}
+
+function hasApplyingSuggestions(suggestions: SuggestionRow[]): boolean {
+  return suggestions.some((suggestion) => suggestion.status === "APPLYING");
 }
 
 function serializeAnalysisRun(
@@ -186,6 +191,7 @@ export function SuggestionsPanel({
   }, [suggestions, pendingCount, latestAnalysisRun]);
 
   const analysisInProgress = isAnalysisInProgress(liveAnalysisRun);
+  const applyInProgress = hasApplyingSuggestions(liveSuggestions);
 
   useEffect(() => {
     if (!analysisInProgress) {
@@ -226,6 +232,47 @@ export function SuggestionsPanel({
       clearInterval(interval);
     };
   }, [analysisInProgress, projectId]);
+
+  useEffect(() => {
+    if (!applyInProgress) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function pollSuggestionsPanel() {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/analyze`);
+        if (!response.ok || cancelled) {
+          return;
+        }
+
+        const data = await readResponseJson<AnalysisPanelResponse>(response);
+        if (!data || cancelled) {
+          return;
+        }
+
+        setLiveSuggestions(data.suggestions);
+        setLivePendingCount(data.pendingCount);
+
+        if (!hasApplyingSuggestions(data.suggestions)) {
+          router.refresh();
+        }
+      } catch {
+        // Ignore transient network errors while polling.
+      }
+    }
+
+    void pollSuggestionsPanel();
+    const interval = setInterval(() => {
+      void pollSuggestionsPanel();
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [applyInProgress, projectId, router]);
 
   useEffect(() => {
     const previousStatus = previousStatusRef.current;
@@ -335,7 +382,10 @@ export function SuggestionsPanel({
           body: JSON.stringify({ status }),
         },
       );
-      const data = await readResponseJson<{ error?: string }>(response);
+      const data = await readResponseJson<{
+        error?: string;
+        suggestion?: SuggestionRow;
+      }>(response);
 
       if (!data) {
         throw new Error("Empty response from server");
@@ -345,7 +395,25 @@ export function SuggestionsPanel({
         throw new Error(data.error ?? "Failed to update suggestion");
       }
 
-      router.refresh();
+      if (data.suggestion) {
+        setLiveSuggestions((current) => {
+          if (status === "APPLIED") {
+            return current.map((row) =>
+              row.id === suggestionId ? data.suggestion! : row,
+            );
+          }
+
+          return current.filter((row) => row.id !== suggestionId);
+        });
+
+        if (status === "DISMISSED") {
+          setLivePendingCount((count) => Math.max(0, count - 1));
+        }
+      }
+
+      if (status === "DISMISSED") {
+        router.refresh();
+      }
     } catch (updateError) {
       setError(
         updateError instanceof Error
@@ -368,15 +436,15 @@ export function SuggestionsPanel({
             ) : null}
           </CardTitle>
           <CardDescription>
-            Local Ollama analysis on synced issues. Apply marks suggestions
-            reviewed in TriageOps only — no GitLab or GitHub write-back.
+            Local Ollama analysis on synced issues. Apply updates the linked
+            issue on GitLab or GitHub (description or duplicate close).
           </CardDescription>
         </div>
         <div className="flex shrink-0 gap-2">
           <Button
             variant="outline"
             onClick={clearAnalysis}
-            disabled={clearing || running || analysisInProgress}
+            disabled={clearing || running || analysisInProgress || applyInProgress}
           >
             {clearing ? "Clearing…" : "Clear analysis"}
           </Button>
@@ -417,7 +485,7 @@ export function SuggestionsPanel({
 
         {!analysisInProgress && liveSuggestions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No pending suggestions. Run analysis after syncing open issues.
+            No open suggestions. Run analysis after syncing open issues.
           </p>
         ) : null}
 
@@ -426,6 +494,7 @@ export function SuggestionsPanel({
             <TableHeader>
               <TableRow>
                 <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Issues</TableHead>
                 <TableHead>Suggestion</TableHead>
                 <TableHead>Confidence</TableHead>
@@ -433,10 +502,34 @@ export function SuggestionsPanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {liveSuggestions.map((suggestion) => (
+              {liveSuggestions.map((suggestion) => {
+                const isApplying = suggestion.status === "APPLYING";
+                const isFailed = suggestion.status === "APPLY_FAILED";
+                const isPending = suggestion.status === "PENDING";
+                const isActing = actingId === suggestion.id;
+
+                return (
                 <TableRow key={suggestion.id}>
                   <TableCell>
                     <Badge variant="outline">{suggestion.type}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        isFailed
+                          ? "destructive"
+                          : isApplying
+                            ? "secondary"
+                            : "outline"
+                      }
+                    >
+                      {isApplying ? "Applying…" : suggestion.status.toLowerCase()}
+                    </Badge>
+                    {isFailed && suggestion.writeBackError ? (
+                      <p className="mt-1 max-w-xs text-xs text-destructive">
+                        {suggestion.writeBackError}
+                      </p>
+                    ) : null}
                   </TableCell>
                   <TableCell className="max-w-xs">
                     <p className="font-medium">
@@ -463,29 +556,45 @@ export function SuggestionsPanel({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={actingId === suggestion.id}
-                        onClick={() =>
-                          updateSuggestion(suggestion.id, "DISMISSED")
-                        }
-                      >
-                        Dismiss
-                      </Button>
-                      <Button
-                        size="sm"
-                        disabled={actingId === suggestion.id}
-                        onClick={() =>
-                          updateSuggestion(suggestion.id, "APPLIED")
-                        }
-                      >
-                        Apply
-                      </Button>
+                      {isPending ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isActing || isApplying}
+                            onClick={() =>
+                              updateSuggestion(suggestion.id, "DISMISSED")
+                            }
+                          >
+                            Dismiss
+                          </Button>
+                          <Button
+                            size="sm"
+                            disabled={isActing || isApplying}
+                            onClick={() =>
+                              updateSuggestion(suggestion.id, "APPLIED")
+                            }
+                          >
+                            Apply
+                          </Button>
+                        </>
+                      ) : null}
+                      {isFailed ? (
+                        <Button
+                          size="sm"
+                          disabled={isActing}
+                          onClick={() =>
+                            updateSuggestion(suggestion.id, "APPLIED")
+                          }
+                        >
+                          Retry
+                        </Button>
+                      ) : null}
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         ) : null}

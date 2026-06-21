@@ -1,5 +1,6 @@
 import {
   IssueSuggestionStatus,
+  IssueSuggestionType,
   SyncStatus,
   prisma,
 } from "@triage-ops/db";
@@ -7,7 +8,14 @@ import type { LlmAnalysisRun } from "@prisma/client";
 import { getProjectById } from "@/lib/services/projects";
 import type { AuthContext } from "@/lib/auth/session";
 import { isLockHeld, forceReleaseLock } from "@/lib/lock";
+import { enqueueWriteBackJob } from "@/lib/queue";
 import { getRedis } from "@/lib/redis";
+
+export const PANEL_SUGGESTION_STATUSES = [
+  IssueSuggestionStatus.PENDING,
+  IssueSuggestionStatus.APPLYING,
+  IssueSuggestionStatus.APPLY_FAILED,
+] as const;
 
 const INTERRUPTED_MESSAGE =
   "Analysis interrupted (worker stopped or timed out).";
@@ -127,12 +135,34 @@ export type UpdateSuggestionStatusInput = {
   status: "DISMISSED" | "APPLIED";
 };
 
+function validateApplySuggestion(suggestion: {
+  type: IssueSuggestionType;
+  suggestedText: string | null;
+  relatedIssueId: string | null;
+}): void {
+  if (suggestion.type === IssueSuggestionType.DESCRIPTION) {
+    if (!suggestion.suggestedText?.trim()) {
+      throw new Error("Description suggestion is missing suggested text");
+    }
+    return;
+  }
+
+  if (!suggestion.relatedIssueId) {
+    throw new Error("Duplicate suggestion is missing related issue");
+  }
+}
+
+export type UpdateSuggestionStatusResult = {
+  suggestion: NonNullable<Awaited<ReturnType<typeof listSuggestions>>>[number];
+  queued: boolean;
+};
+
 export async function updateSuggestionStatus(
   ctx: AuthContext,
   projectId: string,
   suggestionId: string,
   input: UpdateSuggestionStatusInput,
-) {
+): Promise<UpdateSuggestionStatusResult | null | undefined> {
   const project = await getProjectById(ctx, projectId);
   if (!project) {
     return null;
@@ -146,21 +176,50 @@ export async function updateSuggestionStatus(
     return undefined;
   }
 
-  if (suggestion.status !== IssueSuggestionStatus.PENDING) {
-    throw new Error("Only pending suggestions can be updated");
-  }
-
   const now = new Date();
 
-  return prisma.issueSuggestion.update({
+  if (input.status === "DISMISSED") {
+    if (suggestion.status !== IssueSuggestionStatus.PENDING) {
+      throw new Error("Only pending suggestions can be dismissed");
+    }
+
+    const updated = await prisma.issueSuggestion.update({
+      where: { id: suggestionId },
+      data: {
+        status: IssueSuggestionStatus.DISMISSED,
+        reviewedAt: now,
+        appliedAt: null,
+        writeBackError: null,
+      },
+      include: suggestionInclude,
+    });
+
+    return { suggestion: updated, queued: false };
+  }
+
+  if (
+    suggestion.status !== IssueSuggestionStatus.PENDING &&
+    suggestion.status !== IssueSuggestionStatus.APPLY_FAILED
+  ) {
+    throw new Error("Only pending or failed suggestions can be applied");
+  }
+
+  validateApplySuggestion(suggestion);
+
+  const updated = await prisma.issueSuggestion.update({
     where: { id: suggestionId },
     data: {
-      status: input.status,
+      status: IssueSuggestionStatus.APPLYING,
       reviewedAt: now,
-      appliedAt: input.status === "APPLIED" ? now : null,
+      appliedAt: null,
+      writeBackError: null,
     },
     include: suggestionInclude,
   });
+
+  await enqueueWriteBackJob({ projectId, suggestionId });
+
+  return { suggestion: updated, queued: true };
 }
 
 export async function countPendingSuggestions(
@@ -201,7 +260,7 @@ export async function getAnalysisPanelData(
     prisma.issueSuggestion.findMany({
       where: {
         projectId,
-        status: IssueSuggestionStatus.PENDING,
+        status: { in: [...PANEL_SUGGESTION_STATUSES] },
       },
       orderBy: { createdAt: "desc" },
       include: suggestionInclude,
@@ -254,6 +313,20 @@ export async function clearProjectAnalysis(
 
   if (activeRun) {
     return { cleared: false, reason: "Analysis is in progress" };
+  }
+
+  const applyingSuggestion = await prisma.issueSuggestion.findFirst({
+    where: {
+      projectId,
+      status: IssueSuggestionStatus.APPLYING,
+    },
+  });
+
+  if (applyingSuggestion) {
+    return {
+      cleared: false,
+      reason: "A suggestion is being applied to VCS",
+    };
   }
 
   const [suggestionsDeleted, runsDeleted] = await prisma.$transaction([

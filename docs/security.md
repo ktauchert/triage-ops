@@ -82,6 +82,7 @@ On-prem customers often use SSO into GitLab (Okta, Azure AD, etc.). TriageOps do
 2. The PAT is stored in `vcs_connections.accessToken` in Postgres.
 3. Only **server-side** code reads the PAT:
    - Worker sync jobs (issue fetch)
+   - Worker write-back jobs (apply suggestions to VCS)
    - Web API `remote-projects` listing
 4. PATs are **never** returned in `GET /api/connections` responses.
 
@@ -89,10 +90,10 @@ Login OAuth tokens (Auth.js `accounts` table) are **separate** from sync PATs. L
 
 ### Least-privilege scopes (recommended)
 
-| Provider | Minimum scope for list + sync | Notes |
-|----------|------------------------------|--------|
-| **GitHub** | `repo` | Required for private repositories. Use `public_repo` only if all target repos are public. |
-| **GitLab** | `read_api` | Read-only access to projects and issues — sufficient for triage sync |
+| Provider | Minimum scope for list + sync | Write-back (Apply) |
+|----------|------------------------------|---------------------|
+| **GitHub** | `repo` (private repos) or `public_repo` (public only) | `repo` or fine-grained **Issues: Read and write** |
+| **GitLab** | `read_api` (sync only) | `api` (update description, notes, close issues) |
 
 Use **fine-grained** or **classic** PATs with the narrowest scope your organization allows. Rotate tokens on a schedule and when people leave the team.
 
@@ -137,7 +138,9 @@ Use **fine-grained** or **classic** PATs with the narrowest scope your organizat
 
 Synced data is a **cache** of VCS issue metadata for triage metrics. Deleting a project or connection removes associated rows (cascade).
 
-**Not sent to external AI in MVP:** Phase 2 Ollama integration is planned to run locally against DB copies only; tokens are not sent to Ollama.
+**Not sent to external AI:** Ollama runs locally against DB copies only; VCS tokens are never sent to Ollama.
+
+**VCS writes on Apply:** When a user applies a suggestion, the worker uses the stored PAT to update issue bodies, add comments, or close duplicates on GitHub/GitLab. Failed writes are recorded in `IssueSuggestion.writeBackError`.
 
 ---
 
@@ -251,7 +254,8 @@ Cascade delete removes projects, issues, and sync history for that connection. P
 | Audit log for admin actions | Planned (Phase 3) |
 | Enterprise SSO (direct IdP) | Planned (Phase 3) |
 | API rate limiting | Planned |
-| LLM isolation (no token leakage) | Planned (Phase 2) |
+| LLM isolation (no token leakage to Ollama) | Shipped |
+| VCS write-back on Apply (worker PAT usage) | Shipped (Phase 2.5) |
 
 ---
 

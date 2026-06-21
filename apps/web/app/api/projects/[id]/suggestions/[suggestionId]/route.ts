@@ -29,22 +29,25 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { id: projectId, suggestionId } = await context.params;
 
   try {
-    const suggestion = await updateSuggestionStatus(
+    const result = await updateSuggestionStatus(
       session,
       projectId,
       suggestionId,
       { status },
     );
 
-    if (suggestion === null) {
+    if (result === null) {
       return errorResponse("Project not found", 404);
     }
 
-    if (suggestion === undefined) {
+    if (result === undefined) {
       return errorResponse("Suggestion not found", 404);
     }
 
-    return jsonResponse({ suggestion });
+    return jsonResponse(
+      { suggestion: result.suggestion },
+      result.queued ? 202 : 200,
+    );
   } catch (error) {
     if (error instanceof Error) {
       return errorResponse(error.message, 400);

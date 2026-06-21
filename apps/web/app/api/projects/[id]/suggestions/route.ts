@@ -21,11 +21,13 @@ export async function GET(request: Request, context: RouteContext) {
   if (statusParam) {
     if (
       statusParam !== IssueSuggestionStatus.PENDING &&
+      statusParam !== IssueSuggestionStatus.APPLYING &&
+      statusParam !== IssueSuggestionStatus.APPLY_FAILED &&
       statusParam !== IssueSuggestionStatus.DISMISSED &&
       statusParam !== IssueSuggestionStatus.APPLIED
     ) {
       return errorResponse(
-        "status must be PENDING, DISMISSED, or APPLIED",
+        "status must be PENDING, APPLYING, APPLY_FAILED, DISMISSED, or APPLIED",
         400,
       );
     }

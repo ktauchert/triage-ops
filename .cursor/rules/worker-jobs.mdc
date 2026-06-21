@@ -35,3 +35,4 @@ alwaysApply: false
 |-------|-----------|----------|
 | `gitlab-sync` | `sync-worker.ts` | `sync:{projectId}` |
 | `llm-analysis` | `llm-analysis-worker.ts` | `llm:{projectId}` |
+| `vcs-writeback` | `vcs-writeback-worker.ts` | `sync:{projectId}` |

@@ -32,7 +32,7 @@ Scaffolding and core pipeline infrastructure.
 - [x] API route: `GET /api/projects/[id]/sync-runs` — list sync history
 - [x] Shared enqueue helper using BullMQ `Queue` from web
 - [x] Vitest tests for API validation helpers
-- [ ] Full route-handler tests with mocked Prisma + queue
+- [x] Full route-handler tests with mocked Prisma + queue
 
 ### Step 3b — GitHub integration ✅
 
@@ -75,9 +75,9 @@ Scaffolding and core pipeline infrastructure.
 ### Step 7 — MVP hardening — partial
 
 - [x] End-to-end smoke test script (register → sync → metrics) — `npm run test:e2e`
-- [ ] Docker Compose full-stack verification (`npm run docker:up:all` + migrate)
+- [x] Docker Compose full-stack verification (`npm run docker:up:all` + migrate) — `npm run docker:verify`
 - [x] Basic CI: lint + test + web build on push (GitHub Actions)
-- [ ] Review [MVP Definition of Done](./mvp-definition-of-done.md) — formal sign-off
+- [x] Review [MVP Definition of Done](./mvp-definition-of-done.md) — formal sign-off
 
 ### Step 8 — Authentication & access control ✅
 
@@ -118,6 +118,23 @@ Scaffolding and core pipeline infrastructure.
 
 ---
 
+## Phase 2.5 — VCS write-back ✅
+
+**Goal:** When users **Apply** AI suggestions, push changes to GitLab/GitHub and sync local Postgres state.
+
+### Step 11 — Async write-back worker ✅
+
+- [x] `IssueSuggestionStatus`: `APPLYING`, `APPLY_FAILED`; `writeBackError` audit field
+- [x] BullMQ queue: `vcs-writeback` (`WriteBackJobPayload`)
+- [x] GitLab write client: update description, add note, close issue
+- [x] GitHub write client: update body, comment, close as duplicate
+- [x] Duplicate policy: lower IID canonical; comment both issues; close duplicate
+- [x] Worker acquires `sync:{projectId}` lock; patches local `Issue` rows on success
+- [x] Web: Apply → `APPLYING` + enqueue; PATCH returns **202**; retry from `APPLY_FAILED`
+- [x] Dashboard: applying / failed / retry UX; poll until write-back completes
+
+---
+
 ## Phase 3 — Production & growth (post-MVP)
 
 - [ ] Multi-tenant workspace isolation (orgs, teams, shared projects)
@@ -132,8 +149,7 @@ Scaffolding and core pipeline infrastructure.
 
 ## Suggested immediate next steps
 
-Phase 2 LLM triage is complete. Next options:
+Phase 1 MVP is complete (June 2026). Next options:
 
 1. **Phase 3 — Production & growth** — scheduled sync, webhooks, token encryption
-2. **Phase 2.5 — VCS write-back** — push applied description drafts to GitLab/GitHub
-3. **MVP hardening** — full Docker compose verification, formal DoD sign-off
+2. **P2 hardening** from [code review](./code-review-2026-06-21.md) — duplicate write-back edge cases, route integration depth
