@@ -95,7 +95,8 @@ This document describes what is **implemented**, **partially implemented**, and 
 |------|-------|
 | Milestone sync | Upserted from issue-linked milestones only (no standalone milestones API) |
 | Token security | Access tokens stored as plain strings; deferred to Phase 3 (documented in UI) |
-| Phase 3 | Multi-tenant, auto-sync, webhooks, token encryption, Helm chart |
+| Phase 3 infrastructure | Auto-sync, webhooks, token encryption, Helm — [phases](./phases.md) |
+| Phase 4 governance | RBAC, admin UI, audit, reporting, rollback — [phases](./phases.md) |
 
 ---
 
@@ -111,11 +112,25 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ## Not started
 
-- Multi-tenant workspace isolation
+### Phase 3 — Production infrastructure
+
 - Token encryption at rest
 - Scheduled auto-sync, webhooks
 - Helm chart / production install guide
+- Enterprise SSO (direct IdP), API rate limiting
+- Multi-tenant orgs (optional; overlaps Phase 4 project membership)
 - SaaS billing
+
+### Phase 4 — Governance, admin & operations
+
+- Role-based access control (admin, lead, operator, viewer)
+- Admin dashboard (users, projects, auth, jobs)
+- Per-action audit log and `appliedBy` on suggestions
+- Change log of affected VCS issues + export
+- Impact timeline (metric snapshots, campaign reporting)
+- Rollback / revert for applied write-back (description first, duplicate partial)
+
+See [Implementation Phases](./phases.md#phase-4--governance-admin--operations-planned) for the full checklist.
 
 ---
 

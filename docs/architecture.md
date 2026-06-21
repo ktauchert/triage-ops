@@ -229,6 +229,7 @@ OAuth login via **Auth.js v5** with HTTP-only session cookies (Prisma adapter). 
 | Data ownership | `VcsConnection.userId` — filtered when `per_user`, shared when `shared` |
 | Login page | `/login` with provider buttons |
 | VCS sync tokens | Separate from login OAuth — users still add PATs per connection |
+| RBAC / admin | Not implemented — all authenticated users share the same capabilities today ([Phase 4](./phases.md#phase-4--governance-admin--operations-planned)) |
 
 See [Running the App](./running-the-app.md) for OAuth app setup and env vars. For production hardening and security review, see [security.md](./security.md).
 

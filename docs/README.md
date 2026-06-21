@@ -62,6 +62,10 @@ triage-ops/
 | **Authentication** | ✅ Auth.js OAuth — [docs](./running-the-app.md#authentication) |
 | Phase 2 LLM (Ollama) | ✅ Done — [running-the-app](./running-the-app.md#ollama-llm-analysis-phase-2) |
 | Label sync | ✅ Done |
+| Phase 2.5 Write-back | ✅ Done |
+| Phase 1 MVP hardening | ✅ Done — [phases](./phases.md) |
 | E2E smoke test | ✅ `npm run test:e2e` |
+| Phase 3 Production infra | Planned — webhooks, encryption, Helm |
+| Phase 4 Governance | Planned — RBAC, admin, audit, reporting, rollback |
 
 See [Implementation Phases](./phases.md) for the full roadmap.

@@ -91,7 +91,7 @@ Scaffolding and core pipeline infrastructure.
 - [x] Document auth setup in `docs/running-the-app.md`
 - [x] Unit test: unauthenticated API session returns 401 when auth enabled
 
-**Out of scope for Step 8 (Phase 3):** multi-tenant billing, enterprise SSO (direct IdP), fine-grained RBAC.
+**Out of scope for Step 8:** multi-tenant billing, enterprise SSO (direct IdP). **RBAC, admin UI, audit log, rollback** → [Phase 4](./phases.md#phase-4--governance-admin--operations-planned).
 
 ---
 
@@ -135,21 +135,85 @@ Scaffolding and core pipeline infrastructure.
 
 ---
 
-## Phase 3 — Production & growth (post-MVP)
+## Phase 3 — Production infrastructure (post-MVP)
 
-- [ ] Multi-tenant workspace isolation (orgs, teams, shared projects)
+**Goal:** Harden and automate the platform for long-running deployments. Focus on **infra and integration**, not product RBAC (see Phase 4).
+
+- [ ] Token encryption at rest (if not done in Step 6)
 - [ ] Scheduled auto-sync (cron jobs via BullMQ repeatable jobs)
 - [ ] Webhook-triggered sync on GitHub/GitLab issue events
 - [ ] Self-hosted install guide + Helm chart
-- [ ] Token encryption at rest (if not done in Step 6)
+- [ ] Multi-tenant workspace isolation (orgs, teams) — optional; overlaps Phase 4 project membership
 - [ ] Billing / license tier (if SaaS)
-- [ ] Enterprise SSO (SAML/OIDC beyond Step 8 basic auth)
+- [ ] Enterprise SSO (SAML/OIDC beyond Step 8 GitHub/GitLab OAuth)
+- [ ] API rate limiting
+
+---
+
+## Phase 4 — Governance, admin & operations (planned)
+
+**Goal:** Operate TriageOps with **roles**, **auditability**, and **reporting** when multiple users work with different responsibilities. An admin provisions access; users sign in via GitHub/GitLab OAuth (corporate SSO upstream). Suited for intranet teams that outgrow “everyone can do everything.”
+
+> **Not required for small intranet MVP** (Phases 0–2.5 + allowlist). Becomes important when operators, reviewers, and admins need separated duties.
+
+### Step 12 — RBAC foundation
+
+- [ ] `UserRole` enum or role table (e.g. `ADMIN`, `LEAD`, `OPERATOR`, `VIEWER`)
+- [ ] Optional `ProjectMembership` (user ↔ project + role override)
+- [ ] Permission matrix for API actions: manage connections, sync, analyze, apply, dismiss, admin
+- [ ] Enforce permissions in route handlers + `lib/auth/` helpers (not UI-only)
+- [ ] Bootstrap first admin (`ADMIN_EMAILS` env or first-user rule)
+
+**Suggested roles:**
+
+| Role | Typical permissions |
+|------|---------------------|
+| Admin | Users, roles, connections, projects, settings |
+| Lead | Run analysis, review suggestions, approve/dismiss |
+| Operator | Apply write-back (description / duplicate), no connection management |
+| Viewer | Read metrics and suggestions only |
+
+### Step 13 — Admin dashboard
+
+- [ ] `/admin` area (Admin role only): users, roles, project access
+- [ ] Connections overview (PAT metadata only — never show tokens)
+- [ ] Auth status: providers, allowlist summary, active sessions count
+- [ ] Background jobs: recent sync / LLM / write-back runs and failures
+
+### Step 14 — Audit log
+
+- [ ] `AuditEvent` model: `userId`, `action`, `resourceType`, `resourceId`, `metadata`, `createdAt`
+- [ ] Log: suggestion apply/dismiss, sync trigger, analysis clear, connection/project CRUD
+- [ ] `appliedByUserId` on `IssueSuggestion` (link write-back to actor)
+- [ ] Admin UI: searchable audit trail
+
+### Step 15 — Change log & affected issues
+
+- [ ] Unified **changes** view: all applied suggestions with issue IIDs, VCS links, actor, timestamp
+- [ ] Filter by project, type (DESCRIPTION / DUPLICATE), user, date range
+- [ ] Export (CSV) for compliance / handover
+
+### Step 16 — Impact reporting (timeline)
+
+- [ ] Periodic **metric snapshots** per project (ghost, zombie, milestone decay, open count)
+- [ ] Dashboard timeline: “since campaign start” — issues touched, duplicates closed, descriptions added
+- [ ] Delta vs baseline for management reporting
+
+### Step 17 — Rollback (write-back undo)
+
+- [ ] Store **previous state** before apply (e.g. `previousDescription`, duplicate close metadata)
+- [ ] **DESCRIPTION revert:** worker job restores prior body on VCS + local `Issue`
+- [ ] **DUPLICATE revert (partial):** reopen issue via VCS API; document manual comment cleanup
+- [ ] UI: “Revert” on eligible change-log entries (permission: Lead or Admin)
+- [ ] Optional queue: `vcs-rollback` (same lock conventions as write-back)
 
 ---
 
 ## Suggested immediate next steps
 
-Phase 1 MVP is complete (June 2026). Next options:
+Phases 0–2.5 and Phase 1 MVP are complete (June 2026). Choose by deployment maturity:
 
-1. **Phase 3 — Production & growth** — scheduled sync, webhooks, token encryption
-2. **P2 hardening** from [code review](./code-review-2026-06-21.md) — duplicate write-back edge cases, route integration depth
+1. **Small intranet team** — ship with auth + allowlist; optional Phase 3 infra items as needed
+2. **Phase 3 — Production infrastructure** — webhooks, auto-sync, token encryption, Helm
+3. **Phase 4 — Governance** — RBAC, admin dashboard, audit, reporting, rollback (when multiple roles matter)
+4. **P2 hardening** from [code review](./code-review-2026-06-21.md) — duplicate write-back edge cases

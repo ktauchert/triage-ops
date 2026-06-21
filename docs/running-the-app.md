@@ -208,6 +208,8 @@ Before rolling out on an intranet or exposing the app beyond localhost, complete
 5. Do not expose Postgres or Redis ports outside the private network
 6. Use VCS PATs with least privilege (`api` on GitLab for write-back; `repo` or fine-grained **Issues: Read and write** on GitHub)
 
+For **multi-user deployments** with separated duties (admin vs operator vs viewer), plan [Phase 4 — Governance](./phases.md#phase-4--governance-admin--operations-planned) (RBAC, audit log, reporting, rollback).
+
 ---
 
 ## Full Docker deployment

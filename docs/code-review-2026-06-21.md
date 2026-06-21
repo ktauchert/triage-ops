@@ -129,7 +129,7 @@ Referenz: [`docs/security.md`](./security.md)
 | PATs nie in API-Responses | ✅ |
 | LLM ohne VCS-Tokens | ✅ |
 | PAT-Verschlüsselung at rest | ❌ Phase 3 |
-| RBAC / Audit-Log-UI | ❌ Out of scope |
+| RBAC / Audit-Log-UI | ❌ Phase 4 (geplant) |
 | Rate Limiting | ❌ Out of scope |
 
 **Write-back PAT-Scopes:** GitLab `api`, GitHub Issues write — korrekt in Security-Docs und UI-Beschreibung.
@@ -184,11 +184,12 @@ Referenz: [`docs/security.md`](./security.md)
 4. **Lock-Failure:** In UI oder Docs erklären, dass „Retry“ nach Sync-Wartezeit nötig sein kann.
 5. **Route-Integrationstest** für PATCH suggestions (mocked Prisma + queue).
 
-### P3 — Phase 3 / später
+### P3 — Phase 4 / später
 
-6. PAT-Verschlüsselung at rest.
+6. PAT-Verschlüsselung at rest (Phase 3).
 7. E2E-Szenario: Apply Description → Mock VCS → Status `APPLIED`.
-8. RBAC und Audit-Log.
+8. RBAC, Admin-Dashboard, Audit-Log → [Phase 4](./phases.md#phase-4--governance-admin--operations-planned).
+9. Impact-Timeline und Write-back-Rollback → Phase 4.
 
 ---
 

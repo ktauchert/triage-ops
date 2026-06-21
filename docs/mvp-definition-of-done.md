@@ -90,6 +90,7 @@ These are **not** required for MVP functional sign-off:
 - Mobile-optimised UI
 - SaaS billing
 - Multi-tenant orgs / enterprise SSO (Phase 3)
+- RBAC, admin dashboard, audit log, impact reporting, write-back rollback (Phase 4)
 
 ## Required before production / shared deployment
 

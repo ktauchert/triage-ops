@@ -65,12 +65,13 @@ flowchart TB
 
 On-prem customers often use SSO into GitLab (Okta, Azure AD, etc.). TriageOps does **not** integrate with the IdP directly. Users sign in with **GitLab OAuth**; GitLab handles corporate SSO upstream. This is the recommended on-prem login path.
 
-### Not implemented (out of scope for current release)
+### Not implemented (planned — Phase 4 unless noted)
 
-- Direct SAML/OIDC to corporate IdP (bypassing GitLab)
-- Role-based access control (admin vs viewer)
-- Per-action audit log UI
-- API rate limiting
+- Direct SAML/OIDC to corporate IdP (bypassing GitLab/GitHub) — Phase 3
+- Role-based access control (admin vs operator vs viewer) — **Phase 4**
+- Per-action audit log UI — **Phase 4**
+- Write-back rollback / revert — **Phase 4**
+- API rate limiting — Phase 3
 
 ---
 
@@ -250,10 +251,12 @@ Cascade delete removes projects, issues, and sync history for that connection. P
 |------|--------|
 | OAuth login + proxy protection | Shipped |
 | Email/domain allowlist | Shipped |
-| Encrypt `accessToken` at rest | Planned |
-| Audit log for admin actions | Planned (Phase 3) |
+| Encrypt `accessToken` at rest | Planned (Phase 3) |
+| RBAC (admin / operator / viewer) | Planned (Phase 4) |
+| Audit log + admin dashboard | Planned (Phase 4) |
+| Write-back rollback | Planned (Phase 4) |
 | Enterprise SSO (direct IdP) | Planned (Phase 3) |
-| API rate limiting | Planned |
+| API rate limiting | Planned (Phase 3) |
 | LLM isolation (no token leakage to Ollama) | Shipped |
 | VCS write-back on Apply (worker PAT usage) | Shipped (Phase 2.5) |
 
