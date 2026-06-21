@@ -1,4 +1,4 @@
-import { VcsProvider } from "@triage-ops/db";
+import { VcsProvider, prisma } from "@triage-ops/db";
 import {
   createProject,
   listProjects,
@@ -12,7 +12,7 @@ import {
   requireString,
 } from "@/lib/api";
 import { requireApiSession } from "@/lib/auth/session";
-import { prisma } from "@triage-ops/db";
+import { requirePermission } from "@/lib/auth/permissions";
 import { canAccessConnection } from "@/lib/auth/access";
 
 export async function GET() {
@@ -29,6 +29,11 @@ export async function POST(request: Request) {
   const session = await requireApiSession();
   if (session instanceof Response) {
     return session;
+  }
+
+  const denied = requirePermission(session, "projects.manage");
+  if (denied) {
+    return denied;
   }
 
   const body = await parseJsonBody<Record<string, unknown>>(request);

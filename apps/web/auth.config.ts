@@ -1,10 +1,12 @@
 import type { NextAuthConfig } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import GitLab from "next-auth/providers/gitlab";
+import { UserRole, prisma } from "@triage-ops/db";
 import { isEmailAllowed } from "@/lib/auth/allowlist";
 import {
   authConfig,
   getConfiguredProviders,
+  isAdminEmail,
   isAuthDisabled,
   type AuthProvider,
 } from "@/lib/auth/config";
@@ -51,7 +53,18 @@ export const nextAuthConfig = {
         return true;
       }
 
-      return isEmailAllowed(user.email);
+      if (!isEmailAllowed(user.email)) {
+        return false;
+      }
+
+      if (user.id && isAdminEmail(user.email)) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { role: UserRole.ADMIN },
+        });
+      }
+
+      return true;
     },
     authorized({ auth: session, request }) {
       if (isAuthDisabled()) {

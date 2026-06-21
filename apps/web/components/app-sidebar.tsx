@@ -2,23 +2,36 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Link2, FolderKanban } from "lucide-react";
+import { LayoutDashboard, Link2, FolderKanban, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
-const navItems = [
+const baseNavItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/connections", label: "Connections", icon: Link2 },
   { href: "/projects", label: "Projects", icon: FolderKanban },
-];
+] as const;
+
+const adminNavItem = {
+  href: "/admin/users",
+  label: "Admin",
+  icon: Shield,
+} as const;
 
 type SidebarUserProps = {
   email?: string | null;
   name?: string | null;
 };
 
-export function AppSidebarNav() {
+type AppSidebarNavProps = {
+  showAdminLink?: boolean;
+};
+
+export function AppSidebarNav({ showAdminLink = false }: AppSidebarNavProps) {
   const pathname = usePathname();
+  const navItems = showAdminLink
+    ? [...baseNavItems, adminNavItem]
+    : [...baseNavItems];
 
   return (
     <>
@@ -34,7 +47,9 @@ export function AppSidebarNav() {
           const active =
             href === "/"
               ? pathname === "/"
-              : pathname.startsWith(href);
+              : href === "/admin/users"
+                ? pathname.startsWith("/admin")
+                : pathname.startsWith(href);
 
           return (
             <Link

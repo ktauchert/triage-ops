@@ -10,6 +10,7 @@ import type { AuthContext } from "@/lib/auth/session";
 import { isLockHeld, forceReleaseLock } from "@/lib/lock";
 import { enqueueWriteBackJob } from "@/lib/queue";
 import { getRedis } from "@/lib/redis";
+import { logAuditEvent } from "@/lib/services/audit";
 
 export const PANEL_SUGGESTION_STATUSES = [
   IssueSuggestionStatus.PENDING,
@@ -128,6 +129,14 @@ export async function triggerLlmAnalysis(ctx: AuthContext, projectId: string) {
     },
   });
 
+  await logAuditEvent({
+    userId: ctx.userId,
+    action: "project.analyze",
+    resourceType: "Project",
+    resourceId: projectId,
+    metadata: { analysisRunId: analysisRun.id },
+  });
+
   return { analysisRun, alreadyRunning: false as const };
 }
 
@@ -170,6 +179,9 @@ export async function updateSuggestionStatus(
 
   const suggestion = await prisma.issueSuggestion.findFirst({
     where: { id: suggestionId, projectId },
+    include: {
+      issue: { select: { gitlabIssueIid: true } },
+    },
   });
 
   if (!suggestion) {
@@ -190,8 +202,22 @@ export async function updateSuggestionStatus(
         reviewedAt: now,
         appliedAt: null,
         writeBackError: null,
+        dismissedByUserId: ctx.userId,
+        appliedByUserId: null,
       },
       include: suggestionInclude,
+    });
+
+    await logAuditEvent({
+      userId: ctx.userId,
+      action: "suggestion.dismiss",
+      resourceType: "IssueSuggestion",
+      resourceId: suggestionId,
+      metadata: {
+        projectId,
+        type: suggestion.type,
+        issueIid: suggestion.issue.gitlabIssueIid,
+      },
     });
 
     return { suggestion: updated, queued: false };
@@ -213,8 +239,22 @@ export async function updateSuggestionStatus(
       reviewedAt: now,
       appliedAt: null,
       writeBackError: null,
+      appliedByUserId: ctx.userId,
+      dismissedByUserId: null,
     },
     include: suggestionInclude,
+  });
+
+  await logAuditEvent({
+    userId: ctx.userId,
+    action: "suggestion.apply",
+    resourceType: "IssueSuggestion",
+    resourceId: suggestionId,
+    metadata: {
+      projectId,
+      type: suggestion.type,
+      issueIid: suggestion.issue.gitlabIssueIid,
+    },
   });
 
   await enqueueWriteBackJob({ projectId, suggestionId });
@@ -339,6 +379,17 @@ export async function clearProjectAnalysis(
   } catch {
     // Best-effort lock cleanup after deleting analysis data.
   }
+
+  await logAuditEvent({
+    userId: ctx.userId,
+    action: "project.analyze.clear",
+    resourceType: "Project",
+    resourceId: projectId,
+    metadata: {
+      suggestionsDeleted: suggestionsDeleted.count,
+      runsDeleted: runsDeleted.count,
+    },
+  });
 
   return {
     cleared: true,

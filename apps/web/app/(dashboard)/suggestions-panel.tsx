@@ -56,6 +56,9 @@ type SuggestionsPanelProps = {
   suggestions: SuggestionRow[];
   pendingCount: number;
   latestAnalysisRun: AnalysisRunSummary;
+  canAnalyze: boolean;
+  canApply: boolean;
+  canDismiss: boolean;
 };
 
 type AnalysisPanelResponse = {
@@ -168,6 +171,9 @@ export function SuggestionsPanel({
   suggestions,
   pendingCount,
   latestAnalysisRun,
+  canAnalyze,
+  canApply,
+  canDismiss,
 }: SuggestionsPanelProps) {
   const router = useRouter();
   const [running, setRunning] = useState(false);
@@ -441,19 +447,23 @@ export function SuggestionsPanel({
           </CardDescription>
         </div>
         <div className="flex shrink-0 gap-2">
-          <Button
-            variant="outline"
-            onClick={clearAnalysis}
-            disabled={clearing || running || analysisInProgress || applyInProgress}
-          >
-            {clearing ? "Clearing…" : "Clear analysis"}
-          </Button>
-          <Button
-            onClick={runAnalysis}
-            disabled={running || clearing || analysisInProgress}
-          >
-            {running || analysisInProgress ? "Analyzing…" : "Run analysis"}
-          </Button>
+          {canAnalyze ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={clearAnalysis}
+                disabled={clearing || running || analysisInProgress || applyInProgress}
+              >
+                {clearing ? "Clearing…" : "Clear analysis"}
+              </Button>
+              <Button
+                onClick={runAnalysis}
+                disabled={running || clearing || analysisInProgress}
+              >
+                {running || analysisInProgress ? "Analyzing…" : "Run analysis"}
+              </Button>
+            </>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -556,30 +566,30 @@ export function SuggestionsPanel({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      {isPending ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={isActing || isApplying}
-                            onClick={() =>
-                              updateSuggestion(suggestion.id, "DISMISSED")
-                            }
-                          >
-                            Dismiss
-                          </Button>
-                          <Button
-                            size="sm"
-                            disabled={isActing || isApplying}
-                            onClick={() =>
-                              updateSuggestion(suggestion.id, "APPLIED")
-                            }
-                          >
-                            Apply
-                          </Button>
-                        </>
+                      {isPending && canDismiss ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isActing || isApplying}
+                          onClick={() =>
+                            updateSuggestion(suggestion.id, "DISMISSED")
+                          }
+                        >
+                          Dismiss
+                        </Button>
                       ) : null}
-                      {isFailed ? (
+                      {isPending && canApply ? (
+                        <Button
+                          size="sm"
+                          disabled={isActing || isApplying}
+                          onClick={() =>
+                            updateSuggestion(suggestion.id, "APPLIED")
+                          }
+                        >
+                          Apply
+                        </Button>
+                      ) : null}
+                      {isFailed && canApply ? (
                         <Button
                           size="sm"
                           disabled={isActing}

@@ -6,6 +6,7 @@ import {
   projectWhereClause,
 } from "@/lib/auth/access";
 import type { AuthContext } from "@/lib/auth/session";
+import { logAuditEvent } from "@/lib/services/audit";
 
 export type CreateConnectionInput = {
   name: string;
@@ -45,7 +46,7 @@ export async function createConnection(
       ? (input.baseUrl?.trim() || DEFAULT_GITHUB_API_URL)
       : (input.baseUrl?.trim() ?? "");
 
-  return prisma.vcsConnection.create({
+  const connection = await prisma.vcsConnection.create({
     data: {
       name: input.name,
       provider: input.provider,
@@ -62,6 +63,19 @@ export async function createConnection(
       updatedAt: true,
     },
   });
+
+  await logAuditEvent({
+    userId: ctx.userId,
+    action: "connection.create",
+    resourceType: "VcsConnection",
+    resourceId: connection.id,
+    metadata: {
+      name: connection.name,
+      provider: connection.provider,
+    },
+  });
+
+  return connection;
 }
 
 export type CreateProjectInput = {
@@ -109,7 +123,7 @@ export async function createProject(
     throw new Error("GitLab projects require a positive externalProjectId");
   }
 
-  return prisma.project.create({
+  const project = await prisma.project.create({
     data: {
       connectionId: input.connectionId,
       externalProjectId:
@@ -125,6 +139,19 @@ export async function createProject(
       },
     },
   });
+
+  await logAuditEvent({
+    userId: ctx.userId,
+    action: "project.create",
+    resourceType: "Project",
+    resourceId: project.id,
+    metadata: {
+      name: project.name,
+      pathWithNamespace: project.pathWithNamespace,
+    },
+  });
+
+  return project;
 }
 
 export async function getProjectById(ctx: AuthContext, projectId: string) {
@@ -169,12 +196,22 @@ export async function triggerProjectSync(ctx: AuthContext, projectId: string) {
     return null;
   }
 
-  return prisma.syncRun.create({
+  const syncRun = await prisma.syncRun.create({
     data: {
       projectId,
       status: "PENDING",
     },
   });
+
+  await logAuditEvent({
+    userId: ctx.userId,
+    action: "project.sync",
+    resourceType: "Project",
+    resourceId: projectId,
+    metadata: { syncRunId: syncRun.id },
+  });
+
+  return syncRun;
 }
 
 export async function deleteConnection(ctx: AuthContext, connectionId: string) {
@@ -183,7 +220,7 @@ export async function deleteConnection(ctx: AuthContext, connectionId: string) {
       id: connectionId,
       ...connectionWhereClause(ctx),
     },
-    select: { id: true },
+    select: { id: true, name: true, provider: true },
   });
 
   if (!connection) {
@@ -191,6 +228,18 @@ export async function deleteConnection(ctx: AuthContext, connectionId: string) {
   }
 
   await prisma.vcsConnection.delete({ where: { id: connectionId } });
+
+  await logAuditEvent({
+    userId: ctx.userId,
+    action: "connection.delete",
+    resourceType: "VcsConnection",
+    resourceId: connectionId,
+    metadata: {
+      name: connection.name,
+      provider: connection.provider,
+    },
+  });
+
   return true;
 }
 
@@ -234,6 +283,18 @@ export async function deleteProject(ctx: AuthContext, projectId: string) {
   }
 
   await prisma.project.delete({ where: { id: projectId } });
+
+  await logAuditEvent({
+    userId: ctx.userId,
+    action: "project.delete",
+    resourceType: "Project",
+    resourceId: projectId,
+    metadata: {
+      name: project.name,
+      pathWithNamespace: project.pathWithNamespace,
+    },
+  });
+
   return true;
 }
 
@@ -345,11 +406,34 @@ export async function updateProjectSettings(
     throw new Error("No valid fields to update");
   }
 
-  return prisma.project.update({
+  const updated = await prisma.project.update({
     where: { id: projectId },
     data,
     include: projectInclude,
   });
+
+  const settingsChanged =
+    input.ghostThresholdDays !== undefined ||
+    input.zombieThresholdDays !== undefined ||
+    input.autoSyncEnabled !== undefined ||
+    input.autoSyncIntervalMinutes !== undefined;
+
+  if (settingsChanged) {
+    await logAuditEvent({
+      userId: ctx.userId,
+      action: "project.settings.update",
+      resourceType: "Project",
+      resourceId: projectId,
+      metadata: {
+        ghostThresholdDays: updated.ghostThresholdDays,
+        zombieThresholdDays: updated.zombieThresholdDays,
+        autoSyncEnabled: updated.autoSyncEnabled,
+        autoSyncIntervalMinutes: updated.autoSyncIntervalMinutes,
+      },
+    });
+  }
+
+  return updated;
 }
 
 export function pickFavoriteProjectId<T extends { id: string; isFavorite: boolean }>(

@@ -72,3 +72,18 @@ export function isProviderConfigured(provider: AuthProvider): boolean {
 export function getConfiguredProviders(): AuthProvider[] {
   return authConfig.providers.filter(isProviderConfigured);
 }
+
+export function getAdminEmails(): string[] {
+  return parseList(process.env.ADMIN_EMAILS).map((entry) =>
+    entry.toLowerCase(),
+  );
+}
+
+export function isAdminEmail(email: string | null | undefined): boolean {
+  if (!email) {
+    return false;
+  }
+
+  const normalized = email.trim().toLowerCase();
+  return getAdminEmails().includes(normalized);
+}

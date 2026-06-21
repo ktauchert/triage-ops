@@ -1,5 +1,6 @@
 import { listConnections, listProjects } from "@/lib/services/projects";
 import { getAuthContext } from "@/lib/auth/session";
+import { getRoleCapabilities } from "@/lib/auth/permissions";
 import { AddProjectForm } from "./add-project-form";
 import { ProjectsTable } from "./projects-table";
 
@@ -11,6 +12,7 @@ export default async function ProjectsPage() {
     listProjects(authContext),
     listConnections(authContext),
   ]);
+  const capabilities = getRoleCapabilities(authContext.role);
 
   return (
     <div className="space-y-8">
@@ -22,9 +24,16 @@ export default async function ProjectsPage() {
         </p>
       </div>
 
-      <AddProjectForm connections={connections} />
+      {capabilities.canManageProjects ? (
+        <AddProjectForm connections={connections} />
+      ) : null}
 
-      <ProjectsTable projects={projects} />
+      <ProjectsTable
+        projects={projects}
+        canManage={capabilities.canManageProjects}
+        canSync={capabilities.canSync}
+        canEditSettings={capabilities.canEditSettings}
+      />
     </div>
   );
 }

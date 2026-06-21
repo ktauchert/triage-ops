@@ -17,6 +17,7 @@ import {
 import { formatRelativeDate } from "@/lib/utils";
 import { ThresholdSettings } from "./threshold-settings";
 import { SuggestionsPanel } from "./suggestions-panel";
+import type { RoleCapabilities } from "@/lib/auth/permissions";
 
 type IssueSummary = {
   id: string;
@@ -91,8 +92,10 @@ type MetricsPayload = {
 
 export function DashboardMetrics({
   metrics,
+  capabilities,
 }: {
   metrics: MetricsPayload | null;
+  capabilities: RoleCapabilities;
 }) {
   if (!metrics) {
     return null;
@@ -129,12 +132,16 @@ export function DashboardMetrics({
         projectId={metrics.projectId}
         ghostThresholdDays={metrics.thresholds.ghostDays}
         zombieThresholdDays={metrics.thresholds.zombieDays}
+        canEdit={capabilities.canEditSettings}
       />
 
       <SuggestionsPanel
         projectId={metrics.projectId}
         suggestions={metrics.suggestions.items}
         pendingCount={metrics.suggestions.pendingCount}
+        canAnalyze={capabilities.canAnalyze}
+        canApply={capabilities.canApply}
+        canDismiss={capabilities.canDismiss}
         latestAnalysisRun={
           metrics.suggestions.latestAnalysisRun
             ? {

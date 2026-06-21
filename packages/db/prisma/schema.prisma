@@ -9,16 +9,37 @@ datasource db {
 
 /// Authenticated user (Auth.js).
 model User {
-  id            String          @id @default(cuid())
-  name          String?
-  email         String?         @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  connections   VcsConnection[]
+  id                      String            @id @default(cuid())
+  name                    String?
+  email                   String?           @unique
+  emailVerified           DateTime?
+  image                   String?
+  role                    UserRole          @default(VIEWER)
+  accounts                Account[]
+  sessions                Session[]
+  connections             VcsConnection[]
+  auditEvents             AuditEvent[]
+  suggestionsApplied      IssueSuggestion[] @relation("SuggestionAppliedBy")
+  suggestionsDismissed    IssueSuggestion[] @relation("SuggestionDismissedBy")
 
   @@map("users")
+}
+
+/// Per-user action audit trail (Phase 4 governance).
+model AuditEvent {
+  id           String   @id @default(cuid())
+  userId       String?
+  action       String
+  resourceType String
+  resourceId   String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([userId])
+  @@map("audit_events")
 }
 
 model Account {
@@ -205,12 +226,16 @@ model IssueSuggestion {
   model          String?
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
-  reviewedAt     DateTime?
-  appliedAt      DateTime?
-  writeBackError String?
-  project        Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  issue          Issue                 @relation("SuggestionPrimaryIssue", fields: [issueId], references: [id], onDelete: Cascade)
-  relatedIssue   Issue?                @relation("SuggestionRelatedIssue", fields: [relatedIssueId], references: [id], onDelete: SetNull)
+  reviewedAt        DateTime?
+  appliedAt         DateTime?
+  writeBackError    String?
+  appliedByUserId   String?
+  dismissedByUserId String?
+  project           Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issue             Issue                 @relation("SuggestionPrimaryIssue", fields: [issueId], references: [id], onDelete: Cascade)
+  relatedIssue      Issue?                @relation("SuggestionRelatedIssue", fields: [relatedIssueId], references: [id], onDelete: SetNull)
+  appliedBy         User?                 @relation("SuggestionAppliedBy", fields: [appliedByUserId], references: [id], onDelete: SetNull)
+  dismissedBy       User?                 @relation("SuggestionDismissedBy", fields: [dismissedByUserId], references: [id], onDelete: SetNull)
 
   @@index([projectId, status])
   @@index([issueId])
@@ -269,4 +294,11 @@ enum SyncStatus {
   RUNNING
   COMPLETED
   FAILED
+}
+
+enum UserRole {
+  ADMIN
+  LEAD
+  OPERATOR
+  VIEWER
 }

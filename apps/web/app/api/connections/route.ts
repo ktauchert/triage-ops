@@ -12,6 +12,7 @@ import {
   requireVcsProvider,
 } from "@/lib/api";
 import { requireApiSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/permissions";
 
 export async function GET() {
   const session = await requireApiSession();
@@ -27,6 +28,11 @@ export async function POST(request: Request) {
   const session = await requireApiSession();
   if (session instanceof Response) {
     return session;
+  }
+
+  const denied = requirePermission(session, "connections.manage");
+  if (denied) {
+    return denied;
   }
 
   const body = await parseJsonBody<Record<string, unknown>>(request);

@@ -8,7 +8,20 @@ vi.mock("./dev-user", () => ({
   ensureDevUser: vi.fn().mockResolvedValue("dev-local"),
 }));
 
+vi.mock("@triage-ops/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@triage-ops/db")>();
+  return {
+    ...actual,
+    prisma: {
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ role: "LEAD" }),
+      },
+    },
+  };
+});
+
 import { auth } from "@/auth";
+import { UserRole } from "@triage-ops/db";
 import { requireApiSession } from "./session";
 
 const mockedAuth = vi.mocked(auth);
@@ -29,6 +42,7 @@ describe("requireApiSession", () => {
 
     expect(session.userId).toBe("dev-local");
     expect(session.dataScope).toBe("shared");
+    expect(session.role).toBe(UserRole.ADMIN);
     expect(mockedAuth).not.toHaveBeenCalled();
   });
 
@@ -62,6 +76,7 @@ describe("requireApiSession", () => {
 
     expect(session).toEqual({
       userId: "user-abc",
+      role: UserRole.LEAD,
       dataScope: "per_user",
       email: "alice@company.com",
       name: "Alice",

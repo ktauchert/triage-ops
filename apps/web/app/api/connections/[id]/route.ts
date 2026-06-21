@@ -9,6 +9,7 @@ import {
   parseJsonBody,
 } from "@/lib/api";
 import { requireApiSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/permissions";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -18,6 +19,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const session = await requireApiSession();
   if (session instanceof Response) {
     return session;
+  }
+
+  const denied = requirePermission(session, "connections.manage");
+  if (denied) {
+    return denied;
   }
 
   const { id } = await context.params;

@@ -54,9 +54,17 @@ vi.mock("@/lib/redis", () => ({
   getRedis: vi.fn(() => ({})),
 }));
 
+vi.mock("@/lib/services/audit", () => ({
+  logAuditEvent: vi.fn().mockResolvedValue({ id: "audit-1" }),
+}));
+
 import { clearProjectAnalysis, updateSuggestionStatus } from "./suggestions";
 
-const ctx = { userId: "user-1", dataScope: "shared" as const };
+const ctx = {
+  userId: "user-1",
+  role: "ADMIN" as const,
+  dataScope: "shared" as const,
+};
 
 describe("updateSuggestionStatus", () => {
   beforeEach(() => {
@@ -72,6 +80,7 @@ describe("updateSuggestionStatus", () => {
       type: "DESCRIPTION",
       suggestedText: "Draft",
       relatedIssueId: null,
+      issue: { gitlabIssueIid: 42 },
     });
     prismaMock.issueSuggestion.update.mockResolvedValue({
       id: "suggestion-1",
@@ -99,6 +108,7 @@ describe("updateSuggestionStatus", () => {
       type: "DESCRIPTION",
       suggestedText: "Draft body",
       relatedIssueId: null,
+      issue: { gitlabIssueIid: 42 },
     });
     prismaMock.issueSuggestion.update.mockResolvedValue({
       id: "suggestion-1",
@@ -129,6 +139,7 @@ describe("updateSuggestionStatus", () => {
       type: "DUPLICATE",
       suggestedText: null,
       relatedIssueId: "issue-2",
+      issue: { gitlabIssueIid: 7 },
     });
     prismaMock.issueSuggestion.update.mockResolvedValue({
       id: "suggestion-1",

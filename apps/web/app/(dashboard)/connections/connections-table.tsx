@@ -33,8 +33,10 @@ type ConnectionRow = {
 
 export function ConnectionsTable({
   connections,
+  canManage = false,
 }: {
   connections: ConnectionRow[];
+  canManage?: boolean;
 }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -134,7 +136,9 @@ export function ConnectionsTable({
                   <TableHead>Base URL</TableHead>
                   <TableHead>Projects</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  {canManage ? (
+                    <TableHead className="text-right">Actions</TableHead>
+                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -173,6 +177,7 @@ export function ConnectionsTable({
                     <TableCell>
                       {formatRelativeDate(connection.createdAt)}
                     </TableCell>
+                    {canManage ? (
                     <TableCell className="text-right">
                       <Button
                         type="button"
@@ -185,6 +190,7 @@ export function ConnectionsTable({
                         Delete
                       </Button>
                     </TableCell>
+                    ) : null}
                   </TableRow>
                 ))}
               </TableBody>

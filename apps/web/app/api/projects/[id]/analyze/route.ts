@@ -6,6 +6,7 @@ import {
   triggerLlmAnalysis,
 } from "@/lib/services/suggestions";
 import { requireApiSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/permissions";
 import type { LlmAnalysisRun } from "@prisma/client";
 
 type RouteContext = {
@@ -32,6 +33,11 @@ export async function GET(_request: Request, context: RouteContext) {
     const session = await requireApiSession();
     if (session instanceof Response) {
       return session;
+    }
+
+    const denied = requirePermission(session, "suggestions.read");
+    if (denied) {
+      return denied;
     }
 
     const { id: projectId } = await context.params;
@@ -62,6 +68,11 @@ export async function POST(_request: Request, context: RouteContext) {
     const session = await requireApiSession();
     if (session instanceof Response) {
       return session;
+    }
+
+    const denied = requirePermission(session, "project.analyze");
+    if (denied) {
+      return denied;
     }
 
     const { id: projectId } = await context.params;
@@ -104,6 +115,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
     const session = await requireApiSession();
     if (session instanceof Response) {
       return session;
+    }
+
+    const denied = requirePermission(session, "project.analyze");
+    if (denied) {
+      return denied;
     }
 
     const { id: projectId } = await context.params;

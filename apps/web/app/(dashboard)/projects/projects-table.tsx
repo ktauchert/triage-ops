@@ -82,7 +82,17 @@ async function waitForSyncRun(
   throw new Error("Sync is taking longer than expected. Refresh the page to check status.");
 }
 
-export function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
+export function ProjectsTable({
+  projects,
+  canManage = false,
+  canSync = false,
+  canEditSettings = false,
+}: {
+  projects: ProjectRow[];
+  canManage?: boolean;
+  canSync?: boolean;
+  canEditSettings?: boolean;
+}) {
   const router = useRouter();
   const [syncingProjectId, setSyncingProjectId] = useState<string | null>(null);
   const [busyProjectId, setBusyProjectId] = useState<string | null>(null);
@@ -316,7 +326,7 @@ export function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
                           type="button"
                           size="sm"
                           variant={project.autoSyncEnabled ? "default" : "outline"}
-                          disabled={rowBusy}
+                          disabled={rowBusy || !canEditSettings}
                           onClick={() => handleAutoSyncToggle(project)}
                         >
                           {project.autoSyncEnabled
@@ -335,6 +345,7 @@ export function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {canSync ? (
                           <Button
                             size="sm"
                             onClick={() => handleSync(project.id)}
@@ -344,6 +355,8 @@ export function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
                               ? "Syncing..."
                               : "Sync"}
                           </Button>
+                          ) : null}
+                          {canManage ? (
                           <Button
                             type="button"
                             size="sm"
@@ -353,6 +366,7 @@ export function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
+                          ) : null}
                         </div>
                       </TableCell>
                     </TableRow>

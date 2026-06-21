@@ -17,12 +17,14 @@ type ThresholdSettingsProps = {
   projectId: string;
   ghostThresholdDays: number;
   zombieThresholdDays: number;
+  canEdit: boolean;
 };
 
 export function ThresholdSettings({
   projectId,
   ghostThresholdDays,
   zombieThresholdDays,
+  canEdit,
 }: ThresholdSettingsProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -88,6 +90,7 @@ export function ThresholdSettings({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {canEdit ? (
         <form onSubmit={handleSubmit} className="grid max-w-xl gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="ghost-threshold">Ghost days</Label>
@@ -128,6 +131,12 @@ export function ThresholdSettings({
             <p className="text-sm text-destructive sm:col-span-3">{error}</p>
           ) : null}
         </form>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Ghost: {ghostThresholdDays} days · Zombie: {zombieThresholdDays} days
+            (read-only for your role)
+          </p>
+        )}
       </CardContent>
     </Card>
   );

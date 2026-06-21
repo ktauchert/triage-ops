@@ -1,6 +1,7 @@
 import { errorResponse, jsonResponse, parseJsonBody } from "@/lib/api";
 import { updateSuggestionStatus } from "@/lib/services/suggestions";
 import { requireApiSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/permissions";
 
 type RouteContext = {
   params: Promise<{ id: string; suggestionId: string }>;
@@ -24,6 +25,14 @@ export async function PATCH(request: Request, context: RouteContext) {
   const status = body.status;
   if (status !== "DISMISSED" && status !== "APPLIED") {
     return errorResponse('status must be "DISMISSED" or "APPLIED"', 400);
+  }
+
+  const denied = requirePermission(
+    session,
+    status === "DISMISSED" ? "suggestion.dismiss" : "suggestion.apply",
+  );
+  if (denied) {
+    return denied;
   }
 
   const { id: projectId, suggestionId } = await context.params;

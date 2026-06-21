@@ -9,6 +9,7 @@ import {
   parseJsonBody,
 } from "@/lib/api";
 import { requireApiSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/permissions";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -33,6 +34,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const session = await requireApiSession();
   if (session instanceof Response) {
     return session;
+  }
+
+  const denied = requirePermission(session, "projects.manage");
+  if (denied) {
+    return denied;
   }
 
   const { id } = await context.params;
@@ -91,6 +97,19 @@ export async function PATCH(request: Request, context: RouteContext) {
       "Provide isFavorite, ghostThresholdDays, zombieThresholdDays, autoSyncEnabled, and/or autoSyncIntervalMinutes",
       400,
     );
+  }
+
+  const settingsRequested =
+    ghostThresholdDays !== undefined ||
+    zombieThresholdDays !== undefined ||
+    body.autoSyncEnabled !== undefined ||
+    body.autoSyncIntervalMinutes !== undefined;
+
+  if (settingsRequested) {
+    const denied = requirePermission(session, "project.settings");
+    if (denied) {
+      return denied;
+    }
   }
 
   if (

@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserRole } from "@triage-ops/db";
 import {
   jsonRequest,
   readJson,
   routeContext,
-  testAuthContext,
+  testAuthContextWithRole,
   unauthorizedResponse,
 } from "@/lib/test/route-helpers";
 
@@ -25,7 +26,7 @@ const ctx = routeContext({ id: "project-1", suggestionId: "suggestion-1" });
 describe("PATCH /api/projects/[id]/suggestions/[suggestionId]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    requireApiSessionMock.mockResolvedValue(testAuthContext);
+    requireApiSessionMock.mockResolvedValue(testAuthContextWithRole(UserRole.ADMIN));
   });
 
   it("returns 401 when unauthenticated", async () => {
@@ -36,6 +37,46 @@ describe("PATCH /api/projects/[id]/suggestions/[suggestionId]", () => {
       ctx,
     );
     expect(response.status).toBe(401);
+  });
+
+  it("returns 403 when VIEWER tries to apply", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.VIEWER),
+    );
+
+    const response = await PATCH(
+      jsonRequest("PATCH", "http://localhost", { status: "APPLIED" }),
+      ctx,
+    );
+    expect(response.status).toBe(403);
+  });
+
+  it("returns 403 when OPERATOR tries to dismiss", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.OPERATOR),
+    );
+
+    const response = await PATCH(
+      jsonRequest("PATCH", "http://localhost", { status: "DISMISSED" }),
+      ctx,
+    );
+    expect(response.status).toBe(403);
+  });
+
+  it("allows OPERATOR to apply", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.OPERATOR),
+    );
+    updateSuggestionStatusMock.mockResolvedValue({
+      suggestion: { id: "suggestion-1", status: "APPLYING" },
+      queued: true,
+    });
+
+    const response = await PATCH(
+      jsonRequest("PATCH", "http://localhost", { status: "APPLIED" }),
+      ctx,
+    );
+    expect(response.status).toBe(202);
   });
 
   it("returns 400 for invalid status", async () => {

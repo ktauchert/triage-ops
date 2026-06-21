@@ -5,6 +5,7 @@ import {
   triggerProjectSync,
 } from "@/lib/services/projects";
 import { requireApiSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/permissions";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -14,6 +15,11 @@ export async function POST(_request: Request, context: RouteContext) {
   const session = await requireApiSession();
   if (session instanceof Response) {
     return session;
+  }
+
+  const denied = requirePermission(session, "project.sync");
+  if (denied) {
+    return denied;
   }
 
   const { id: projectId } = await context.params;

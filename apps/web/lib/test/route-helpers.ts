@@ -3,10 +3,17 @@ import type { AuthContext } from "@/lib/auth/session";
 
 export const testAuthContext: AuthContext = {
   userId: "user-test",
+  role: "ADMIN",
   dataScope: "shared",
   email: "test@example.com",
   name: "Test User",
 };
+
+export function testAuthContextWithRole(
+  role: AuthContext["role"],
+): AuthContext {
+  return { ...testAuthContext, role };
+}
 
 export function jsonRequest(
   method: string,

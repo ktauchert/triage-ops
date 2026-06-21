@@ -1,6 +1,7 @@
 import { getProjectMetrics } from "@/lib/services/metrics";
 import { listProjects, pickFavoriteProjectId } from "@/lib/services/projects";
 import { getAuthContext } from "@/lib/auth/session";
+import { getRoleCapabilities } from "@/lib/auth/permissions";
 import { DashboardMetrics } from "./dashboard-metrics";
 import { ProjectSelector } from "./project-selector";
 
@@ -19,6 +20,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const metrics = selectedProjectId
     ? await getProjectMetrics(selectedProjectId)
     : null;
+
+  const capabilities = getRoleCapabilities(authContext.role);
 
   return (
     <div className="space-y-8">
@@ -39,7 +42,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         selectedProjectId={selectedProjectId}
       />
 
-      <DashboardMetrics metrics={metrics} />
+      <DashboardMetrics metrics={metrics} capabilities={capabilities} />
     </div>
   );
 }

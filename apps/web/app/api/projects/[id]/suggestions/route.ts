@@ -2,6 +2,7 @@ import { IssueSuggestionStatus } from "@triage-ops/db";
 import { errorResponse, jsonResponse } from "@/lib/api";
 import { listSuggestions } from "@/lib/services/suggestions";
 import { requireApiSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/permissions";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -11,6 +12,11 @@ export async function GET(request: Request, context: RouteContext) {
   const session = await requireApiSession();
   if (session instanceof Response) {
     return session;
+  }
+
+  const denied = requirePermission(session, "suggestions.read");
+  if (denied) {
+    return denied;
   }
 
   const { id: projectId } = await context.params;

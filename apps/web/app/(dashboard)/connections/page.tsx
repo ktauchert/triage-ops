@@ -1,5 +1,6 @@
 import { listConnections } from "@/lib/services/projects";
 import { getAuthContext } from "@/lib/auth/session";
+import { getRoleCapabilities } from "@/lib/auth/permissions";
 import { AddConnectionForm } from "./add-connection-form";
 import { ConnectionsTable } from "./connections-table";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function ConnectionsPage() {
   const authContext = await getAuthContext();
   const connections = await listConnections(authContext);
+  const { canManageConnections } = getRoleCapabilities(authContext.role);
 
   return (
     <div className="space-y-8">
@@ -18,9 +20,12 @@ export default async function ConnectionsPage() {
         </p>
       </div>
 
-      <AddConnectionForm />
+      {canManageConnections ? <AddConnectionForm /> : null}
 
-      <ConnectionsTable connections={connections} />
+      <ConnectionsTable
+        connections={connections}
+        canManage={canManageConnections}
+      />
     </div>
   );
 }
