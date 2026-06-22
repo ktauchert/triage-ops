@@ -59,7 +59,18 @@ flowchart TB
 | **API enforcement** | Route handlers call `requireApiSession()`; unauthenticated requests return **401** |
 | **Allowlist** | Optional `ALLOWED_EMAIL_DOMAINS` / `ALLOWED_EMAILS` for on-prem (reject sign-in before session is created) |
 | **Deployment profiles** | On-prem: `AUTH_DATA_SCOPE=shared` + GitLab OAuth + allowlist. Hosted solo: `per_user` isolation |
-| **Dev bypass** | `AUTH_DISABLED=true` skips all auth — **must be `false` in production** |
+| **Dev bypass** | `AUTH_DISABLED=true` skips all auth — **must be `false` in production** (future: refused at startup when `NODE_ENV=production`) |
+
+### Planned — instance bootstrap (Phase 4)
+
+**Decision doc:** [on-prem-product.md](./on-prem-product.md)
+
+| Control | Detail |
+|---------|--------|
+| **Setup wizard** | Fresh install → `/setup` → first OAuth login becomes first `ADMIN` |
+| **More admins** | Existing admins promote users via Admin UI (no shared recovery password) |
+| **Closed registration** | After setup, only admin-provisioned emails may sign in |
+| **Allowlist default** | Empty allowlist in production → **deny** (today: allow — will change) |
 
 ### Corporate SSO (GitLab)
 
@@ -67,11 +78,20 @@ On-prem customers often use SSO into GitLab (Okta, Azure AD, etc.). TriageOps do
 
 ### Not implemented (planned — Phase 4 unless noted)
 
+- Instance bootstrap wizard + closed registration — [on-prem-product.md](./on-prem-product.md)
+- Production startup guards (`AUTH_DISABLED`, empty allowlist) — Phase 4 Step 12b
 - Direct SAML/OIDC to corporate IdP (bypassing GitLab/GitHub) — Phase 3
-- Role-based access control (admin vs operator vs viewer) — **Phase 4**
-- Per-action audit log UI — **Phase 4**
+- Per-action audit search/filter — **Phase 4** (basic list shipped)
 - Write-back rollback / revert — **Phase 4**
 - API rate limiting — Phase 3
+
+### Implemented (Phase 4 — partial)
+
+| Control | Detail |
+|---------|--------|
+| **RBAC** | `ADMIN`, `LEAD`, `OPERATOR`, `VIEWER` with API enforcement |
+| **Admin UI** | `/admin` users + roles, audit event list |
+| **Audit log** | `AuditEvent` model + logging on critical actions |
 
 ---
 
@@ -199,6 +219,8 @@ The bundled `docker-compose.yml` falls back to **default passwords** (`triage_op
 ## On-prem reference configuration
 
 For a full step-by-step install checklist (Docker Compose, OAuth, HTTPS, acceptance tests), see **[Intranet Rollout](./intranet-rollout.md)**. Kubernetes deployments via Helm are planned (Phase 3c) but not available yet.
+
+**Product install (no git clone):** planned for end of Phase 4 — [on-prem-product.md](./on-prem-product.md).
 
 Example `.env` for an intranet GitLab deployment:
 

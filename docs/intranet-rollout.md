@@ -4,7 +4,18 @@ Schritt-für-Schritt-Anleitung für den **Produktivbetrieb im Firmen-Intranet** 
 
 **Zielgruppe:** IT/Ops, die TriageOps einmalig aufsetzen und an ein Team ausrollen.
 
-**Verwandte Docs:** [Security](./security.md) (Härtung, Reviewer-FAQ) · [Running the App](./running-the-app.md) (lokale Entwicklung) · [Architecture](./architecture.md)
+**Verwandte Docs:** [Security](./security.md) (Härtung, Reviewer-FAQ) · [On-Prem Product Model](./on-prem-product.md) (Bootstrap + Image-Auslieferung) · [Running the App](./running-the-app.md) (lokale Entwicklung) · [Architecture](./architecture.md)
+
+---
+
+## Installationswege
+
+| Weg | Zielgruppe | Status | Anleitung |
+|-----|------------|--------|-----------|
+| **git clone + build** | Entwicklung, eigener Fork | ✅ Jetzt | [§ Phase 1 — Dev](#phase-1--server-vorbereiten) unten |
+| **Images pullen (Prod)** | Kunde / Pilot ohne Source | 🔜 Ende Phase 4 | [on-prem-product.md](./on-prem-product.md) · [§ Phase 1 — Produkt](#11-produkt-installation-geplant) |
+
+> Kunden sollen **kein** Repository klonen müssen. Nach dem Product Release: privates Container-Registry-Token + `docker-compose.prod.yml` + Install-Bundle.
 
 ---
 
@@ -64,17 +75,41 @@ flowchart TB
 
 - [ ] **Ziel-URL** festgelegt (z. B. `https://triageops.company.internal`)
 - [ ] **GitLab-OAuth-App** (oder GitHub) beim VCS-Admin beantragt
-- [ ] **E-Mail-Allowlist** definiert (`ALLOWED_EMAIL_DOMAINS` oder `ALLOWED_EMAILS`)
+- [ ] **E-Mail-Allowlist** definiert (`ALLOWED_EMAIL_DOMAINS` oder `ALLOWED_EMAILS`) — künftig Pflicht nach Setup; bis dahin dringend empfohlen
+- [ ] **Setup-Plan:** erster Admin per OAuth nach [Bootstrap-Modell](./on-prem-product.md) (geplant) — bis Implementierung: `ADMIN_EMAILS` setzen
 - [ ] **VCS-PAT-Richtlinie:** wer darf Connections anlegen, welche Scopes, Rotationsintervall
 - [ ] **Host/VM** mit Docker + Compose (mind. 4 GB RAM empfohlen, mehr wenn Ollama-Modelle groß)
 - [ ] **Backup-Konzept** für Postgres-Volume
-- [ ] Bei mehreren Rollen (Admin vs. Operator): [Phase 4 Governance](./phases.md#phase-4--governance-admin--operations-planned) eingeplant — aktuell haben alle eingeloggten Nutzer dieselben Rechte
+- [ ] Bei mehreren Rollen (Admin vs. Operator): [Phase 4 Governance](./phases.md#phase-4--governance-admin--operations-in-progress) — RBAC + Admin-UI teilweise vorhanden
 
 ---
 
 ## Phase 1 — Server vorbereiten
 
-### 1.1 Repository & Abhängigkeiten
+### 1.1 Produkt-Installation (geplant)
+
+**Zielgruppe:** Kunde / Pilot ohne Git-Zugang · **Zeitpunkt:** Ende Entwicklungsphase (Phase 4 + Image-Pipeline).
+
+Kurzablauf (Vorschau — Details in [on-prem-product.md](./on-prem-product.md)):
+
+```bash
+# Install-Bundle entpacken (kein git clone)
+docker login ghcr.io -u <kunde> -p <registry-token>
+cp .env.example .env
+# .env bearbeiten (Secrets, OAuth, Allowlist)
+
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml --profile production up -d
+docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate
+```
+
+Danach: HTTPS-URL öffnen → **`/setup`** (geplant) → erster Admin meldet sich per GitHub/GitLab an → weitere User im Admin-Bereich anlegen.
+
+**Offene Implementierung:** siehe [phases.md — Step 12b & Phase 3c distribution](./phases.md).
+
+### 1.2 Entwicklung / interner Build (jetzt)
+
+#### Repository & Abhängigkeiten
 
 ```bash
 git clone <repo-url> triage-ops
@@ -90,7 +125,7 @@ Auf dem Zielserver:
 
 Node.js ist **nur für lokale Entwicklung** nötig — der Produktiv-Stack läuft vollständig in Containern.
 
-### 1.2 Umgebungsdatei anlegen
+### 1.3 Umgebungsdatei anlegen
 
 ```bash
 cp .env.example .env
@@ -98,7 +133,7 @@ cp .env.example .env
 
 **Nicht** `db:seed` im Produktivbetrieb ausführen — das legt Platzhalter-Connections mit Dummy-Tokens an.
 
-### 1.3 Produktions-`.env` (Beispiel Intranet + GitLab)
+### 1.4 Produktions-`.env` (Beispiel Intranet + GitLab)
 
 Docker Compose liest die Root-`.env` **automatisch** für `${VAR}`-Substitution in `docker-compose.yml`. Web und Worker laden dieselbe Datei zusätzlich per `env_file`. Ein Passwort reicht in `.env` — Compose setzt es für Postgres-Container und `DATABASE_URL` in web/worker/migrate.
 
@@ -152,7 +187,7 @@ openssl rand -base64 32   # für AUTH_SECRET
 openssl rand -base64 32   # für TOKEN_ENCRYPTION_KEY
 ```
 
-### 1.4 Postgres-Passwort (nur `.env`, nicht `docker-compose.yml`)
+### 1.5 Postgres-Passwort (nur `.env`, nicht `docker-compose.yml`)
 
 Für Produktion `POSTGRES_PASSWORD` in `.env` setzen. `docker-compose.yml` referenziert `${POSTGRES_PASSWORD:-triage_ops}` — Postgres, web, worker und migrate bekommen dasselbe Passwort automatisch.
 
@@ -274,6 +309,8 @@ Nach dem Start alle Punkte durchgehen:
 ### Sicherheit
 
 - [ ] `AUTH_DISABLED=false` — Login erforderlich
+- [ ] Setup abgeschlossen: erster Admin per OAuth (geplant) oder interim `ADMIN_EMAILS` gesetzt
+- [ ] Kein offener Self-Service-Login (Allowlist gesetzt; künftig nur provisionierte User)
 - [ ] `curl -i https://triageops.company.internal/api/projects` ohne Cookie → **401**
 - [ ] Anmeldung mit erlaubter E-Mail funktioniert
 - [ ] Anmeldung mit nicht erlaubter E-Mail wird abgelehnt
@@ -300,6 +337,15 @@ Nach dem Start alle Punkte durchgehen:
 
 ## Phase 6 — Erste Nutzung (Team-Onboarding)
 
+### Instanz-Setup (einmalig — geplant)
+
+1. Admin öffnet `https://triageops.company.internal/setup`
+2. Anmeldung per GitHub/GitLab → wird **erster Admin**
+3. **Admin → Users:** weitere Personen anlegen (E-Mail + Rolle `LEAD` / `OPERATOR` / `VIEWER` / ggf. weiterer `ADMIN`)
+4. Erst danach können eingeladene Nutzer sich per OAuth anmelden
+
+### Tagesbetrieb (Endnutzer)
+
 Kurzablauf für Endnutzer:
 
 1. `https://triageops.company.internal` öffnen → mit GitLab/GitHub anmelden
@@ -318,7 +364,8 @@ Kurzablauf für Endnutzer:
 |---------|------------------|
 | Logs | `docker compose logs -f web worker` |
 | Neustart | `docker compose --profile production restart web worker` |
-| Update (neue Version) | `git pull` → `npm run docker:up:all` (rebuild) → `npm run docker:migrate` |
+| Update (Dev / git) | `git pull` → `npm run docker:up:all` (rebuild) → `npm run docker:migrate` |
+| Update (Prod / Images) | `docker compose -f docker-compose.prod.yml pull` → migrate → `up -d` — [geplant](./on-prem-product.md) |
 | Migrationen (Prod) | `npm run docker:migrate` |
 | Stoppen | `npm run docker:down` |
 | PAT rotieren | Connection in UI bearbeiten, neuen Token speichern |

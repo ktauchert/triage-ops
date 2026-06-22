@@ -188,28 +188,34 @@ flowchart LR
 
 | Item | Status | Effort | When you need it |
 |------|--------|--------|------------------|
-| Self-hosted install guide (Compose) | [ ] partial | **~1 day** — extend [running-the-app.md](./running-the-app.md) | Any production deploy |
+| Self-hosted install guide (Compose) | [ ] partial | **~1 day** — [intranet-rollout.md](./intranet-rollout.md) | Any production deploy |
+| **Product distribution (image-based)** | [ ] planned | **~3–5 days** | End of Phase 4 — customers without git clone — [on-prem-product.md](./on-prem-product.md) |
+| `docker-compose.prod.yml` (image pins, no `build:`) | [ ] | part of distribution | Product releases |
+| CI: push `web` + `worker` images to private GHCR on tag | [ ] | part of distribution | Product releases |
+| Install bundle (Compose + `.env.example` + docs, no source) | [ ] | **~1 day** | First external pilot |
 | **Helm chart** (Kubernetes) | [ ] | **~1–2 weeks** | K8s cluster, GitOps, multiple envs — *not needed for Docker Compose intranet* |
-| Multi-tenant (orgs, teams) | [ ] | **~2–4 weeks** | Shared instance for many teams; overlaps [Phase 4](./phases.md#phase-4--governance-admin--operations-planned) |
-| Billing / license tier | [ ] | **~2+ weeks** | SaaS product only |
+| Multi-tenant (orgs, teams) | [ ] | **~2–4 weeks** | Shared instance for many teams; overlaps [Phase 4](./phases.md#phase-4--governance-admin--operations-in-progress) |
+| Billing / license tier | [ ] | **~2+ weeks** | SaaS or commercial on-prem only |
 
 **Helm in one sentence:** A packaged install for Kubernetes (like `docker-compose.yml`, but for K8s). Skip until you actually run on K8s.
 
 ---
 
-## Phase 4 — Governance, admin & operations (planned)
+## Phase 4 — Governance, admin & operations (in progress)
 
 **Goal:** Operate TriageOps with **roles**, **auditability**, and **reporting** when multiple users work with different responsibilities. An admin provisions access; users sign in via GitHub/GitLab OAuth (corporate SSO upstream). Suited for intranet teams that outgrow “everyone can do everything.”
 
+**Product decisions (bootstrap + distribution):** [on-prem-product.md](./on-prem-product.md)
+
 > **Not required for small intranet MVP** (Phases 0–2.5 + allowlist). Becomes important when operators, reviewers, and admins need separated duties.
 
-### Step 12 — RBAC foundation
+### Step 12 — RBAC foundation — partial (June 2026)
 
-- [ ] `UserRole` enum or role table (e.g. `ADMIN`, `LEAD`, `OPERATOR`, `VIEWER`)
+- [x] `UserRole` enum (`ADMIN`, `LEAD`, `OPERATOR`, `VIEWER`)
 - [ ] Optional `ProjectMembership` (user ↔ project + role override)
-- [ ] Permission matrix for API actions: manage connections, sync, analyze, apply, dismiss, admin
-- [ ] Enforce permissions in route handlers + `lib/auth/` helpers (not UI-only)
-- [ ] Bootstrap first admin (`ADMIN_EMAILS` env or first-user rule)
+- [x] Permission matrix for API actions: manage connections, sync, analyze, apply, dismiss, admin
+- [x] Enforce permissions in route handlers + `lib/auth/` helpers (not UI-only)
+- [ ] Bootstrap first admin via setup wizard (replaces env-only `ADMIN_EMAILS` as primary path) — see [Step 12b](#step-12b--instance-bootstrap--closed-registration-planned)
 
 **Suggested roles:**
 
@@ -220,19 +226,36 @@ flowchart LR
 | Operator | Apply write-back (description / duplicate), no connection management |
 | Viewer | Read metrics and suggestions only |
 
-### Step 13 — Admin dashboard
+### Step 12b — Instance bootstrap & closed registration (planned)
 
-- [ ] `/admin` area (Admin role only): users, roles, project access
+> **Chosen model:** [on-prem-product.md § Bootstrap](./on-prem-product.md#chosen-approach--instance-bootstrap-auth) — first OAuth login = first admin; admins can promote more admins; no open registration after setup.
+
+- [ ] `setupComplete` flag (DB settings or dedicated model)
+- [ ] `/setup` flow on fresh install; redirect until complete
+- [ ] First OAuth sign-in → `ADMIN` + mark setup complete
+- [ ] **Closed registration:** admin pre-provisions email + role; unknown emails rejected at sign-in
+- [ ] Admin UI: invite / provision user (extends existing `/admin/users`)
+- [ ] Production guard: refuse `AUTH_DISABLED=true` when `NODE_ENV=production`
+- [ ] Production guard: empty allowlist → deny (not allow) after setup
+- [ ] `dev@local` / `ensureDevUser` only in explicit dev bypass — never in prod images
+- [ ] Keep `ADMIN_EMAILS` as optional automation fallback only
+- [ ] Tests + update [intranet-rollout.md](./intranet-rollout.md) acceptance checklist
+
+### Step 13 — Admin dashboard — partial (June 2026)
+
+- [x] `/admin` area (Admin role only): users, roles
+- [x] Audit events list (read-only)
 - [ ] Connections overview (PAT metadata only — never show tokens)
-- [ ] Auth status: providers, allowlist summary, active sessions count
+- [ ] Auth status: providers, allowlist summary, setup state, active sessions count
 - [ ] Background jobs: recent sync / LLM / write-back runs and failures
+- [ ] **Invite user** form (email + role) for closed registration
 
-### Step 14 — Audit log
+### Step 14 — Audit log — partial (June 2026)
 
-- [ ] `AuditEvent` model: `userId`, `action`, `resourceType`, `resourceId`, `metadata`, `createdAt`
-- [ ] Log: suggestion apply/dismiss, sync trigger, analysis clear, connection/project CRUD
+- [x] `AuditEvent` model: `userId`, `action`, `resourceType`, `resourceId`, `metadata`, `createdAt`
+- [x] Log: suggestion apply/dismiss, sync trigger, analysis clear, connection/project CRUD, role changes
 - [ ] `appliedByUserId` on `IssueSuggestion` (link write-back to actor)
-- [ ] Admin UI: searchable audit trail
+- [x] Admin UI: audit trail (basic list)
 
 ### Step 15 — Change log & affected issues
 
@@ -260,7 +283,8 @@ flowchart LR
 
 Phases 0–2.5 and Phase 1 MVP are complete (June 2026). Choose by deployment maturity:
 
-1. **Small intranet team** — enable `TOKEN_ENCRYPTION_KEY`, auth + allowlist; optional `AUTO_SYNC_SCHEDULER_ENABLED=true`
-2. **Phase 3b** — webhooks when near-real-time sync matters
-3. **Phase 4 — Governance** — RBAC, admin dashboard, audit, reporting, rollback
-4. **Phase 3c** — Helm/K8s or multi-tenant only when required
+1. **Phase 4 — Bootstrap + governance** — [setup wizard + closed registration](./on-prem-product.md#chosen-approach--instance-bootstrap-auth); finish admin invite UX
+2. **Small intranet team (interim)** — `AUTH_DISABLED=false`, mandatory allowlist, `TOKEN_ENCRYPTION_KEY`, optional `AUTO_SYNC_SCHEDULER_ENABLED=true`
+3. **Phase 3b** — webhooks when near-real-time sync matters
+4. **Phase 3c — Product distribution** — [image-based install](./on-prem-product.md#chosen-approach--production-distribution) at end of Phase 4 (before first external pilot)
+5. **Phase 3c** — Helm/K8s or multi-tenant only when required

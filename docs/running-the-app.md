@@ -157,6 +157,8 @@ curl http://localhost:11434/api/tags
 
 Auth is implemented via **Auth.js v5** with GitHub and/or GitLab OAuth. Local development skips login when `AUTH_DISABLED=true` (default in `.env.example`).
 
+**Production bootstrap (planned):** first OAuth login becomes admin; closed registration afterward — see [on-prem-product.md](./on-prem-product.md).
+
 ### Enable auth locally
 
 ```env
