@@ -16,12 +16,22 @@ function getAllowlist() {
   };
 }
 
+export function normalizeEmail(
+  email: string | null | undefined,
+): string | null {
+  if (!email?.trim()) {
+    return null;
+  }
+
+  return email.trim().toLowerCase();
+}
+
 export function isEmailAllowed(email: string | null | undefined): boolean {
-  if (!email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
     return false;
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
   const { domains, emails } = getAllowlist();
 
   if (domains.length === 0 && emails.length === 0) {

@@ -226,20 +226,19 @@ flowchart LR
 | Operator | Apply write-back (description / duplicate), no connection management |
 | Viewer | Read metrics and suggestions only |
 
-### Step 12b — Instance bootstrap & closed registration (planned)
+### Step 12b — Instance bootstrap & closed registration — partial (June 2026)
 
-> **Chosen model:** [on-prem-product.md § Bootstrap](./on-prem-product.md#chosen-approach--instance-bootstrap-auth) — first OAuth login = first admin; admins can promote more admins; no open registration after setup.
+> **Chosen model:** [on-prem-product.md § Bootstrap](./on-prem-product.md#chosen-approach--instance-bootstrap-auth) — first OAuth login = first admin; admins can promote more admins; closed registration after setup.
 
-- [ ] `setupComplete` flag (DB settings or dedicated model)
-- [ ] `/setup` flow on fresh install; redirect until complete
-- [ ] First OAuth sign-in → `ADMIN` + mark setup complete
-- [ ] **Closed registration:** admin pre-provisions email + role; unknown emails rejected at sign-in
-- [ ] Admin UI: invite / provision user (extends existing `/admin/users`)
-- [ ] Production guard: refuse `AUTH_DISABLED=true` when `NODE_ENV=production`
-- [ ] Production guard: empty allowlist → deny (not allow) after setup
-- [ ] `dev@local` / `ensureDevUser` only in explicit dev bypass — never in prod images
-- [ ] Keep `ADMIN_EMAILS` as optional automation fallback only
-- [ ] Tests + update [intranet-rollout.md](./intranet-rollout.md) acceptance checklist
+- [x] `setupComplete` flag (`AppSettings` model)
+- [x] `/setup` flow on fresh install; redirect until complete
+- [x] First OAuth sign-in → `ADMIN` + mark setup complete
+- [x] **Closed registration:** admin pre-provisions email + role; unknown emails rejected at sign-in
+- [x] Admin UI: invite / provision user (`POST /api/admin/users`, pending invites table)
+- [x] Production guard: refuse `AUTH_DISABLED=true` when `NODE_ENV=production` (`instrumentation.ts`)
+- [x] `dev@local` / `ensureDevUser` only with explicit dev bypass — blocked in production
+- [x] Keep `ADMIN_EMAILS` as optional automation fallback on sign-in
+- [x] Tests + migration backfill for existing installs
 
 ### Step 13 — Admin dashboard — partial (June 2026)
 

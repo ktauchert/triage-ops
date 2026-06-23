@@ -21,8 +21,37 @@ model User {
   auditEvents             AuditEvent[]
   suggestionsApplied      IssueSuggestion[] @relation("SuggestionAppliedBy")
   suggestionsDismissed    IssueSuggestion[] @relation("SuggestionDismissedBy")
+  setupCompletedInstances AppSettings[]     @relation("SetupCompletedBy")
+  invitedProvisionedUsers ProvisionedUser[] @relation("InvitedUsers")
+  provisionedUserLink     ProvisionedUser?  @relation("ProvisionedUserLink")
 
   @@map("users")
+}
+
+/// Singleton instance settings (id = "default").
+model AppSettings {
+  id                     String    @id @default("default")
+  setupComplete          Boolean   @default(false) @map("setup_complete")
+  setupCompletedAt       DateTime? @map("setup_completed_at")
+  setupCompletedByUserId String?   @map("setup_completed_by_user_id")
+  setupCompletedBy       User?     @relation("SetupCompletedBy", fields: [setupCompletedByUserId], references: [id], onDelete: SetNull)
+
+  @@map("app_settings")
+}
+
+/// User invited by admin before first OAuth sign-in.
+model ProvisionedUser {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  role            UserRole  @default(VIEWER)
+  invitedByUserId String?   @map("invited_by_user_id")
+  invitedBy       User?     @relation("InvitedUsers", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  invitedAt       DateTime  @default(now()) @map("invited_at")
+  claimedAt       DateTime? @map("claimed_at")
+  userId          String?   @unique @map("user_id")
+  user            User?     @relation("ProvisionedUserLink", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("provisioned_users")
 }
 
 /// Per-user action audit trail (Phase 4 governance).

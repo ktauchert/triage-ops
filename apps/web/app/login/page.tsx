@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getConfiguredProviders, isAuthDisabled } from "@/lib/auth/config";
+import { isSetupComplete } from "@/lib/auth/setup";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,10 @@ type LoginPageProps = {
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  if (!isAuthDisabled() && !(await isSetupComplete())) {
+    redirect("/setup");
+  }
+
   const session = await auth();
   const { callbackUrl, error } = await searchParams;
 
@@ -56,8 +61,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
           {error === "AccessDenied" ? (
             <div className="glass-subtle rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              Access denied. Your account is not on the allowlist for this
-              instance.
+              Access denied. Your account has not been invited, or your email is
+              not on the allowlist for this instance.
             </div>
           ) : null}
 

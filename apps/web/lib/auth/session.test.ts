@@ -8,6 +8,10 @@ vi.mock("./dev-user", () => ({
   ensureDevUser: vi.fn().mockResolvedValue("dev-local"),
 }));
 
+vi.mock("./setup", () => ({
+  assertSetupAllowsApiAccess: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@triage-ops/db", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@triage-ops/db")>();
   return {

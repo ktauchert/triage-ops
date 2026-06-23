@@ -27,7 +27,20 @@ type UserRow = {
   role: AppUserRole;
 };
 
-export function AdminUsersTable({ users }: { users: UserRow[] }) {
+type PendingInviteRow = {
+  id: string;
+  email: string;
+  role: AppUserRole;
+  invitedAt: Date;
+};
+
+export function AdminUsersTable({
+  users,
+  pendingInvites,
+}: {
+  users: UserRow[];
+  pendingInvites: PendingInviteRow[];
+}) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +78,42 @@ export function AdminUsersTable({ users }: { users: UserRow[] }) {
       {error ? (
         <p className="text-sm text-destructive">{error}</p>
       ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pending invites</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {pendingInvites.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No pending invites. Invited users can sign in once with OAuth.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Invited</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingInvites.map((invite) => (
+                  <TableRow key={invite.id}>
+                    <TableCell>{invite.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{invite.role}</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {invite.invitedAt.toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

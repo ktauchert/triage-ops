@@ -8,6 +8,8 @@ import {
 
 const requireApiSessionMock = vi.hoisted(() => vi.fn());
 const listUsersMock = vi.hoisted(() => vi.fn());
+const listPendingInvitesMock = vi.hoisted(() => vi.fn());
+const inviteUserMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/session", () => ({
   requireApiSession: requireApiSessionMock,
@@ -15,9 +17,11 @@ vi.mock("@/lib/auth/session", () => ({
 
 vi.mock("@/lib/services/admin", () => ({
   listUsers: listUsersMock,
+  listPendingInvites: listPendingInvitesMock,
+  inviteUser: inviteUserMock,
 }));
 
-import { GET } from "./route";
+import { GET, POST } from "./route";
 
 describe("GET /api/admin/users", () => {
   beforeEach(() => {
@@ -26,6 +30,7 @@ describe("GET /api/admin/users", () => {
       testAuthContextWithRole(UserRole.ADMIN),
     );
     listUsersMock.mockResolvedValue([]);
+    listPendingInvitesMock.mockResolvedValue([]);
   });
 
   it("returns 401 when unauthenticated", async () => {
@@ -52,5 +57,30 @@ describe("GET /api/admin/users", () => {
     const data = await response.json();
     expect(data.users).toHaveLength(1);
     expect(data.users[0].id).toBe("u1");
+    expect(data.pendingInvites).toEqual([]);
+  });
+
+  it("creates an invite for admin", async () => {
+    inviteUserMock.mockResolvedValue({
+      id: "invite-1",
+      email: "bob@company.com",
+      role: UserRole.LEAD,
+      invitedAt: new Date("2026-06-21T12:00:00.000Z"),
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "bob@company.com", role: "LEAD" }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(inviteUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({ role: UserRole.ADMIN }),
+      "bob@company.com",
+      UserRole.LEAD,
+    );
   });
 });

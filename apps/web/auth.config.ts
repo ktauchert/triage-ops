@@ -1,15 +1,18 @@
 import type { NextAuthConfig } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import GitLab from "next-auth/providers/gitlab";
-import { UserRole, prisma } from "@triage-ops/db";
-import { isEmailAllowed } from "@/lib/auth/allowlist";
+import { isDevAuthBypassAllowed } from "@/lib/auth/environment";
 import {
   authConfig,
   getConfiguredProviders,
-  isAdminEmail,
   isAuthDisabled,
   type AuthProvider,
 } from "@/lib/auth/config";
+import {
+  applySignInUserState,
+  canSignInWithEmail,
+  isSetupComplete,
+} from "@/lib/auth/setup";
 
 function buildProviders() {
   const configured = new Set<AuthProvider>(getConfiguredProviders());
@@ -47,34 +50,40 @@ export const nextAuthConfig = {
   session: {
     strategy: "jwt",
   },
+  events: {
+    async signIn({ user }) {
+      if (isAuthDisabled() || !user.id) {
+        return;
+      }
+
+      await applySignInUserState(user.id, user.email);
+    },
+  },
   callbacks: {
     async signIn({ user }) {
       if (isAuthDisabled()) {
-        return true;
+        return isDevAuthBypassAllowed();
       }
 
-      if (!isEmailAllowed(user.email)) {
-        return false;
-      }
-
-      if (user.id && isAdminEmail(user.email)) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { role: UserRole.ADMIN },
-        });
-      }
-
-      return true;
+      return canSignInWithEmail(user.email);
     },
-    authorized({ auth: session, request }) {
+    async authorized({ auth: session, request }) {
       if (isAuthDisabled()) {
-        return true;
+        return isDevAuthBypassAllowed();
       }
 
       const { pathname } = request.nextUrl;
 
-      if (pathname === "/login" || pathname.startsWith("/api/auth")) {
+      if (
+        pathname === "/login" ||
+        pathname === "/setup" ||
+        pathname.startsWith("/api/auth")
+      ) {
         return true;
+      }
+
+      if (!(await isSetupComplete())) {
+        return Response.redirect(new URL("/setup", request.nextUrl));
       }
 
       return Boolean(session?.user);

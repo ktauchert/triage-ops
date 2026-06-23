@@ -10,6 +10,7 @@ import {
 
 const requireApiSessionMock = vi.hoisted(() => vi.fn());
 const listUsersMock = vi.hoisted(() => vi.fn());
+const listPendingInvitesMock = vi.hoisted(() => vi.fn());
 const updateUserRoleMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/session", () => ({
@@ -18,6 +19,7 @@ vi.mock("@/lib/auth/session", () => ({
 
 vi.mock("@/lib/services/admin", () => ({
   listUsers: listUsersMock,
+  listPendingInvites: listPendingInvitesMock,
   updateUserRole: updateUserRoleMock,
 }));
 
@@ -31,6 +33,7 @@ describe("GET /api/admin/users", () => {
       testAuthContextWithRole(UserRole.ADMIN),
     );
     listUsersMock.mockResolvedValue([]);
+    listPendingInvitesMock.mockResolvedValue([]);
   });
 
   it("returns 401 when unauthenticated", async () => {

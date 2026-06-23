@@ -1,11 +1,15 @@
 import Link from "next/link";
-import { listUsers } from "@/lib/services/admin";
+import { listPendingInvites, listUsers } from "@/lib/services/admin";
 import { AdminUsersTable } from "./admin-users-table";
+import { InviteUserForm } from "./invite-user-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
-  const users = await listUsers();
+  const [users, pendingInvites] = await Promise.all([
+    listUsers(),
+    listPendingInvites(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -13,8 +17,8 @@ export default async function AdminUsersPage() {
         <div>
           <h2 className="page-heading">Users</h2>
           <p className="page-subheading">
-            Assign roles to control who can sync, analyze, apply suggestions, and
-            manage connections.
+            Invite colleagues by email, assign roles, and control who can sign in
+            after instance setup.
           </p>
         </div>
         <Link
@@ -25,7 +29,12 @@ export default async function AdminUsersPage() {
         </Link>
       </div>
 
-      <AdminUsersTable users={users} />
+      <div className="space-y-3">
+        <h3 className="section-heading">Invite user</h3>
+        <InviteUserForm />
+      </div>
+
+      <AdminUsersTable users={users} pendingInvites={pendingInvites} />
     </div>
   );
 }

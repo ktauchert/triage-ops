@@ -126,8 +126,8 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ### Phase 4 — remaining
 
-- Instance bootstrap (`/setup`, first admin, closed registration) — [on-prem-product.md](./on-prem-product.md)
-- Admin: invite user, auth status dashboard, job overview
+- Instance bootstrap (`/setup`, first admin, closed registration) — **shipped** [on-prem-product.md](./on-prem-product.md)
+- Admin: invite user — **shipped**; auth status dashboard, job overview — open
 - Change log of affected VCS issues + export
 - Impact timeline (metric snapshots, campaign reporting)
 - Rollback / revert for applied write-back (description first, duplicate partial)

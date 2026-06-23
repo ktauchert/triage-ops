@@ -1,10 +1,17 @@
+import { redirect } from "next/navigation";
+import { isAuthDisabled } from "@/lib/auth/config";
+import { isSetupComplete } from "@/lib/auth/setup";
 import { AppSidebar } from "@/components/app-shell";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  if (!isAuthDisabled() && !(await isSetupComplete())) {
+    redirect("/setup");
+  }
+
   return (
     <div className="flex min-h-screen">
       <AppSidebar />

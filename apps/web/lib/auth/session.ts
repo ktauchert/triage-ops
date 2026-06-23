@@ -2,7 +2,9 @@ import { UserRole, prisma } from "@triage-ops/db";
 import { errorResponse } from "@/lib/api";
 import { auth } from "@/auth";
 import { authConfig, type AuthDataScope } from "./config";
+import { isDevAuthBypassAllowed } from "./environment";
 import { ensureDevUser } from "./dev-user";
+import { assertSetupAllowsApiAccess } from "./setup";
 
 export type AuthContext = {
   userId: string;
@@ -38,6 +40,10 @@ async function buildAuthContext(
 
 export async function getAuthContext(): Promise<AuthContext> {
   if (authConfig.disabled) {
+    if (!isDevAuthBypassAllowed()) {
+      throw new Error("Unauthorized");
+    }
+
     const userId = await ensureDevUser();
     return buildAuthContext(userId, "dev@local", "Local Dev", UserRole.ADMIN);
   }
@@ -56,7 +62,16 @@ export async function getAuthContext(): Promise<AuthContext> {
 }
 
 export async function requireApiSession(): Promise<AuthContext | Response> {
+  const setupBlocked = await assertSetupAllowsApiAccess();
+  if (setupBlocked) {
+    return setupBlocked;
+  }
+
   if (authConfig.disabled) {
+    if (!isDevAuthBypassAllowed()) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const userId = await ensureDevUser();
     return buildAuthContext(userId, "dev@local", "Local Dev", UserRole.ADMIN);
   }
@@ -79,6 +94,10 @@ export async function getSessionUser(): Promise<{
   name?: string | null;
 } | null> {
   if (authConfig.disabled) {
+    if (!isDevAuthBypassAllowed()) {
+      return null;
+    }
+
     return { email: "dev@local", name: "Local Dev" };
   }
 

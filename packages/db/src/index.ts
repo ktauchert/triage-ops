@@ -25,4 +25,6 @@ export {
   type SyncRun,
   type User,
   type VcsConnection,
+  type AppSettings,
+  type ProvisionedUser,
 } from "@prisma/client";
