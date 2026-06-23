@@ -146,7 +146,7 @@ Tracked in [phases.md § Phase 3c — Product distribution](./phases.md#phase-3c
 | Private GHCR (or customer registry mirror) | No public pull without credentials |
 | GitHub Release asset: install bundle | Compose + docs, no source |
 | `intranet-rollout.md` | Product path as **primary**; git clone under “Development only” |
-| Optional later: license key / activation | Commercial tier only — not required for v1 product |
+| Optional later: license key / activation | Commercial Pro tier — [editions.md](./editions.md) |
 
 ### Repository visibility
 

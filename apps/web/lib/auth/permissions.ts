@@ -1,4 +1,4 @@
-import type { UserRole } from "@triage-ops/db";
+import { UserRole } from "@triage-ops/db";
 import { errorResponse } from "@/lib/api";
 import type { AuthContext } from "./session";
 
@@ -71,6 +71,46 @@ export function getRoleCapabilities(role: UserRole): RoleCapabilities {
     canAdminUsers: hasPermission(role, "admin.users"),
     canAdminAudit: hasPermission(role, "admin.audit"),
   };
+}
+
+export function getRoleCapabilityLabels(role: UserRole): string[] {
+  const caps = getRoleCapabilities(role);
+  const labels: string[] = [];
+
+  if (caps.canAdminUsers) {
+    labels.push("Admin console");
+  }
+  if (caps.canManageConnections) {
+    labels.push("Manage connections");
+  }
+  if (caps.canManageProjects) {
+    labels.push("Register projects");
+  }
+  if (caps.canSync) {
+    labels.push("Trigger sync");
+  }
+  if (caps.canAnalyze) {
+    labels.push("Run analysis");
+  }
+  if (caps.canEditSettings) {
+    labels.push("Project settings");
+  }
+  if (caps.canDismiss) {
+    labels.push("Dismiss suggestions");
+  }
+  if (caps.canApply) {
+    labels.push("Apply to VCS");
+  }
+
+  if (role === UserRole.VIEWER) {
+    return ["Read-only", "View metrics & suggestions"];
+  }
+
+  if (caps.canApply && !caps.canSync && !caps.canAnalyze) {
+    labels.push("View metrics");
+  }
+
+  return labels;
 }
 
 export function requirePermission(
