@@ -2,11 +2,19 @@ import { IssueSuggestionType, VcsProvider } from "@triage-ops/db";
 import { describe, expect, it } from "vitest";
 import { applySuggestionToVcs } from "./apply-suggestion.js";
 import {
+  duplicateCanonicalComment,
+  duplicateCloseComment,
+} from "./duplicate-sides.js";
+import {
   githubIssueCommentErrorHandler,
   githubIssueCommentHandler,
+  githubIssueCommentsListHandler,
+  githubIssueGetHandler,
   githubIssuePatchErrorHandler,
   githubIssuePatchHandler,
+  gitlabIssueGetHandler,
   gitlabIssueNoteHandler,
+  gitlabIssueNotesListHandler,
   gitlabIssueUpdateHandler,
   gitlabIssueWriteErrorHandler,
   server,
@@ -86,6 +94,9 @@ describe("applySuggestionToVcs", () => {
 
   it("writes GitHub duplicate suggestions", async () => {
     server.use(
+      githubIssueCommentsListHandler("acme", "widgets", 9),
+      githubIssueCommentsListHandler("acme", "widgets", 15),
+      githubIssueGetHandler("acme", "widgets", 15, "open"),
       githubIssueCommentHandler("acme", "widgets", 9),
       githubIssueCommentHandler("acme", "widgets", 15),
       githubIssuePatchHandler("acme", "widgets", 15),
@@ -116,6 +127,7 @@ describe("applySuggestionToVcs", () => {
 
   it("throws when GitHub duplicate comment write fails", async () => {
     server.use(
+      githubIssueCommentsListHandler("acme", "widgets", 15),
       githubIssueCommentErrorHandler("acme", "widgets", 15, 502, "Bad Gateway"),
     );
 
@@ -142,6 +154,9 @@ describe("applySuggestionToVcs", () => {
 
   it("writes GitLab duplicate suggestions", async () => {
     server.use(
+      gitlabIssueNotesListHandler(42, 9),
+      gitlabIssueNotesListHandler(42, 15),
+      gitlabIssueGetHandler(42, 15, "opened"),
       gitlabIssueNoteHandler(42, 9),
       gitlabIssueNoteHandler(42, 15),
       gitlabIssueUpdateHandler(42, 15),
@@ -153,6 +168,43 @@ describe("applySuggestionToVcs", () => {
         baseUrl: "https://gitlab.example.com",
         accessToken: "token",
         externalProjectId: 42,
+        pathWithNamespace: "acme/widgets",
+        type: IssueSuggestionType.DUPLICATE,
+        suggestedText: "Possible duplicate",
+        issueIid: 15,
+        relatedIssueIid: 9,
+      },
+      {
+        primary: { id: "issue-a", gitlabIssueIid: 15 },
+        related: { id: "issue-b", gitlabIssueIid: 9 },
+      },
+    );
+
+    expect(result.localUpdates).toEqual([
+      { issueId: "issue-a", state: "CLOSED" },
+    ]);
+  });
+
+  it("is idempotent when a GitHub duplicate was already applied", async () => {
+    // Canonical = 9 (lower iid), duplicate = 15. Notes already present and the
+    // duplicate already closed: no POST/PATCH handlers registered, so any write
+    // attempt would trigger MSW's unhandled-request error and fail the test.
+    server.use(
+      githubIssueCommentsListHandler("acme", "widgets", 15, [
+        duplicateCloseComment(9),
+      ]),
+      githubIssueCommentsListHandler("acme", "widgets", 9, [
+        duplicateCanonicalComment(15),
+      ]),
+      githubIssueGetHandler("acme", "widgets", 15, "closed"),
+    );
+
+    const result = await applySuggestionToVcs(
+      {
+        provider: VcsProvider.GITHUB,
+        baseUrl: "https://api.github.com",
+        accessToken: "token",
+        externalProjectId: null,
         pathWithNamespace: "acme/widgets",
         type: IssueSuggestionType.DUPLICATE,
         suggestedText: "Possible duplicate",

@@ -1,4 +1,5 @@
 import { getOptionalEnv } from "../../config/env.js";
+import { fetchWithResilience, getOllamaHttpTimeoutMs } from "../http.js";
 
 export class OllamaApiError extends Error {
   constructor(
@@ -61,7 +62,11 @@ async function ollamaFetch(
   config: OllamaClientConfig,
 ): Promise<Response> {
   const url = `${config.host}${path}`;
-  const response = await fetchImpl(url, init);
+  const response = await fetchWithResilience(url, init, {
+    fetchImpl,
+    timeoutMs: getOllamaHttpTimeoutMs(),
+    retries: 0,
+  });
 
   if (!response.ok) {
     const body = await response.text();

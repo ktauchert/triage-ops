@@ -2,12 +2,16 @@ import { IssueSuggestionType, VcsProvider } from "@triage-ops/db";
 import {
   addGitHubIssueComment,
   closeGitHubIssueAsDuplicate,
+  getGitHubIssueState,
+  listGitHubIssueCommentBodies,
   updateGitHubIssueBody,
 } from "../github/write.js";
 import { parseGitHubRepo } from "../github/normalize.js";
 import {
   addGitLabIssueNote,
   closeGitLabIssue,
+  getGitLabIssueState,
+  listGitLabIssueNoteBodies,
   updateGitLabIssueDescription,
 } from "../gitlab/write.js";
 import {
@@ -111,20 +115,45 @@ async function applyGitLabSuggestion(
       ? issues.primary
       : issues.related;
 
-  await addGitLabIssueNote({
+  // Idempotent: a retry after a partial failure must not duplicate notes or
+  // re-close. Check existing notes/state before each mutation.
+  const duplicateCloseBody = duplicateCloseComment(canonicalIid);
+  const canonicalBody = duplicateCanonicalComment(duplicateIid);
+
+  const duplicateNotes = await listGitLabIssueNoteBodies({
     ...base,
     issueIid: duplicateIid,
-    body: duplicateCloseComment(canonicalIid),
   });
-  await addGitLabIssueNote({
+  if (!duplicateNotes.includes(duplicateCloseBody)) {
+    await addGitLabIssueNote({
+      ...base,
+      issueIid: duplicateIid,
+      body: duplicateCloseBody,
+    });
+  }
+
+  const canonicalNotes = await listGitLabIssueNoteBodies({
     ...base,
     issueIid: canonicalIid,
-    body: duplicateCanonicalComment(duplicateIid),
   });
-  await closeGitLabIssue({
+  if (!canonicalNotes.includes(canonicalBody)) {
+    await addGitLabIssueNote({
+      ...base,
+      issueIid: canonicalIid,
+      body: canonicalBody,
+    });
+  }
+
+  const duplicateState = await getGitLabIssueState({
     ...base,
     issueIid: duplicateIid,
   });
+  if (duplicateState !== "closed") {
+    await closeGitLabIssue({
+      ...base,
+      issueIid: duplicateIid,
+    });
+  }
 
   return {
     updatedIssueIds: [canonicalIssue.id, duplicateIssue.id],
@@ -189,20 +218,45 @@ async function applyGitHubSuggestion(
       ? issues.primary
       : issues.related;
 
-  await addGitHubIssueComment({
+  // Idempotent: a retry after a partial failure must not duplicate comments or
+  // re-close. Check existing comments/state before each mutation.
+  const duplicateCloseBody = duplicateCloseComment(canonicalIid);
+  const canonicalBody = duplicateCanonicalComment(duplicateIid);
+
+  const duplicateComments = await listGitHubIssueCommentBodies({
     ...base,
     issueNumber: duplicateIid,
-    body: duplicateCloseComment(canonicalIid),
   });
-  await addGitHubIssueComment({
+  if (!duplicateComments.includes(duplicateCloseBody)) {
+    await addGitHubIssueComment({
+      ...base,
+      issueNumber: duplicateIid,
+      body: duplicateCloseBody,
+    });
+  }
+
+  const canonicalComments = await listGitHubIssueCommentBodies({
     ...base,
     issueNumber: canonicalIid,
-    body: duplicateCanonicalComment(duplicateIid),
   });
-  await closeGitHubIssueAsDuplicate({
+  if (!canonicalComments.includes(canonicalBody)) {
+    await addGitHubIssueComment({
+      ...base,
+      issueNumber: canonicalIid,
+      body: canonicalBody,
+    });
+  }
+
+  const duplicateState = await getGitHubIssueState({
     ...base,
     issueNumber: duplicateIid,
   });
+  if (duplicateState !== "closed") {
+    await closeGitHubIssueAsDuplicate({
+      ...base,
+      issueNumber: duplicateIid,
+    });
+  }
 
   return {
     updatedIssueIds: [canonicalIssue.id, duplicateIssue.id],

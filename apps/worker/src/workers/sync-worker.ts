@@ -6,7 +6,7 @@ import {
 } from "@triage-ops/db";
 import type { NormalizedIssue, SyncJobPayload } from "@triage-ops/shared-types";
 import type { Job } from "bullmq";
-import { acquireLock } from "../lib/lock.js";
+import { acquireLock, startLockHeartbeat } from "../lib/lock.js";
 import { getRedis } from "../lib/redis.js";
 import { fetchProjectIssues } from "../lib/vcs/fetch-project-issues.js";
 import {
@@ -109,8 +109,18 @@ export async function processSyncJob(job: Job<SyncJobPayload>): Promise<void> {
   const lock = await acquireLock(redis, `sync:${projectId}`);
 
   if (!lock) {
+    await prisma.syncRun.update({
+      where: { id: syncRunId },
+      data: {
+        status: SyncStatus.FAILED,
+        completedAt: new Date(),
+        errorMessage: `Sync already in progress for project ${projectId}`,
+      },
+    });
     throw new Error(`Sync already in progress for project ${projectId}`);
   }
+
+  const stopHeartbeat = startLockHeartbeat(redis, lock);
 
   try {
     await prisma.syncRun.update({
@@ -172,6 +182,7 @@ export async function processSyncJob(job: Job<SyncJobPayload>): Promise<void> {
     });
     throw error;
   } finally {
+    stopHeartbeat();
     await lock.release();
   }
 }

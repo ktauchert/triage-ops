@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  assertEncryptionConfigured,
   isEncryptedAccessToken,
   openAccessToken,
   sealAccessToken,
@@ -39,5 +40,25 @@ describe("token-crypto", () => {
     vi.unstubAllEnvs();
 
     expect(() => openAccessToken(sealed)).toThrow(/TOKEN_ENCRYPTION_KEY/);
+  });
+
+  describe("assertEncryptionConfigured", () => {
+    it("is a no-op outside production", () => {
+      vi.stubEnv("NODE_ENV", "development");
+      vi.stubEnv("TOKEN_ENCRYPTION_KEY", "");
+      expect(() => assertEncryptionConfigured()).not.toThrow();
+    });
+
+    it("throws in production when the key is missing", () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("TOKEN_ENCRYPTION_KEY", "");
+      expect(() => assertEncryptionConfigured()).toThrow(/TOKEN_ENCRYPTION_KEY/);
+    });
+
+    it("passes in production when a valid key is set", () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("TOKEN_ENCRYPTION_KEY", TEST_KEY);
+      expect(() => assertEncryptionConfigured()).not.toThrow();
+    });
   });
 });

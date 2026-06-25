@@ -8,7 +8,7 @@ import {
 import type { LlmAnalysisJobPayload } from "@triage-ops/shared-types";
 import type { Job } from "bullmq";
 import { getOllamaConfig, chat, embed } from "../lib/ollama/client.js";
-import { acquireLock } from "../lib/lock.js";
+import { acquireLock, startLockHeartbeat } from "../lib/lock.js";
 import { getRedis } from "../lib/redis.js";
 import { planAnalysisProgress } from "../lib/llm/analysis-progress.js";
 import { embedIssuesBatched } from "../lib/llm/embeddings.js";
@@ -57,6 +57,7 @@ export async function processLlmAnalysisJob(
   }
 
   const ollamaConfig = getOllamaConfig();
+  const stopHeartbeat = startLockHeartbeat(redis, lock, 1800);
 
   try {
     const openIssues = await prisma.issue.findMany({
@@ -232,6 +233,7 @@ export async function processLlmAnalysisJob(
     });
     throw error;
   } finally {
+    stopHeartbeat();
     await lock.release();
   }
 }

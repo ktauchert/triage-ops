@@ -13,6 +13,7 @@ const prismaMock = vi.hoisted(() => ({
 
 const lockMock = vi.hoisted(() => ({
   acquireLock: vi.fn(),
+  startLockHeartbeat: vi.fn(() => () => {}),
 }));
 
 const applyMock = vi.hoisted(() => ({
@@ -123,6 +124,50 @@ describe("processVcsWriteBackJob", () => {
           status: "APPLY_FAILED",
           writeBackError: "GitLab API 403",
         }),
+      }),
+    );
+  });
+
+  it("keeps suggestion APPLYING for retry on a non-final attempt", async () => {
+    prismaMock.issueSuggestion.findFirst.mockResolvedValue(applyingSuggestion());
+    applyMock.applySuggestionToVcs.mockRejectedValue(new Error("503 transient"));
+
+    const job = {
+      data: { projectId: "project-1", suggestionId: "suggestion-1" },
+      opts: { attempts: 3 },
+      attemptsMade: 0,
+    } as unknown as Job;
+
+    await expect(processVcsWriteBackJob(job)).rejects.toThrow("503 transient");
+
+    expect(prismaMock.issueSuggestion.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "suggestion-1" },
+        data: expect.objectContaining({
+          status: "APPLYING",
+          writeBackError: "503 transient",
+        }),
+      }),
+    );
+  });
+
+  it("re-runs a previously APPLY_FAILED suggestion", async () => {
+    prismaMock.issueSuggestion.findFirst.mockResolvedValue(
+      applyingSuggestion({ status: "APPLY_FAILED" }),
+    );
+    applyMock.applySuggestionToVcs.mockResolvedValue({
+      updatedIssueIds: ["issue-1"],
+      localUpdates: [{ issueId: "issue-1", description: "Draft body" }],
+    });
+
+    await processVcsWriteBackJob(
+      createJob({ projectId: "project-1", suggestionId: "suggestion-1" }),
+    );
+
+    expect(applyMock.applySuggestionToVcs).toHaveBeenCalled();
+    expect(prismaMock.issueSuggestion.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: "APPLIED" }),
       }),
     );
   });

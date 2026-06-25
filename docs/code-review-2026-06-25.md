@@ -10,6 +10,27 @@
 
 ---
 
+## Update 2026-06-25 — Alle „Hoch"-Befunde behoben
+
+Nach Erstellung dieses Reviews wurden **alle 15 High-Severity-Befunde** umgesetzt (Workstreams A/B/C). Verifikation: **355 Unit-Tests grün** (db 7, metrics 17, worker 103, web 228), Web-Build + Worker-`tsc` sauber.
+
+| ID | Befund | Fix |
+| --- | --- | --- |
+| H1/H2 | JWT-Session-Lifecycle (Deaktivierung/Löschung) | `session.ts` lädt jetzt `{ role, deactivatedAt }` und gibt **401** bei deaktiviertem/gelöschtem User statt VIEWER-Fallback |
+| H3 | Bootstrap-Race → mehrere Admins | Atomarer `appSettings.updateMany(setupComplete:false→true)`-Claim; nur Gewinner wird ADMIN |
+| H4 | Pre-Setup-Takeover | Allowlist wird im Bootstrap-Fenster erzwungen, sofern konfiguriert |
+| H5/M5 | Kein Fail-Fast bei fehlenden Secrets | `assertEncryptionConfigured()` (Web-`instrumentation.ts` + Worker-`index.ts`) + `AUTH_SECRET`-Prüfung in `assertProductionAuthConfig` |
+| B1 | HTTP-Timeouts + 429/5xx-Backoff | Neuer `lib/http.ts` (`fetchWithResilience`); alle VCS-/Ollama-Pfade geroutet |
+| B2 | Lock-TTL ohne Renewal | `startLockHeartbeat`/`renewLock` in Sync-/LLM-/Write-back-Workern |
+| B3 | Kein Sync-Run-Recovery | `recoverInterruptedSyncRuns()` beim Worker-Start (Sync-Runs FAILED, stale `APPLYING` → `APPLY_FAILED`, Lock-Release) |
+| B4 | Sync-Lock-Failure ließ Run `PENDING` | `sync-worker.ts` setzt `SyncRun` auf FAILED |
+| B5 | Write-back-Retry wirkungslos / Doppel-Kommentare | Retry verarbeitet `APPLYING`+`APPLY_FAILED`; Duplicate-Close idempotent (Read-before-write) |
+| C1 | Worker-Container als root | `apps/worker/Dockerfile`: non-root `USER worker` (UID 1001) |
+| C2 | Release nicht an CI gekoppelt | `ci.yml` als `workflow_call`; `release.yml` `build-and-push` mit `needs: ci` |
+| C3 | Kein Backup/Restore-/Rollback-Runbook | `install/install.md` §6 Backup & Restore, §7 Rollback |
+
+---
+
 ## Executive Summary
 
 TriageOps ist seit dem letzten Review (2026-06-21) deutlich gereift: PAT-Verschlüsselung (AES-256-GCM), API-Rate-Limiting (Redis), per-Projekt Auto-Sync, RBAC mit vier Rollen, Admin-UI (Users/Audit/Jobs), Instance-Bootstrap (`/setup`, geschlossene Registrierung, Invites) und eine Image-basierte On-Prem-Distribution (GHCR + Install-Bundle) sind hinzugekommen. Architektur und Code-Qualität bleiben **stark**; die Testkultur ist breit (326 grüne Unit-Tests, Web-Build sauber).

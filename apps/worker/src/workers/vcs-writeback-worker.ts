@@ -6,7 +6,7 @@ import {
 } from "@triage-ops/db";
 import type { WriteBackJobPayload } from "@triage-ops/shared-types";
 import type { Job } from "bullmq";
-import { acquireLock } from "../lib/lock.js";
+import { acquireLock, startLockHeartbeat } from "../lib/lock.js";
 import { getRedis } from "../lib/redis.js";
 import { applySuggestionToVcs } from "../lib/vcs/apply-suggestion.js";
 
@@ -38,6 +38,8 @@ export async function processVcsWriteBackJob(
     return;
   }
 
+  const stopHeartbeat = startLockHeartbeat(redis, lock);
+
   try {
     const suggestion = await prisma.issueSuggestion.findFirst({
       where: { id: suggestionId, projectId },
@@ -60,7 +62,12 @@ export async function processVcsWriteBackJob(
       throw new Error(`Suggestion ${suggestionId} not found`);
     }
 
-    if (suggestion.status !== IssueSuggestionStatus.APPLYING) {
+    // Accept APPLYING (fresh) and APPLY_FAILED (BullMQ auto-retry / manual
+    // retry) so retried jobs actually re-run instead of no-opping.
+    if (
+      suggestion.status !== IssueSuggestionStatus.APPLYING &&
+      suggestion.status !== IssueSuggestionStatus.APPLY_FAILED
+    ) {
       return;
     }
 
@@ -111,9 +118,26 @@ export async function processVcsWriteBackJob(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await markApplyFailed(suggestionId, message);
+    const maxAttempts = job.opts?.attempts ?? 1;
+    const isFinalAttempt = (job.attemptsMade ?? 0) + 1 >= maxAttempts;
+
+    if (isFinalAttempt) {
+      await markApplyFailed(suggestionId, message);
+    } else {
+      // Keep the row retryable for BullMQ's next attempt while surfacing the
+      // latest error; rethrow so BullMQ schedules the retry.
+      await prisma.issueSuggestion.update({
+        where: { id: suggestionId },
+        data: {
+          status: IssueSuggestionStatus.APPLYING,
+          writeBackError: message,
+        },
+      });
+    }
+
     throw error;
   } finally {
+    stopHeartbeat();
     await lock.release();
   }
 }

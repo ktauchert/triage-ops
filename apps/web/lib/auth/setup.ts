@@ -70,7 +70,15 @@ export async function canSignInWithEmail(
   const setupComplete = await isSetupComplete();
 
   if (!setupComplete) {
-    return !(await hasBootstrapAdmin());
+    if (await hasBootstrapAdmin()) {
+      return false;
+    }
+
+    // Defense in depth: when an allowlist is configured, restrict who can
+    // claim a fresh instance during the bootstrap window. Without an
+    // allowlist, the instance must only be reachable from a trusted network
+    // until setup is complete.
+    return isAllowlistConfigured() ? isEmailAllowed(normalized) : true;
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -114,12 +122,36 @@ export async function applySignInUserState(
   const setupComplete = await isSetupComplete();
 
   if (!setupComplete) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { role: UserRole.ADMIN },
+    // Atomic first-wins claim: only the sign-in that flips setupComplete
+    // false -> true becomes the bootstrap admin, preventing concurrent
+    // sign-ins from each promoting themselves to ADMIN.
+    const claim = await prisma.appSettings.updateMany({
+      where: { id: SETTINGS_ID, setupComplete: false },
+      data: {
+        setupComplete: true,
+        setupCompletedAt: new Date(),
+        setupCompletedByUserId: userId,
+      },
     });
-    await completeSetup(userId);
-    return;
+
+    if (claim.count === 1) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { role: UserRole.ADMIN },
+      });
+
+      await logAuditEvent({
+        userId,
+        action: "instance.setup.complete",
+        resourceType: "AppSettings",
+        resourceId: SETTINGS_ID,
+      });
+
+      return;
+    }
+
+    // Lost the bootstrap race — fall through and treat this as a normal
+    // sign-in (provisioned invite / admin-email handling below).
   }
 
   const provisioned = await prisma.provisionedUser.findUnique({

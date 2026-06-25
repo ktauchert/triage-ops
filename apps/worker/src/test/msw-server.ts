@@ -46,6 +46,28 @@ export function gitlabIssueNoteHandler(projectId: number, issueIid: number) {
   );
 }
 
+export function gitlabIssueNotesListHandler(
+  projectId: number,
+  issueIid: number,
+  bodies: string[] = [],
+) {
+  return http.get(
+    `https://gitlab.example.com/api/v4/projects/${projectId}/issues/${issueIid}/notes`,
+    () => HttpResponse.json(bodies.map((body, index) => ({ id: index + 1, body }))),
+  );
+}
+
+export function gitlabIssueGetHandler(
+  projectId: number,
+  issueIid: number,
+  state = "opened",
+) {
+  return http.get(
+    `https://gitlab.example.com/api/v4/projects/${projectId}/issues/${issueIid}`,
+    () => HttpResponse.json({ iid: issueIid, state }),
+  );
+}
+
 export function gitlabIssueWriteErrorHandler(
   projectId: number,
   issueIid: number,
@@ -92,6 +114,30 @@ export function githubIssueCommentHandler(
   return http.post(
     `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
     () => HttpResponse.json({ id: 1 }),
+  );
+}
+
+export function githubIssueCommentsListHandler(
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  bodies: string[] = [],
+) {
+  return http.get(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
+    () => HttpResponse.json(bodies.map((body, index) => ({ id: index + 1, body }))),
+  );
+}
+
+export function githubIssueGetHandler(
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  state = "open",
+) {
+  return http.get(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`,
+    () => HttpResponse.json({ number: issueNumber, state }),
   );
 }
 

@@ -4,6 +4,7 @@ import type {
   GitHubIssuesPage,
 } from "@triage-ops/shared-types";
 import { DEFAULT_GITHUB_API_URL } from "@triage-ops/shared-types";
+import { fetchWithResilience } from "../http.js";
 
 export class GitHubApiError extends Error {
   constructor(
@@ -74,13 +75,17 @@ export async function fetchGitHubIssues(
   url.searchParams.set("sort", "updated");
   url.searchParams.set("direction", "asc");
 
-  const response = await fetchImpl(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${params.accessToken}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
+  const response = await fetchWithResilience(
+    url.toString(),
+    {
+      headers: {
+        Authorization: `Bearer ${params.accessToken}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
     },
-  });
+    { fetchImpl },
+  );
 
   if (!response.ok) {
     const body = await response.text().catch(() => undefined);

@@ -72,6 +72,8 @@ Adjust model names if you changed `OLLAMA_CHAT_MODEL` / `OLLAMA_EMBED_MODEL` in 
 
 ## 5. Upgrades
 
+> Always take a fresh database backup **before** upgrading — see [Backup and restore](#6-backup-and-restore). Migrations are forward-only; a backup is your rollback path.
+
 When your vendor releases a new version:
 
 ```bash
@@ -81,6 +83,61 @@ docker compose -f docker-compose.prod.yml --profile production up -d
 ```
 
 Replace `docker-compose.prod.yml` and `.env.example` from the new install bundle if image tags changed. Your `.env` secrets are preserved.
+
+## 6. Backup and restore
+
+All durable state lives in **Postgres** (issues, suggestions, users, connections, encrypted PATs). Redis holds only transient job state and Ollama holds re-pullable models, so a Postgres backup plus your `.env` is sufficient to restore the instance.
+
+> Keep `.env` (and especially `TOKEN_ENCRYPTION_KEY`) backed up **separately and securely**. Without the same `TOKEN_ENCRYPTION_KEY`, encrypted VCS tokens in a restored database cannot be decrypted and must be re-entered.
+
+### Back up the database
+
+```bash
+# Logical dump (recommended) — writes a compressed, restorable archive
+docker compose -f docker-compose.prod.yml exec -T postgres \
+  pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB" > triage-ops-$(date +%F).dump
+```
+
+Store the dump and a copy of `.env` in encrypted, access-restricted storage. Automate this on a schedule (e.g. a nightly cron job) and test restores periodically.
+
+### Restore the database
+
+```bash
+# Bring up only the database
+docker compose -f docker-compose.prod.yml up -d postgres
+
+# Restore into a clean database (drops and recreates objects)
+cat triage-ops-2026-06-25.dump | docker compose -f docker-compose.prod.yml exec -T postgres \
+  pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists
+
+# Start the rest of the stack
+docker compose -f docker-compose.prod.yml --profile production up -d
+```
+
+For a full disaster-recovery rebuild on a new host: install the bundle, restore the same `.env`, restore the dump, then `--profile production up -d`. Do **not** run the `migrate` profile against a freshly restored database unless you are upgrading — the dump already contains the schema at its captured version.
+
+## 7. Rollback a failed upgrade
+
+If an upgrade fails (bad migration, broken release, failing health checks), roll back to the previous version:
+
+```bash
+# 1. Stop application containers (leave Postgres running if reachable)
+docker compose -f docker-compose.prod.yml --profile production down
+
+# 2. Pin the previous version in the bundle and pull it
+#    Set TRIAGE_OPS_VERSION to the last known-good tag in .env (or the compose file)
+docker compose -f docker-compose.prod.yml pull
+
+# 3. Restore the pre-upgrade database backup (required if the new version
+#    applied migrations the old version cannot read)
+cat triage-ops-<pre-upgrade-date>.dump | docker compose -f docker-compose.prod.yml exec -T postgres \
+  pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists
+
+# 4. Start the previous version
+docker compose -f docker-compose.prod.yml --profile production up -d
+```
+
+Because migrations are forward-only, downgrading the image **without** restoring the matching pre-upgrade backup can leave the old code running against a newer schema. Always restore the backup taken in step 5's pre-upgrade note when rolling back across a migration.
 
 ## Registry access
 

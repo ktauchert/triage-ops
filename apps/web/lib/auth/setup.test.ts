@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const prismaMock = vi.hoisted(() => ({
   appSettings: {
     upsert: vi.fn(),
+    updateMany: vi.fn(),
   },
   user: {
     count: vi.fn(),
@@ -50,6 +51,7 @@ vi.mock("@/lib/services/audit", () => ({
 import { isAuthDisabled } from "./config";
 import { isEmailAllowed } from "./allowlist";
 import {
+  applySignInUserState,
   canSignInWithEmail,
   completeSetup,
   isSetupComplete,
@@ -67,6 +69,8 @@ describe("setup auth", () => {
     prismaMock.user.count.mockResolvedValue(0);
     prismaMock.user.findUnique.mockResolvedValue(null);
     prismaMock.provisionedUser.findUnique.mockResolvedValue(null);
+    prismaMock.appSettings.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.user.update.mockResolvedValue({ id: "u1" });
   });
 
   it("reports setup complete when settings flag is true", async () => {
@@ -155,5 +159,40 @@ describe("setup auth", () => {
     vi.mocked(isAuthDisabled).mockReturnValue(true);
     await expect(isSetupComplete()).resolves.toBe(true);
     await expect(canSignInWithEmail("any@example.com")).resolves.toBe(true);
+  });
+
+  it("enforces the allowlist during bootstrap when configured", async () => {
+    vi.stubEnv("ALLOWED_EMAIL_DOMAINS", "company.com");
+    vi.mocked(isEmailAllowed).mockReturnValue(false);
+
+    await expect(canSignInWithEmail("outsider@evil.com")).resolves.toBe(false);
+
+    vi.unstubAllEnvs();
+  });
+
+  it("promotes the bootstrap winner to ADMIN exactly once", async () => {
+    prismaMock.appSettings.updateMany.mockResolvedValue({ count: 1 });
+
+    await applySignInUserState("first-user", "first@company.com");
+
+    expect(prismaMock.appSettings.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "default", setupComplete: false },
+      }),
+    );
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: "first-user" },
+      data: { role: "ADMIN" },
+    });
+  });
+
+  it("does not promote a user that loses the bootstrap race", async () => {
+    prismaMock.appSettings.updateMany.mockResolvedValue({ count: 0 });
+
+    await applySignInUserState("second-user", "second@company.com");
+
+    expect(prismaMock.user.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: { role: "ADMIN" } }),
+    );
   });
 });

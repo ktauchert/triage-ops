@@ -15,24 +15,24 @@ export type AuthContext = {
   name?: string | null;
 };
 
-async function loadUserRole(userId: string): Promise<UserRole> {
-  const user = await prisma.user.findUnique({
+async function loadUser(
+  userId: string,
+): Promise<{ role: UserRole; deactivatedAt: Date | null } | null> {
+  return prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true },
+    select: { role: true, deactivatedAt: true },
   });
-
-  return user?.role ?? UserRole.VIEWER;
 }
 
-async function buildAuthContext(
+function buildAuthContext(
   userId: string,
+  role: UserRole,
   email?: string | null,
   name?: string | null,
-  role?: UserRole,
-): Promise<AuthContext> {
+): AuthContext {
   return {
     userId,
-    role: role ?? (await loadUserRole(userId)),
+    role,
     dataScope: authConfig.dataScope,
     email,
     name,
@@ -46,7 +46,7 @@ export async function getAuthContext(): Promise<AuthContext> {
     }
 
     const userId = await ensureDevUser();
-    return buildAuthContext(userId, "dev@local", "Local Dev", UserRole.ADMIN);
+    return buildAuthContext(userId, UserRole.ADMIN, "dev@local", "Local Dev");
   }
 
   const session = await auth();
@@ -55,8 +55,14 @@ export async function getAuthContext(): Promise<AuthContext> {
     throw new Error("Unauthorized");
   }
 
+  const user = await loadUser(session.user.id);
+  if (!user || user.deactivatedAt) {
+    throw new Error("Unauthorized");
+  }
+
   return buildAuthContext(
     session.user.id,
+    user.role,
     session.user.email,
     session.user.name,
   );
@@ -78,12 +84,7 @@ export async function requireApiSession(
     }
 
     const userId = await ensureDevUser();
-    context = await buildAuthContext(
-      userId,
-      "dev@local",
-      "Local Dev",
-      UserRole.ADMIN,
-    );
+    context = buildAuthContext(userId, UserRole.ADMIN, "dev@local", "Local Dev");
   } else {
     const session = await auth();
 
@@ -91,8 +92,14 @@ export async function requireApiSession(
       return errorResponse("Unauthorized", 401);
     }
 
-    context = await buildAuthContext(
+    const user = await loadUser(session.user.id);
+    if (!user || user.deactivatedAt) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    context = buildAuthContext(
       session.user.id,
+      user.role,
       session.user.email,
       session.user.name,
     );

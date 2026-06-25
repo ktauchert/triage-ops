@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { acquireLock, isLockHeld, releaseLock } from "./lock.js";
+import {
+  acquireLock,
+  isLockHeld,
+  releaseLock,
+  renewLock,
+  startLockHeartbeat,
+} from "./lock.js";
 
 type MockRedis = {
   set: ReturnType<typeof vi.fn>;
@@ -85,5 +91,54 @@ describe("releaseLock", () => {
     );
 
     expect(released).toBe(false);
+  });
+});
+
+describe("renewLock", () => {
+  it("pexpires the key with the token guard and ttl in ms", async () => {
+    const redis = createMockRedis();
+    redis.eval.mockResolvedValue(1);
+
+    const renewed = await renewLock(
+      redis as never,
+      "triage-ops:lock:project:abc",
+      "token-123",
+      300,
+    );
+
+    expect(renewed).toBe(true);
+    expect(redis.eval).toHaveBeenCalledWith(
+      expect.stringContaining("pexpire"),
+      1,
+      "triage-ops:lock:project:abc",
+      "token-123",
+      "300000",
+    );
+  });
+});
+
+describe("startLockHeartbeat", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("renews the lock on each interval and stops when asked", async () => {
+    const redis = createMockRedis();
+    redis.eval.mockResolvedValue(1);
+
+    const stop = startLockHeartbeat(
+      redis as never,
+      { key: "triage-ops:lock:sync:p1", token: "t1", release: async () => true },
+      300,
+    );
+
+    await vi.advanceTimersByTimeAsync(100_000);
+    expect(redis.eval).toHaveBeenCalledTimes(1);
+
+    stop();
+    await vi.advanceTimersByTimeAsync(200_000);
+    expect(redis.eval).toHaveBeenCalledTimes(1);
+
+    vi.useRealTimers();
   });
 });

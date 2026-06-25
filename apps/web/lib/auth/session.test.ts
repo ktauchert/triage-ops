@@ -29,10 +29,11 @@ vi.mock("@triage-ops/db", async (importOriginal) => {
 });
 
 import { auth } from "@/auth";
-import { UserRole } from "@triage-ops/db";
+import { UserRole, prisma } from "@triage-ops/db";
 import { requireApiSession } from "./session";
 
 const mockedAuth = vi.mocked(auth);
+const mockedFindUnique = vi.mocked(prisma.user.findUnique);
 
 describe("requireApiSession", () => {
   afterEach(() => {
@@ -95,5 +96,42 @@ describe("requireApiSession", () => {
       email: "alice@company.com",
       name: "Alice",
     });
+  });
+
+  it("returns 401 when the user has been deactivated", async () => {
+    vi.stubEnv("AUTH_DISABLED", "false");
+    mockedAuth.mockResolvedValue({
+      user: { id: "user-abc", email: "alice@company.com", name: "Alice" },
+      expires: new Date().toISOString(),
+    });
+    mockedFindUnique.mockResolvedValue({
+      role: UserRole.LEAD,
+      deactivatedAt: new Date(),
+    } as never);
+
+    const session = await requireApiSession(
+      new Request("http://localhost/api/test"),
+    );
+    expect(session).toBeInstanceOf(Response);
+    if (session instanceof Response) {
+      expect(session.status).toBe(401);
+    }
+  });
+
+  it("returns 401 when the user no longer exists", async () => {
+    vi.stubEnv("AUTH_DISABLED", "false");
+    mockedAuth.mockResolvedValue({
+      user: { id: "ghost", email: "ghost@company.com", name: "Ghost" },
+      expires: new Date().toISOString(),
+    });
+    mockedFindUnique.mockResolvedValue(null);
+
+    const session = await requireApiSession(
+      new Request("http://localhost/api/test"),
+    );
+    expect(session).toBeInstanceOf(Response);
+    if (session instanceof Response) {
+      expect(session.status).toBe(401);
+    }
   });
 });

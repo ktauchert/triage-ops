@@ -3,6 +3,7 @@ import type {
   GitLabIssueRaw,
   GitLabIssuesPage,
 } from "@triage-ops/shared-types";
+import { fetchWithResilience } from "../http.js";
 
 export class GitLabApiError extends Error {
   constructor(
@@ -65,12 +66,16 @@ export async function fetchGitLabIssues(
   url.searchParams.set("order_by", "updated_at");
   url.searchParams.set("sort", "asc");
 
-  const response = await fetchImpl(url.toString(), {
-    headers: {
-      "PRIVATE-TOKEN": params.accessToken,
-      Accept: "application/json",
+  const response = await fetchWithResilience(
+    url.toString(),
+    {
+      headers: {
+        "PRIVATE-TOKEN": params.accessToken,
+        Accept: "application/json",
+      },
     },
-  });
+    { fetchImpl },
+  );
 
   if (!response.ok) {
     const body = await response.text().catch(() => undefined);

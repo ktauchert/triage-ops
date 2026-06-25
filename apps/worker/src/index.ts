@@ -1,7 +1,9 @@
+import { assertEncryptionConfigured } from "@triage-ops/db";
 import { QUEUE_NAMES } from "@triage-ops/shared-types";
 import { Worker } from "bullmq";
 import { getOptionalEnv } from "./config/env.js";
 import { recoverInterruptedLlmRuns } from "./lib/llm/recover.js";
+import { recoverInterruptedSyncRuns } from "./lib/recover-sync.js";
 import { closeRedis, getRedis } from "./lib/redis.js";
 import { getQueueConnection } from "./queues/sync-queue.js";
 import { processSyncJob } from "./workers/sync-worker.js";
@@ -9,6 +11,8 @@ import { processLlmAnalysisJob } from "./workers/llm-analysis-worker.js";
 import { processVcsWriteBackJob } from "./workers/vcs-writeback-worker.js";
 import { processAutoSyncJob } from "./workers/auto-sync-worker.js";
 import { registerAutoSyncSchedule } from "./queues/auto-sync-queue.js";
+
+assertEncryptionConfigured();
 
 const syncConcurrency = parseInt(
   getOptionalEnv("WORKER_CONCURRENCY", "2"),
@@ -113,6 +117,13 @@ process.on("SIGTERM", shutdown);
 const recoveredRuns = await recoverInterruptedLlmRuns();
 if (recoveredRuns > 0) {
   console.log(`[llm] Recovered ${recoveredRuns} interrupted analysis run(s)`);
+}
+
+const recoveredSyncRuns = await recoverInterruptedSyncRuns();
+if (recoveredSyncRuns > 0) {
+  console.log(
+    `[sync] Recovered ${recoveredSyncRuns} interrupted sync/write-back run(s)`,
+  );
 }
 
 await registerAutoSyncSchedule();

@@ -36,6 +36,47 @@ export async function acquireLock(
   };
 }
 
+/** Extend the lock TTL only if we still own it (token match). */
+export async function renewLock(
+  redis: Redis,
+  key: string,
+  token: string,
+  ttlSeconds: number,
+): Promise<boolean> {
+  const script = `
+    if redis.call("get", KEYS[1]) == ARGV[1] then
+      return redis.call("pexpire", KEYS[1], ARGV[2])
+    else
+      return 0
+    end
+  `;
+  const result = await redis.eval(script, 1, key, token, String(ttlSeconds * 1000));
+  return result === 1;
+}
+
+/**
+ * Periodically renew a held lock so long-running jobs do not lose it when the
+ * TTL elapses. Returns a stop function to call (in `finally`) before release.
+ */
+export function startLockHeartbeat(
+  redis: Redis,
+  handle: LockHandle,
+  ttlSeconds = 300,
+): () => void {
+  const intervalMs = Math.max(1000, Math.floor((ttlSeconds * 1000) / 3));
+  const timer = setInterval(() => {
+    void renewLock(redis, handle.key, handle.token, ttlSeconds).catch(() => {
+      /* best-effort renewal; lock TTL provides the safety net */
+    });
+  }, intervalMs);
+
+  if (typeof timer.unref === "function") {
+    timer.unref();
+  }
+
+  return () => clearInterval(timer);
+}
+
 /** Release lock only if we still own it (token match). */
 export async function releaseLock(
   redis: Redis,

@@ -16,6 +16,7 @@ const prismaMock = vi.hoisted(() => ({
 
 const lockMock = vi.hoisted(() => ({
   acquireLock: vi.fn(),
+  startLockHeartbeat: vi.fn(() => () => {}),
 }));
 
 const ollamaMock = vi.hoisted(() => ({

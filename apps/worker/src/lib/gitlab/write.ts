@@ -1,4 +1,5 @@
 import { GitLabApiError, GitLabValidationError } from "./client.js";
+import { fetchWithResilience } from "../http.js";
 
 export type FetchFn = typeof fetch;
 
@@ -43,15 +44,19 @@ async function gitLabRequest(
   body?: Record<string, unknown>,
   fetchImpl: FetchFn = fetch,
 ): Promise<void> {
-  const response = await fetchImpl(url, {
-    method,
-    headers: {
-      "PRIVATE-TOKEN": accessToken,
-      Accept: "application/json",
-      ...(body ? { "Content-Type": "application/json" } : {}),
+  const response = await fetchWithResilience(
+    url,
+    {
+      method,
+      headers: {
+        "PRIVATE-TOKEN": accessToken,
+        Accept: "application/json",
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
     },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+    { fetchImpl },
+  );
 
   if (!response.ok) {
     const responseBody = await response.text().catch(() => undefined);
@@ -61,6 +66,60 @@ async function gitLabRequest(
       responseBody,
     );
   }
+}
+
+async function gitLabGet<T>(
+  url: string,
+  accessToken: string,
+  fetchImpl: FetchFn = fetch,
+): Promise<T> {
+  const response = await fetchWithResilience(
+    url,
+    {
+      headers: {
+        "PRIVATE-TOKEN": accessToken,
+        Accept: "application/json",
+      },
+    },
+    { fetchImpl },
+  );
+
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => undefined);
+    throw new GitLabApiError(
+      `GitLab API request failed with status ${response.status}`,
+      response.status,
+      responseBody,
+    );
+  }
+
+  return (await response.json()) as T;
+}
+
+export async function getGitLabIssueState(
+  params: GitLabWriteParams,
+  fetchImpl?: FetchFn,
+): Promise<string> {
+  validateWriteParams(params);
+  const data = await gitLabGet<{ state: string }>(
+    issueUrl(params),
+    params.accessToken,
+    fetchImpl,
+  );
+  return data.state;
+}
+
+export async function listGitLabIssueNoteBodies(
+  params: GitLabWriteParams,
+  fetchImpl?: FetchFn,
+): Promise<string[]> {
+  validateWriteParams(params);
+  const data = await gitLabGet<Array<{ body?: string }>>(
+    `${issueUrl(params)}/notes`,
+    params.accessToken,
+    fetchImpl,
+  );
+  return data.map((note) => note.body ?? "");
 }
 
 export async function updateGitLabIssueDescription(

@@ -19,12 +19,15 @@ RUN npm run build -w @triage-ops/worker
 FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/apps/worker/package.json ./apps/worker/package.json
-COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
-COPY --from=builder /app/packages/db ./packages/db
-COPY --from=builder /app/packages/shared-types ./packages/shared-types
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 worker
+COPY --from=builder --chown=worker:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=worker:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=worker:nodejs /app/apps/worker/package.json ./apps/worker/package.json
+COPY --from=builder --chown=worker:nodejs /app/apps/worker/dist ./apps/worker/dist
+COPY --from=builder --chown=worker:nodejs /app/packages/db ./packages/db
+COPY --from=builder --chown=worker:nodejs /app/packages/shared-types ./packages/shared-types
+USER worker
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "process.exit(0)"
 CMD ["node", "apps/worker/dist/index.js"]
