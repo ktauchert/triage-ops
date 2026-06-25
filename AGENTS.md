@@ -28,6 +28,8 @@ npm run dev:worker           # BullMQ sync + llm-analysis + vcs-writeback worker
 
 GitLab test data (optional): `npm run gitlab:seed` then sync from Projects page.
 
+**Production install (customers):** GitHub Release install bundle + GHCR pull — no git clone. See [install/install.md](../install/install.md). Developers use `git clone` + `docker compose` as below.
+
 ---
 
 ## Where code goes

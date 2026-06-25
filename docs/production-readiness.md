@@ -58,12 +58,12 @@ Minimum to run on a real intranet VM with real users:
 Minimum to hand a customer an install they can run without your repo:
 
 - [ ] All Gate A items
-- [ ] `docker-compose.prod.yml` — `image:` pins only, no `build:`
-- [ ] CI publishes `web` + `worker` images on semver git tag
-- [ ] Private container registry (GHCR or customer mirror)
-- [ ] Install bundle (ZIP): compose + `.env.example` + `install.md` + license
-- [ ] Customer docs: pull → configure → migrate → up → `/setup`
-- [ ] Documented upgrade path: `pull` → `migrate` → `up -d`
+- [x] `docker-compose.prod.yml` — `image:` pins only, no `build:`
+- [x] CI publishes `web` + `worker` images on semver git tag
+- [x] Private container registry (GHCR or customer mirror)
+- [x] Install bundle (ZIP): compose + `.env.example` + `install.md` + license
+- [x] Customer docs: pull → configure → migrate → up → `/setup`
+- [x] Documented upgrade path: `pull` → `migrate` → `up -d`
 - [ ] One dry-run: install from bundle on a clean VM **without** the monorepo
 
 **Est. effort:** ~3–5 days engineering (distribution pipeline + docs + dry-run).
@@ -76,14 +76,14 @@ Minimum to hand a customer an install they can run without your repo:
 
 | Task | Owner | Est. | Done |
 |------|-------|------|------|
-| Add `docker-compose.prod.yml` at repo root | Dev | 0.5 d | [ ] |
-| Pin image names/tags (`ghcr.io/<org>/triage-ops-web`, `…-worker`) | Dev | 0.5 d | [ ] |
-| CI job: on tag `v*`, build + push both images | Dev | 1 d | [ ] |
-| Create `install/` template folder for release ZIP | Dev | 0.5 d | [ ] |
-| GitHub Release workflow: attach install bundle | Dev | 0.5 d | [ ] |
-| Registry access: per-customer read token or org token | Ops | 0.5 d | [ ] |
+| Add `docker-compose.prod.yml` at repo root | Dev | 0.5 d | [x] |
+| Pin image names/tags (`ghcr.io/ktauchert/triage-ops-web`, `…-worker`) | Dev | 0.5 d | [x] |
+| CI job: on tag `v*`, build + push both images | Dev | 1 d | [x] |
+| Create `install/` template folder for release ZIP | Dev | 0.5 d | [x] |
+| GitHub Release workflow: attach install bundle | Dev | 0.5 d | [x] |
+| Registry access: per-customer read token or org token | Ops | 0.5 d | [x] |
 | Dry-run install on clean VM from bundle only | Dev/Ops | 1 d | [ ] |
-| Update [intranet-rollout.md](./intranet-rollout.md): product path = primary | Docs | 0.5 d | [ ] |
+| Update [intranet-rollout.md](./intranet-rollout.md): product path = primary | Docs | 0.5 d | [x] |
 
 **Deliverable:** Customer receives `triage-ops-install-x.y.z.zip`, never clones git.
 

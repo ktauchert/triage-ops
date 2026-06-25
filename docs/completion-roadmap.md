@@ -30,7 +30,7 @@ TriageOps runs **entirely inside the customer network**:
 | Phases 0–2.5 (core product) | ✅ 100% | Sync, metrics, LLM, write-back |
 | Phase 3a (security) | ✅ ~95% | Encryption ✅ · rate limits ✅ · docs ✅ · SSO deferred |
 | Phase 3b (automation) | ~70% | Auto-sync ✅ · webhooks ❌ |
-| Phase 3c (distribution / scale) | ~20% | Dockerfiles ✅ · images/bundle/Helm ❌ |
+| Phase 3c (distribution / scale) | ~85% | Images/bundle/CI ✅ · Helm ❌ · dry-run pending |
 | Phase 4 (governance) | ~75% | RBAC, admin console, audit largely done |
 | Phase 15–17 (change log, reporting, rollback) | 0% | Not started |
 
@@ -43,7 +43,7 @@ TriageOps runs **entirely inside the customer network**:
 All must be checked before calling the product complete for on-prem SME customers:
 
 - [ ] [Security](./security.md) checklist signed off (HTTPS, secrets, network, rate limits)
-- [ ] Gate B distribution pipeline works end-to-end (install bundle, no monorepo)
+- [ ] Gate B distribution pipeline works end-to-end (install bundle, no monorepo) — **pipeline shipped; dry-run on clean VM pending**
 - [ ] [Intranet Rollout](./intranet-rollout.md) completed on a **clean VM from install bundle only**
 - [ ] Bootstrap + invite flow tested with a second real user
 - [ ] Sync + analyze + apply tested against GitHub and GitLab
@@ -106,15 +106,15 @@ All must be checked before calling the product complete for on-prem SME customer
 
 ### Tasks
 
-- [ ] Add `docker-compose.prod.yml` at repo root (`image:` pins only, no `build:`)
-- [ ] Pin image names/tags (`ghcr.io/<org>/triage-ops-web`, `…-worker`)
-- [ ] CI job: on tag `v*`, build + push both images
-- [ ] Create `install/` template folder for release ZIP
-- [ ] GitHub Release workflow: attach install bundle
-- [ ] Document registry access (per-customer read token or org token)
+- [x] Add `docker-compose.prod.yml` at repo root (`image:` pins only, no `build:`)
+- [x] Pin image names/tags (`ghcr.io/ktauchert/triage-ops-web`, `…-worker`)
+- [x] CI job: on tag `v*`, build + push both images (`.github/workflows/release.yml`)
+- [x] Create `install/` template folder for release ZIP
+- [x] GitHub Release workflow: attach install bundle
+- [x] Document registry access (per-customer read token or org token) — `install/install.md`
 - [ ] Dry-run install on clean VM from bundle **without** monorepo
-- [ ] Update [intranet-rollout.md](./intranet-rollout.md) — product path is primary
-- [ ] Document customer upgrade path: `pull` → `migrate` → `up -d`
+- [x] Update [intranet-rollout.md](./intranet-rollout.md) — product path is primary
+- [x] Document customer upgrade path: `pull` → `migrate` → `up -d`
 
 ### Target install bundle layout
 
@@ -198,7 +198,7 @@ Work top to bottom. Each block has a clear ship gate before moving on.
 | Block | Workstreams | Est. effort | Ship gate |
 |-------|-------------|-------------|-----------|
 | **A** | 1 ✅ + 2 ✅ | ~2 weeks | Security signed off; admin UI operable |
-| **B** | 3 | ~1 week | Clean-VM install from bundle |
+| **B** | 3 ✅ (dry-run pending) | ~1 week | Clean-VM install from bundle |
 | **C** | 4 + ops runbooks | ~1 week | Webhooks + backup/upgrade docs tested |
 | **D** | 5 (Step 15) | ~1 week | Change log + CSV export |
 | **E** | 5 (Step 16) | ~1–2 weeks | Impact timeline on dashboard |
@@ -209,13 +209,11 @@ Work top to bottom. Each block has a clear ship gate before moving on.
 
 ### Next up (Block B)
 
-Workstreams 1 and 2 are **done**. Continue with product distribution:
+Workstreams 1–3 **code is shipped**. Remaining Block B gate:
 
-1. `docker-compose.prod.yml` + CI image publish (Workstream 3)
-2. Dry-run install from bundle on a clean VM
+1. Tag a release (`git tag v0.1.0 && git push origin v0.1.0`) to publish GHCR images + install ZIP
+2. Dry-run install from bundle on a clean VM (`install/install.md`, `scripts/verify-prod-install.sh`)
 3. Then Workstream 4 (webhooks) or Workstream 5 (governance depth) as needed
-
-Then run a clean-VM dry-run from the install bundle.
 
 ---
 

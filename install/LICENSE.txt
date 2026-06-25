@@ -1,0 +1,16 @@
+TriageOps — Proprietary Software License
+
+Copyright (c) 2026 TriageOps contributors. All rights reserved.
+
+This software is licensed, not sold. You may use TriageOps only under a
+written agreement with the vendor or under the terms provided with your
+install bundle.
+
+You may not copy, modify, merge, publish, distribute, sublicense, or sell
+copies of this software except as expressly permitted by your license agreement.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+For licensing inquiries, contact your TriageOps vendor representative.

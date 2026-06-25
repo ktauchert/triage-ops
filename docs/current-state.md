@@ -130,14 +130,15 @@ This document describes what is **implemented**, **partially implemented**, and 
 ### Phase 4 — remaining
 
 - Instance bootstrap (`/setup`, first admin, closed registration) — **shipped** [on-prem-product.md](./on-prem-product.md)
-- Admin: invite user — **shipped**; auth status dashboard, job overview — open
+- Admin: invite user — **shipped**; auth status dashboard, job overview — **shipped**
 - Change log of affected VCS issues + export
 - Impact timeline (metric snapshots, campaign reporting)
 - Rollback / revert for applied write-back (description first, duplicate partial)
 
 ### Phase 3c — product distribution
 
-- `docker-compose.prod.yml`, CI image push to private registry, install bundle — [on-prem-product.md](./on-prem-product.md)
+- `docker-compose.prod.yml`, CI image push to GHCR, install bundle — **shipped** [on-prem-product.md](./on-prem-product.md) · [install/install.md](../install/install.md)
+- Dry-run from bundle on clean VM — pending ops validation
 
 See [Implementation Phases](./phases.md#phase-4--governance-admin--operations-in-progress) for the full checklist.
 

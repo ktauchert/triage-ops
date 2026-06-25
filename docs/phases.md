@@ -188,11 +188,11 @@ flowchart LR
 
 | Item | Status | Effort | When you need it |
 |------|--------|--------|------------------|
-| Self-hosted install guide (Compose) | [ ] partial | **~1 day** — [intranet-rollout.md](./intranet-rollout.md) | Any production deploy |
-| **Product distribution (image-based)** | [ ] planned | **~3–5 days** | Before external pilot — [production-readiness.md](./production-readiness.md) |
-| `docker-compose.prod.yml` (image pins, no `build:`) | [ ] | part of distribution | Product releases |
-| CI: push `web` + `worker` images to private GHCR on tag | [ ] | part of distribution | Product releases |
-| Install bundle (Compose + `.env.example` + docs, no source) | [ ] | **~1 day** | First external pilot |
+| Self-hosted install guide (Compose) | [x] | **~1 day** — [intranet-rollout.md](./intranet-rollout.md) + [install/install.md](../install/install.md) | Any production deploy |
+| **Product distribution (image-based)** | [x] | **~3–5 days** — [production-readiness.md](./production-readiness.md) | Before external pilot |
+| `docker-compose.prod.yml` (image pins, no `build:`) | [x] | part of distribution | Product releases |
+| CI: push `web` + `worker` images to private GHCR on tag | [x] | `.github/workflows/release.yml` | Product releases |
+| Install bundle (Compose + `.env.example` + docs, no source) | [x] | `install/` + Release ZIP | First external pilot |
 | **Helm chart** (Kubernetes) | [ ] | **~1–2 weeks** | K8s cluster, GitOps, multiple envs — *not needed for Docker Compose intranet* |
 | Multi-tenant (orgs, teams) | [ ] | **~2–4 weeks** | Shared instance for many teams; overlaps [Phase 4](./phases.md#phase-4--governance-admin--operations-in-progress) |
 | Billing / license tier | [ ] | **~2+ weeks** | SaaS or commercial on-prem only |

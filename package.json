@@ -22,7 +22,8 @@
     "docker:up:all": "docker compose --profile production up -d",
     "docker:down": "docker compose down",
     "docker:migrate": "docker compose --profile migrate run --rm migrate",
-    "docker:verify": "bash scripts/verify-docker-stack.sh"
+    "docker:verify": "bash scripts/verify-docker-stack.sh",
+    "docker:verify:prod": "bash scripts/verify-prod-install.sh"
   },
   "engines": {
     "node": ">=24"

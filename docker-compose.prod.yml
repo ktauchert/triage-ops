@@ -1,0 +1,96 @@
+# TriageOps production install — pull pre-built images only (no build:).
+# Set TRIAGE_OPS_VERSION in .env (see .env.production.example).
+# First install: pull → up infra → migrate → up production profile.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: triage-ops-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-triage_ops}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-triage_ops}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-triage_ops} -d ${POSTGRES_DB:-triage_ops}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: triage-ops-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: triage-ops-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+
+  web:
+    image: ${TRIAGE_OPS_REGISTRY:-ghcr.io/ktauchert}/triage-ops-web:${TRIAGE_OPS_VERSION:?set TRIAGE_OPS_VERSION}
+    container_name: triage-ops-web
+    restart: unless-stopped
+    profiles:
+      - production
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-triage_ops}
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: ${TRIAGE_OPS_REGISTRY:-ghcr.io/ktauchert}/triage-ops-worker:${TRIAGE_OPS_VERSION:?set TRIAGE_OPS_VERSION}
+    container_name: triage-ops-worker
+    restart: unless-stopped
+    profiles:
+      - production
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-triage_ops}
+      REDIS_URL: redis://redis:6379
+      OLLAMA_HOST: http://ollama:11434
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  migrate:
+    image: ${TRIAGE_OPS_REGISTRY:-ghcr.io/ktauchert}/triage-ops-worker:${TRIAGE_OPS_VERSION:?set TRIAGE_OPS_VERSION}
+    container_name: triage-ops-migrate
+    profiles:
+      - migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-triage_ops}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["npx", "prisma", "migrate", "deploy", "--schema", "packages/db/prisma/schema.prisma"]
+    restart: "no"
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:

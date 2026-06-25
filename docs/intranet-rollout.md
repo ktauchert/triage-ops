@@ -12,10 +12,10 @@ Schritt-für-Schritt-Anleitung für den **Produktivbetrieb im Firmen-Intranet** 
 
 | Weg | Zielgruppe | Status | Anleitung |
 |-----|------------|--------|-----------|
-| **git clone + build** | Entwicklung, eigener Fork | ✅ Jetzt | [§ Phase 1 — Dev](#phase-1--server-vorbereiten) unten |
-| **Images pullen (Prod)** | Kunde / Pilot ohne Source | 🔜 Ende Phase 4 | [on-prem-product.md](./on-prem-product.md) · [§ Phase 1 — Produkt](#11-produkt-installation-geplant) |
+| **Images pullen (Prod)** | Kunde / Pilot ohne Source | ✅ Verfügbar | [install/install.md](../install/install.md) · [§ 1.1 Produkt](#11-produkt-installation) |
+| **git clone + build** | Entwicklung, eigener Fork | ✅ Jetzt | [§ 1.2 Dev](#12-entwicklung--interner-build) |
 
-> Kunden sollen **kein** Repository klonen müssen. Nach dem Product Release: privates Container-Registry-Token + `docker-compose.prod.yml` + Install-Bundle.
+> Kunden sollen **kein** Repository klonen müssen. Unterstützter Weg: privates Container-Registry-Token + Install-Bundle (`triage-ops-install-x.y.z.zip` von GitHub Release).
 
 ---
 
@@ -76,7 +76,7 @@ flowchart TB
 - [ ] **Ziel-URL** festgelegt (z. B. `https://triageops.company.internal`)
 - [ ] **GitLab-OAuth-App** (oder GitHub) beim VCS-Admin beantragt
 - [ ] **E-Mail-Allowlist** definiert (`ALLOWED_EMAIL_DOMAINS` oder `ALLOWED_EMAILS`) — künftig Pflicht nach Setup; bis dahin dringend empfohlen
-- [ ] **Setup-Plan:** erster Admin per OAuth nach [Bootstrap-Modell](./on-prem-product.md) (geplant) — bis Implementierung: `ADMIN_EMAILS` setzen
+- [ ] **Setup-Plan:** erster Admin per OAuth nach [Bootstrap-Modell](./on-prem-product.md) — `/setup` auf frischer DB
 - [ ] **VCS-PAT-Richtlinie:** wer darf Connections anlegen, welche Scopes, Rotationsintervall
 - [ ] **Host/VM** mit Docker + Compose (mind. 4 GB RAM empfohlen, mehr wenn Ollama-Modelle groß)
 - [ ] **Backup-Konzept** für Postgres-Volume
@@ -86,28 +86,31 @@ flowchart TB
 
 ## Phase 1 — Server vorbereiten
 
-### 1.1 Produkt-Installation (geplant)
+### 1.1 Produkt-Installation
 
-**Zielgruppe:** Kunde / Pilot ohne Git-Zugang · **Zeitpunkt:** Ende Entwicklungsphase (Phase 4 + Image-Pipeline).
+**Zielgruppe:** Kunde / Pilot ohne Git-Zugang.
 
-Kurzablauf (Vorschau — Details in [on-prem-product.md](./on-prem-product.md)):
+Install-Bundle entpacken (kein `git clone`). Kurzablauf — vollständige Schritte in [install/install.md](../install/install.md):
 
 ```bash
-# Install-Bundle entpacken (kein git clone)
+# Install-Bundle entpacken
 docker login ghcr.io -u <kunde> -p <registry-token>
 cp .env.example .env
 # .env bearbeiten (Secrets, OAuth, Allowlist)
 
 docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml --profile production up -d
+docker compose -f docker-compose.prod.yml up -d postgres redis ollama
 docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate
+docker compose -f docker-compose.prod.yml --profile production up -d
 ```
 
-Danach: HTTPS-URL öffnen → **`/setup`** (geplant) → erster Admin meldet sich per GitHub/GitLab an → weitere User im Admin-Bereich anlegen.
+Danach: HTTPS-URL öffnen → **`/setup`** → erster Admin meldet sich per GitHub/GitLab an → weitere User im Admin-Bereich anlegen.
 
-**Offene Implementierung:** siehe [phases.md — Step 12b & Phase 3c distribution](./phases.md).
+**Upgrade:** `pull` → `migrate` → `up -d` (siehe `install.md`).
 
-### 1.2 Entwicklung / interner Build (jetzt)
+**Images:** `ghcr.io/ktauchert/triage-ops-web`, `ghcr.io/ktauchert/triage-ops-worker` — Tags via Release (`v*` → GitHub Actions).
+
+### 1.2 Entwicklung / interner Build
 
 #### Repository & Abhängigkeiten
 
@@ -376,7 +379,7 @@ Kurzablauf für Endnutzer:
 | Logs | `docker compose logs -f web worker` |
 | Neustart | `docker compose --profile production restart web worker` |
 | Update (Dev / git) | `git pull` → `npm run docker:up:all` (rebuild) → `npm run docker:migrate` |
-| Update (Prod / Images) | `docker compose -f docker-compose.prod.yml pull` → migrate → `up -d` — [geplant](./on-prem-product.md) |
+| Update (Prod / Images) | `docker compose -f docker-compose.prod.yml pull` → migrate → `up -d` — [install/install.md](../install/install.md) |
 | Migrationen (Prod) | `npm run docker:migrate` |
 | Stoppen | `npm run docker:down` |
 | PAT rotieren | Connection in UI bearbeiten, neuen Token speichern |

@@ -2,7 +2,7 @@
 
 This document records **decisions** for production on-prem deployments: how the first admin is created, how access stays closed, and how customers install TriageOps **without cloning the source repository**.
 
-**Status:** Decided direction · **implementation** tracked in [phases.md](./phases.md) (Phase 4 Step 12b, Phase 3c distribution).
+**Status:** Decided direction · **bootstrap shipped** · **distribution pipeline shipped** (June 2026)
 
 **Related:** [Security](./security.md) · [Intranet Rollout](./intranet-rollout.md) · [Running the App](./running-the-app.md)
 
@@ -91,7 +91,7 @@ Customers should **not** need `git clone` or Node.js on the server. Developers k
 | Profile | Audience | Method | When |
 |---------|----------|--------|------|
 | **Development** | Contributors, you | `git clone` + `npm run docker:up` / `build:` in Compose | Now (unchanged) |
-| **Product (on-prem)** | Customer IT / pilot | Pull images from private registry + `docker-compose.prod.yml` | End of development phase (Phase 4 complete) |
+| **Product (on-prem)** | Customer IT / pilot | Pull images from private registry + `docker-compose.prod.yml` | **Shipped** — install bundle via GitHub Release |
 
 ### Target customer install (preview — when shipped)
 
@@ -117,12 +117,9 @@ cp .env.example .env
 
 # 3. Pull & start
 docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml --profile production up -d
-
-# 4. Migrate
+docker compose -f docker-compose.prod.yml up -d postgres redis ollama
 docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate
-
-# 5. Open HTTPS URL → /setup → first admin OAuth login
+docker compose -f docker-compose.prod.yml --profile production up -d
 ```
 
 **Updates:**
@@ -139,14 +136,14 @@ No `git pull`, no `npm install`, no image build on customer hardware.
 
 Tracked in [phases.md § Phase 3c — Product distribution](./phases.md#phase-3c--deployment--scale-optional).
 
-| Item | Purpose |
-|------|---------|
-| `docker-compose.prod.yml` | `image: ghcr.io/<org>/triage-ops-web:1.x` — no `build:` |
-| CI job: build & push web/worker images on tag | Reproducible releases |
-| Private GHCR (or customer registry mirror) | No public pull without credentials |
-| GitHub Release asset: install bundle | Compose + docs, no source |
-| `intranet-rollout.md` | Product path as **primary**; git clone under “Development only” |
-| Optional later: license key / activation | Commercial Pro tier — [editions.md](./editions.md) |
+| Item | Purpose | Status |
+|------|---------|--------|
+| `docker-compose.prod.yml` | `image: ghcr.io/ktauchert/triage-ops-web:1.x` — no `build:` | ✅ |
+| CI job: build & push web/worker images on tag | `.github/workflows/release.yml` | ✅ |
+| Private GHCR (or customer registry mirror) | No public pull without credentials | ✅ |
+| GitHub Release asset: install bundle | Compose + docs, no source | ✅ |
+| `intranet-rollout.md` | Product path as **primary**; git clone under “Development only” | ✅ |
+| Optional later: license key / activation | Commercial Pro tier — [editions.md](./editions.md) | — |
 
 ### Repository visibility
 
