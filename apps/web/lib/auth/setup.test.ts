@@ -99,9 +99,25 @@ describe("setup auth", () => {
       id: "default",
       setupComplete: true,
     });
-    prismaMock.user.findUnique.mockResolvedValue({ id: "u1" });
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: "u1",
+      deactivatedAt: null,
+    });
 
     await expect(canSignInWithEmail("alice@company.com")).resolves.toBe(true);
+  });
+
+  it("denies deactivated users after setup", async () => {
+    prismaMock.appSettings.upsert.mockResolvedValue({
+      id: "default",
+      setupComplete: true,
+    });
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: "u1",
+      deactivatedAt: new Date("2026-06-01T00:00:00.000Z"),
+    });
+
+    await expect(canSignInWithEmail("alice@company.com")).resolves.toBe(false);
   });
 
   it("allows pending invite after setup", async () => {

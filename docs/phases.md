@@ -189,7 +189,7 @@ flowchart LR
 | Item | Status | Effort | When you need it |
 |------|--------|--------|------------------|
 | Self-hosted install guide (Compose) | [ ] partial | **~1 day** — [intranet-rollout.md](./intranet-rollout.md) | Any production deploy |
-| **Product distribution (image-based)** | [ ] planned | **~3–5 days** | End of Phase 4 — customers without git clone — [on-prem-product.md](./on-prem-product.md) |
+| **Product distribution (image-based)** | [ ] planned | **~3–5 days** | Before external pilot — [production-readiness.md](./production-readiness.md) |
 | `docker-compose.prod.yml` (image pins, no `build:`) | [ ] | part of distribution | Product releases |
 | CI: push `web` + `worker` images to private GHCR on tag | [ ] | part of distribution | Product releases |
 | Install bundle (Compose + `.env.example` + docs, no source) | [ ] | **~1 day** | First external pilot |
@@ -285,5 +285,5 @@ Phases 0–2.5 and Phase 1 MVP are complete (June 2026). Choose by deployment ma
 1. **Phase 4 — Bootstrap + governance** — [setup wizard + closed registration](./on-prem-product.md#chosen-approach--instance-bootstrap-auth); finish admin invite UX
 2. **Small intranet team (interim)** — `AUTH_DISABLED=false`, mandatory allowlist, `TOKEN_ENCRYPTION_KEY`, optional `AUTO_SYNC_SCHEDULER_ENABLED=true`
 3. **Phase 3b** — webhooks when near-real-time sync matters
-4. **Phase 3c — Product distribution** — [image-based install](./on-prem-product.md#chosen-approach--production-distribution) at end of Phase 4 (before first external pilot)
+4. **Phase 3c — Product distribution** — [production-readiness.md § Workstream 1](./production-readiness.md#1-product-distribution--essential-for-gate-b) before first external pilot
 5. **Phase 3c** — Helm/K8s or multi-tenant only when required

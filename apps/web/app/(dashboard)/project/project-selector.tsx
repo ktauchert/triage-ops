@@ -37,7 +37,9 @@ export function ProjectSelector({
         value={selectedProjectId ?? ""}
         onChange={(event) => {
           const projectId = event.target.value;
-          router.push(projectId ? `/?project=${projectId}` : "/");
+          if (projectId) {
+            router.push(`/project/${projectId}`);
+          }
         }}
         className="select-field max-w-md"
       >
@@ -51,7 +53,7 @@ export function ProjectSelector({
       {projects.some((project) => project.isFavorite) ? (
         <p className="flex items-center gap-1 text-xs text-muted-foreground">
           <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
-          Favorites load first on the dashboard.
+          Starred projects appear first in this list and on your home page.
         </p>
       ) : null}
     </div>

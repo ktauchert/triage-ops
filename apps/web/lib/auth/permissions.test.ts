@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { UserRole } from "@triage-ops/db";
 import {
   getRoleCapabilities,
+  getRoleCapabilityLabels,
   hasPermission,
   requirePermission,
 } from "./permissions";
@@ -68,5 +69,28 @@ describe("getRoleCapabilities", () => {
       canAdminUsers: false,
       canAdminAudit: false,
     });
+  });
+});
+
+describe("getRoleCapabilityLabels", () => {
+  it("describes VIEWER as read-only", () => {
+    expect(getRoleCapabilityLabels(UserRole.VIEWER)).toEqual([
+      "Read-only",
+      "View metrics & suggestions",
+    ]);
+  });
+
+  it("describes OPERATOR apply-focused access", () => {
+    expect(getRoleCapabilityLabels(UserRole.OPERATOR)).toEqual([
+      "Apply to VCS",
+      "View metrics",
+    ]);
+  });
+
+  it("includes admin and management labels for ADMIN", () => {
+    const labels = getRoleCapabilityLabels(UserRole.ADMIN);
+    expect(labels).toContain("Admin console");
+    expect(labels).toContain("Manage connections");
+    expect(labels).toContain("Apply to VCS");
   });
 });

@@ -352,9 +352,25 @@ npm run lint                          # TypeScript + ESLint all packages
 npm run build                         # Production build all packages
 ```
 
+**If only the e2e smoke test fails:** re-run `npm run test:e2e` by itself. The rest of the suite (200+ unit tests) can pass while e2e fails for environmental reasons. Treat an isolated e2e failure as the signal to investigate; if `npm run test:e2e` passes on retry, the full run was likely a flake or stale queue state.
+
 ---
 
 ## Troubleshooting
+
+### E2E smoke: `GitHub API request failed with status 401`
+
+The smoke test **does not need a real GitHub token** — GitHub is mocked via MSW. A 401 usually means the sync job was processed by **`npm run dev:worker`** instead of the test’s in-process worker. The dev worker has no MSW and calls the real API with the test’s fake token.
+
+E2E setup automatically uses **Redis DB 15** (`packages/e2e/src/test/setup.ts`) so jobs are not shared with a dev worker on DB 0. Override with `E2E_REDIS_URL` if needed.
+
+| Symptom | Likely cause | What to do |
+|---------|--------------|------------|
+| `npm test` fails on `smoke.test.ts` with 401 | Queue steal or stale failed job | Run `npm run test:e2e` alone — if it passes, the codebase is fine |
+| `npm run test:e2e` also fails with 401 | MSW/setup regression | Investigate `packages/e2e` and `apps/worker/src/test/msw-server.ts` |
+| CI fails on smoke | Real bug (no dev worker in CI) | Fix before merge |
+
+Alternative while debugging: stop `dev:worker` before running e2e tests.
 
 ### Port 5432 already in use
 

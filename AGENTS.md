@@ -71,7 +71,8 @@ Never edit applied migration SQL — add a new migration.
 
 - **Vitest** + **MSW** for worker VCS/LLM clients; tests live beside source (`*.test.ts`).
 - TDD for pure logic and API clients: test first, then implement.
-- `npm test` — all workspaces; `npm run test:e2e` needs Postgres + Redis.
+- `npm test` — all workspaces; `npm run test:e2e` needs Postgres + Redis (e2e uses Redis DB 15 so `dev:worker` does not steal jobs).
+- If `npm test` fails only on e2e smoke with GitHub 401, re-run `npm run test:e2e` before debugging — see `docs/running-the-app.md` troubleshooting.
 - Run `npm run build` for web after API/type changes.
 
 ---

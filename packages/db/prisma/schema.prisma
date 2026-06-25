@@ -15,6 +15,7 @@ model User {
   emailVerified           DateTime?
   image                   String?
   role                    UserRole          @default(VIEWER)
+  deactivatedAt           DateTime?         @map("deactivated_at")
   accounts                Account[]
   sessions                Session[]
   connections             VcsConnection[]

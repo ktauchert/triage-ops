@@ -6,10 +6,12 @@ export default NextAuth(nextAuthConfig).auth;
 export const config = {
   matcher: [
     "/",
+    "/project/:path*",
     "/connections",
     "/projects",
     "/setup",
     "/login",
+    "/admin",
     "/admin/:path*",
     "/api/connections/:path*",
     "/api/projects/:path*",

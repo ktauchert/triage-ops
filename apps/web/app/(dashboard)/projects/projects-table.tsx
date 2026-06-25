@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Star, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,6 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn, formatRelativeDate, syncStatusColor } from "@/lib/utils";
+import { ProjectHealthStrip } from "@/components/project/project-health-strip";
+import type { ProjectHealthSignal } from "@/lib/services/project-health";
 
 type SyncRun = {
   id: string;
@@ -84,11 +87,13 @@ async function waitForSyncRun(
 
 export function ProjectsTable({
   projects,
+  healthByProjectId = {},
   canManage = false,
   canSync = false,
   canEditSettings = false,
 }: {
   projects: ProjectRow[];
+  healthByProjectId?: Record<string, ProjectHealthSignal[]>;
   canManage?: boolean;
   canSync?: boolean;
   canEditSettings?: boolean;
@@ -316,6 +321,16 @@ export function ProjectsTable({
                         <div className="text-sm text-muted-foreground">
                           {project.pathWithNamespace}
                         </div>
+                        <Link
+                          href={`/project/${project.id}`}
+                          className="mt-1 inline-block text-xs font-medium text-primary hover:underline"
+                        >
+                          Open dashboard
+                        </Link>
+                        <ProjectHealthStrip
+                          signals={healthByProjectId[project.id] ?? []}
+                          className="mt-2 border-0 pt-0"
+                        />
                       </TableCell>
                       <TableCell>{project.connection.name}</TableCell>
                       <TableCell>
@@ -345,6 +360,9 @@ export function ProjectsTable({
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="secondary" asChild>
+                            <Link href={`/project/${project.id}`}>Dashboard</Link>
+                          </Button>
                           {canSync ? (
                           <Button
                             size="sm"

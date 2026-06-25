@@ -53,7 +53,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ### Web (`apps/web`)
 
-- **Dashboard** — overview counts, triage signals, per-project threshold settings, issue labels, milestone tables, **AI suggestions panel**
+- **Dashboard** — home (starred projects) + per-project triage at `/project/[id]`; see [dashboard-restructure.md](./dashboard-restructure.md)
 - **Connections** — add/list GitHub or GitLab connections (provider picker)
 - **Projects** — register repo/project, manual sync, last run status
 - **Authentication** — Auth.js OAuth (GitHub/GitLab), proxy route protection, deployment profiles
@@ -86,7 +86,9 @@ This document describes what is **implemented**, **partially implemented**, and 
 - Vitest integration test: register connection/project → BullMQ sync → metrics
 - GitHub API mocked via MSW (no real token required)
 - Requires Postgres + Redis (`npm run docker:up`)
+- Uses **Redis DB 15** automatically so a running `dev:worker` (DB 0) does not steal sync jobs
 - Run: `npm run test:e2e` (also included in `npm test`)
+- If full `npm test` fails only on smoke: re-run `npm run test:e2e` — see [running-the-app.md § E2E smoke 401](./running-the-app.md#e2e-smoke-github-api-request-failed-with-status-401)
 
 ---
 
@@ -99,8 +101,8 @@ This document describes what is **implemented**, **partially implemented**, and 
 | Auto-sync | Per-project toggle; worker `auto-sync` queue when `AUTO_SYNC_SCHEDULER_ENABLED=true` |
 | Phase 3b | Webhooks not started |
 | Phase 3c | Helm, multi-tenant, billing not started |
-| Phase 4 governance | RBAC, admin UI, audit **partial**; bootstrap + closed registration **planned** — [on-prem-product.md](./on-prem-product.md) |
-| Product distribution | Image-based install, `compose.prod.yml`, private registry — **planned** end Phase 4 — [on-prem-product.md](./on-prem-product.md) |
+| Phase 4 governance | RBAC, admin UI, audit **partial**; dashboard restructure **in progress** — [dashboard-restructure.md](./dashboard-restructure.md); bootstrap + closed registration **planned** — [on-prem-product.md](./on-prem-product.md) |
+| Product distribution | Image-based install, `compose.prod.yml`, private registry — [production-readiness.md](./production-readiness.md) |
 
 ---
 

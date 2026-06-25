@@ -67,10 +67,14 @@ export async function canSignInWithEmail(
 
   const existingUser = await prisma.user.findUnique({
     where: { email: normalized },
-    select: { id: true },
+    select: { id: true, deactivatedAt: true },
   });
 
   if (existingUser) {
+    if (existingUser.deactivatedAt) {
+      return false;
+    }
+
     return isAllowlistConfigured() ? isEmailAllowed(normalized) : true;
   }
 
