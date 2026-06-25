@@ -1,5 +1,5 @@
 import { IssueSuggestionStatus, UserRole, prisma } from "@triage-ops/db";
-import { normalizeEmail } from "@/lib/auth/allowlist";
+import { normalizeEmail, getAllowlistCounts } from "@/lib/auth/allowlist";
 import {
   getConfiguredProviders,
   getDataScope,
@@ -18,6 +18,8 @@ export type AdminAuthStatus = {
   dataScope: string;
   registrationMode: "closed" | "open" | "bootstrap";
   allowlistConfigured: boolean;
+  allowlistDomainCount: number;
+  allowlistEmailCount: number;
   adminEmailsFallbackCount: number;
   activeSessionCount: number;
   deactivatedUserCount: number;
@@ -33,6 +35,19 @@ export type AdminJobFailure = {
   occurredAt: Date;
 };
 
+export type AdminBackgroundJob = {
+  id: string;
+  kind: "sync" | "analysis" | "writeback";
+  projectId: string;
+  projectName: string;
+  status: string;
+  startedAt: Date;
+  completedAt: Date | null;
+  errorMessage: string | null;
+  detail: string | null;
+  appliedByEmail: string | null;
+};
+
 export type AdminConnectionSummary = {
   id: string;
   name: string;
@@ -40,6 +55,7 @@ export type AdminConnectionSummary = {
   baseUrl: string;
   projectCount: number;
   ownerEmail: string | null;
+  createdAt: Date;
 };
 
 export type AdminOverview = {
@@ -55,6 +71,7 @@ export type AdminOverview = {
   auth: AdminAuthStatus;
   connections: AdminConnectionSummary[];
   recentJobFailures: AdminJobFailure[];
+  recentBackgroundJobs: AdminBackgroundJob[];
 };
 
 export function countUsersByRole(
@@ -72,6 +89,15 @@ export function countUsersByRole(
   }
 
   return counts;
+}
+
+export function mergeBackgroundJobs(
+  jobs: AdminBackgroundJob[],
+  limit = 30,
+): AdminBackgroundJob[] {
+  return [...jobs]
+    .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())
+    .slice(0, limit);
 }
 
 export function mergeJobFailures(
@@ -107,6 +133,8 @@ export async function getAdminAuthStatus(): Promise<AdminAuthStatus> {
     registrationMode = "closed";
   }
 
+  const allowlistCounts = getAllowlistCounts();
+
   return {
     authDisabled: isAuthDisabled(),
     setupComplete,
@@ -115,6 +143,8 @@ export async function getAdminAuthStatus(): Promise<AdminAuthStatus> {
     dataScope: getDataScope(),
     registrationMode,
     allowlistConfigured: isAllowlistConfigured(),
+    allowlistDomainCount: allowlistCounts.domainCount,
+    allowlistEmailCount: allowlistCounts.emailCount,
     adminEmailsFallbackCount: getAdminEmails().length,
     activeSessionCount,
     deactivatedUserCount,
@@ -129,6 +159,7 @@ async function listAdminConnectionSummaries(): Promise<AdminConnectionSummary[]>
       name: true,
       provider: true,
       baseUrl: true,
+      createdAt: true,
       user: {
         select: { email: true },
       },
@@ -145,7 +176,128 @@ async function listAdminConnectionSummaries(): Promise<AdminConnectionSummary[]>
     baseUrl: connection.baseUrl,
     projectCount: connection._count.projects,
     ownerEmail: connection.user?.email ?? null,
+    createdAt: connection.createdAt,
   }));
+}
+
+export async function listRecentBackgroundJobs(
+  limit = 30,
+): Promise<AdminBackgroundJob[]> {
+  const perSource = Math.max(limit, 10);
+
+  const [syncRuns, analysisRuns, writeBackJobs] = await Promise.all([
+    prisma.syncRun.findMany({
+      orderBy: { startedAt: "desc" },
+      take: perSource,
+      select: {
+        id: true,
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        issuesSynced: true,
+        errorMessage: true,
+        project: {
+          select: { id: true, name: true },
+        },
+      },
+    }),
+    prisma.llmAnalysisRun.findMany({
+      orderBy: { startedAt: "desc" },
+      take: perSource,
+      select: {
+        id: true,
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        completedSteps: true,
+        totalSteps: true,
+        progressLabel: true,
+        suggestionsCreated: true,
+        errorMessage: true,
+        project: {
+          select: { id: true, name: true },
+        },
+      },
+    }),
+    prisma.issueSuggestion.findMany({
+      where: {
+        status: {
+          in: [
+            IssueSuggestionStatus.APPLYING,
+            IssueSuggestionStatus.APPLIED,
+            IssueSuggestionStatus.APPLY_FAILED,
+          ],
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: perSource,
+      select: {
+        id: true,
+        status: true,
+        appliedAt: true,
+        updatedAt: true,
+        writeBackError: true,
+        project: {
+          select: { id: true, name: true },
+        },
+        appliedBy: {
+          select: { email: true },
+        },
+      },
+    }),
+  ]);
+
+  return mergeBackgroundJobs(
+    [
+      ...syncRuns.map((run) => ({
+        id: run.id,
+        kind: "sync" as const,
+        projectId: run.project.id,
+        projectName: run.project.name,
+        status: run.status,
+        startedAt: run.startedAt,
+        completedAt: run.completedAt,
+        errorMessage: run.errorMessage,
+        detail:
+          run.issuesSynced != null
+            ? `${run.issuesSynced} issue${run.issuesSynced === 1 ? "" : "s"} synced`
+            : null,
+        appliedByEmail: null,
+      })),
+      ...analysisRuns.map((run) => ({
+        id: run.id,
+        kind: "analysis" as const,
+        projectId: run.project.id,
+        projectName: run.project.name,
+        status: run.status,
+        startedAt: run.startedAt,
+        completedAt: run.completedAt,
+        errorMessage: run.errorMessage,
+        detail: run.progressLabel
+          ? run.progressLabel
+          : run.totalSteps > 0
+            ? `${run.completedSteps}/${run.totalSteps} steps · ${run.suggestionsCreated} suggestions`
+            : `${run.suggestionsCreated} suggestions`,
+        appliedByEmail: null,
+      })),
+      ...writeBackJobs.map((suggestion) => ({
+        id: suggestion.id,
+        kind: "writeback" as const,
+        projectId: suggestion.project.id,
+        projectName: suggestion.project.name,
+        status: suggestion.status,
+        startedAt: suggestion.appliedAt ?? suggestion.updatedAt,
+        completedAt:
+          suggestion.status === IssueSuggestionStatus.APPLYING
+            ? null
+            : suggestion.appliedAt ?? suggestion.updatedAt,
+        errorMessage: suggestion.writeBackError,
+        detail: null,
+        appliedByEmail: suggestion.appliedBy?.email ?? null,
+      })),
+    ],
+    limit,
+  );
 }
 
 async function listRecentJobFailures(limit = 10): Promise<AdminJobFailure[]> {
@@ -234,6 +386,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     auth,
     connections,
     recentJobFailures,
+    recentBackgroundJobs,
   ] = await Promise.all([
     listUsers(),
     listPendingInvites(),
@@ -241,6 +394,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     getAdminAuthStatus(),
     listAdminConnectionSummaries(),
     listRecentJobFailures(),
+    listRecentBackgroundJobs(5),
   ]);
 
   return {
@@ -256,6 +410,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     auth,
     connections,
     recentJobFailures,
+    recentBackgroundJobs,
   };
 }
 

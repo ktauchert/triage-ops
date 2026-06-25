@@ -43,6 +43,10 @@ vi.mock("./setup", async (importOriginal) => {
   };
 });
 
+vi.mock("@/lib/services/audit", () => ({
+  logAuditEvent: vi.fn().mockResolvedValue({ id: "audit-1" }),
+}));
+
 import { isAuthDisabled } from "./config";
 import { isEmailAllowed } from "./allowlist";
 import {

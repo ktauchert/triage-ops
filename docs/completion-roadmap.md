@@ -31,7 +31,7 @@ TriageOps runs **entirely inside the customer network**:
 | Phase 3a (security) | ✅ ~95% | Encryption ✅ · rate limits ✅ · docs ✅ · SSO deferred |
 | Phase 3b (automation) | ~70% | Auto-sync ✅ · webhooks ❌ |
 | Phase 3c (distribution / scale) | ~20% | Dockerfiles ✅ · images/bundle/Helm ❌ |
-| Phase 4 (governance) | ~55% | RBAC, bootstrap, admin, audit partial |
+| Phase 4 (governance) | ~75% | RBAC, admin console, audit largely done |
 | Phase 15–17 (change log, reporting, rollback) | 0% | Not started |
 
 **Target release:** tag **`v1.0.0`** after Workstreams 1–5 (Blocks A–F below). Workstream 6 (enterprise tier) → **`v1.x`**.
@@ -49,7 +49,7 @@ All must be checked before calling the product complete for on-prem SME customer
 - [ ] Sync + analyze + apply tested against GitHub and GitLab
 - [ ] Backup/restore tested once
 - [ ] Upgrade tested once (pull newer tag → migrate → restart)
-- [ ] Admin can operate instance without SSH (users, jobs, auth, audit in UI)
+- [x] Admin can operate instance without SSH (users, jobs, auth, audit in UI)
 - [ ] Change log + CSV export available
 - [ ] Description rollback works; duplicate rollback documented (partial)
 - [ ] Support runbook: logs, common failures, contact path
@@ -81,16 +81,16 @@ All must be checked before calling the product complete for on-prem SME customer
 
 **Goal:** Operators run the instance from the admin UI — no SSH required.
 
-**Gate:** Admin can provision users, inspect health, and review audit without shell access.
+**Gate:** Admin can provision users, inspect health, and review audit without shell access — **shipped June 2026**.
 
 ### Tasks
 
-- [ ] Admin: connections overview (PAT metadata only — never show tokens)
-- [ ] Admin: auth status (providers, allowlist summary, setup state, active session count)
-- [ ] Admin: background jobs panel (recent sync / LLM / write-back runs + failures)
-- [ ] Admin: invite user form polish (email + role for closed registration)
-- [ ] `appliedByUserId` on `IssueSuggestion` (link write-back to actor)
-- [ ] Audit log covers all new admin actions
+- [x] Admin: connections overview (PAT metadata only — never show tokens)
+- [x] Admin: auth status (providers, allowlist summary, setup state, active session count)
+- [x] Admin: background jobs panel (recent sync / LLM / write-back runs + failures)
+- [x] Admin: invite user form polish (email + role for closed registration)
+- [x] `appliedByUserId` on `IssueSuggestion` (link write-back to actor)
+- [x] Audit log covers all new admin actions
 
 ### Optional (larger orgs)
 
@@ -197,7 +197,7 @@ Work top to bottom. Each block has a clear ship gate before moving on.
 
 | Block | Workstreams | Est. effort | Ship gate |
 |-------|-------------|-------------|-----------|
-| **A** | 1 ✅ + 2 | ~2 weeks | Security signed off; admin UI operable |
+| **A** | 1 ✅ + 2 ✅ | ~2 weeks | Security signed off; admin UI operable |
 | **B** | 3 | ~1 week | Clean-VM install from bundle |
 | **C** | 4 + ops runbooks | ~1 week | Webhooks + backup/upgrade docs tested |
 | **D** | 5 (Step 15) | ~1 week | Change log + CSV export |
@@ -207,13 +207,13 @@ Work top to bottom. Each block has a clear ship gate before moving on.
 
 **Tag `v1.0.0` after Block F.** Block G is post-v1 unless a customer requires K8s earlier.
 
-### Next up (Block A continued)
+### Next up (Block B)
 
-Workstream 1 is **done**. Continue Block A with Workstream 2:
+Workstreams 1 and 2 are **done**. Continue with product distribution:
 
-1. Admin job overview + auth status (Workstream 2)
-2. Admin connections overview + invite polish (Workstream 2)
-3. `docker-compose.prod.yml` + CI image publish (Workstream 3 — Block B)
+1. `docker-compose.prod.yml` + CI image publish (Workstream 3)
+2. Dry-run install from bundle on a clean VM
+3. Then Workstream 4 (webhooks) or Workstream 5 (governance depth) as needed
 
 Then run a clean-VM dry-run from the install bundle.
 
@@ -269,6 +269,7 @@ docker compose -f docker-compose.prod.yml --profile production up -d
 | Date | Block | Notes |
 |------|-------|-------|
 | 2026-06-25 | WS 1 | Shipped: API rate limits, `.env.production.example`, security/intranet/running-the-app docs, allowlist startup warning |
+| 2026-06-25 | WS 2 | Shipped: `/admin/jobs`, background job service, invite UX, audit gaps, allowlist counts on overview |
 | | | |
 | | | |
 

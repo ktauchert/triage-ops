@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isEmailAllowed } from "./allowlist";
+import { getAllowlistCounts, isEmailAllowed } from "./allowlist";
 
 describe("isEmailAllowed", () => {
   afterEach(() => {
@@ -37,5 +37,21 @@ describe("isEmailAllowed", () => {
     expect(isEmailAllowed(null)).toBe(false);
     expect(isEmailAllowed(undefined)).toBe(false);
     expect(isEmailAllowed("")).toBe(false);
+  });
+});
+
+describe("getAllowlistCounts", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("returns domain and email counts without exposing values", () => {
+    vi.stubEnv("ALLOWED_EMAIL_DOMAINS", "company.com, partner.org");
+    vi.stubEnv("ALLOWED_EMAILS", "alice@company.com");
+
+    expect(getAllowlistCounts()).toEqual({
+      domainCount: 2,
+      emailCount: 1,
+    });
   });
 });

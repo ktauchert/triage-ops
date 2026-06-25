@@ -64,6 +64,13 @@ export function buildCommandPaletteItems(
         group: "Admin",
       },
       {
+        id: "admin-jobs",
+        label: "Background jobs",
+        keywords: "admin jobs sync analysis writeback failures",
+        href: "/admin/jobs",
+        group: "Admin",
+      },
+      {
         id: "admin-audit",
         label: "Audit log",
         keywords: "admin audit log history actions",

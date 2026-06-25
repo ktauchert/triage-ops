@@ -253,14 +253,14 @@ export async function setConnectionFavorite(
       id: connectionId,
       ...connectionWhereClause(ctx),
     },
-    select: { id: true },
+    select: { id: true, name: true },
   });
 
   if (!connection) {
     return null;
   }
 
-  return prisma.vcsConnection.update({
+  const updated = await prisma.vcsConnection.update({
     where: { id: connectionId },
     data: { isFavorite },
     select: {
@@ -274,6 +274,19 @@ export async function setConnectionFavorite(
       _count: { select: { projects: true } },
     },
   });
+
+  await logAuditEvent({
+    userId: ctx.userId,
+    action: "connection.favorite.update",
+    resourceType: "VcsConnection",
+    resourceId: connectionId,
+    metadata: {
+      name: connection.name,
+      isFavorite,
+    },
+  });
+
+  return updated;
 }
 
 export async function deleteProject(ctx: AuthContext, projectId: string) {

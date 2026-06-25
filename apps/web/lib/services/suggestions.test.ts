@@ -130,6 +130,15 @@ describe("updateSuggestionStatus", () => {
       projectId: "project-1",
       suggestionId: "suggestion-1",
     });
+    expect(prismaMock.issueSuggestion.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "suggestion-1" },
+        data: expect.objectContaining({
+          status: "APPLYING",
+          appliedByUserId: "user-1",
+        }),
+      }),
+    );
   });
 
   it("allows retry from APPLY_FAILED", async () => {

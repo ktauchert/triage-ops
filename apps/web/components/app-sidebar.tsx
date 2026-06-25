@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Activity,
   ArrowLeft,
   FolderKanban,
   Home,
@@ -33,6 +34,7 @@ const adminNavItem = {
 
 const adminConsoleNavItems = [
   { href: "/admin", label: "Overview", icon: Shield },
+  { href: "/admin/jobs", label: "Jobs", icon: Activity },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/audit", label: "Audit log", icon: ScrollText },
 ] as const;

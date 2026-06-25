@@ -2,6 +2,7 @@ import { UserRole, prisma } from "@triage-ops/db";
 import { isEmailAllowed, normalizeEmail } from "./allowlist";
 import { isAdminEmail, isAuthDisabled } from "./config";
 import { isProductionEnvironment } from "./environment";
+import { logAuditEvent } from "@/lib/services/audit";
 
 const SETTINGS_ID = "default";
 
@@ -36,6 +37,13 @@ export async function completeSetup(userId: string): Promise<void> {
       setupCompletedAt: new Date(),
       setupCompletedByUserId: userId,
     },
+  });
+
+  await logAuditEvent({
+    userId,
+    action: "instance.setup.complete",
+    resourceType: "AppSettings",
+    resourceId: SETTINGS_ID,
   });
 }
 
@@ -132,6 +140,17 @@ export async function applySignInUserState(
         },
       }),
     ]);
+
+    await logAuditEvent({
+      userId,
+      action: "user.invite.claim",
+      resourceType: "ProvisionedUser",
+      resourceId: provisioned.id,
+      metadata: {
+        email: normalized,
+        role: provisioned.role,
+      },
+    });
   }
 
   if (isAdminEmail(normalized)) {

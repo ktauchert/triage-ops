@@ -19,13 +19,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatUserRole } from "@/lib/services/home";
-import type { AdminAuthStatus, AdminJobFailure } from "@/lib/services/admin";
+import type { AdminAuthStatus, AdminBackgroundJob, AdminJobFailure } from "@/lib/services/admin";
 import { getAdminOverview } from "@/lib/services/admin";
 import { formatRelativeDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-function jobKindLabel(kind: AdminJobFailure["kind"]): string {
+function jobKindLabel(kind: AdminJobFailure["kind"] | AdminBackgroundJob["kind"]): string {
   switch (kind) {
     case "sync":
       return "Sync";
@@ -116,7 +116,7 @@ export default async function AdminOverviewPage() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/admin/audit">View audit log</Link>
+              <Link href="/admin/jobs?filter=failed">View background jobs</Link>
             </Button>
           </CardContent>
         </Card>
@@ -193,7 +193,7 @@ export default async function AdminOverviewPage() {
               </p>
               <p className="mt-1 text-sm">
                 {overview.auth.allowlistConfigured
-                  ? "Env allowlist active"
+                  ? `${overview.auth.allowlistDomainCount} domain${overview.auth.allowlistDomainCount === 1 ? "" : "s"}, ${overview.auth.allowlistEmailCount} explicit email${overview.auth.allowlistEmailCount === 1 ? "" : "s"}`
                   : "Not configured"}
               </p>
             </div>
@@ -211,7 +211,72 @@ export default async function AdminOverviewPage() {
       </section>
 
       <section className="space-y-3">
-        <h3 className="section-heading">Recent job failures</h3>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h3 className="section-heading">Recent background jobs</h3>
+          <Link
+            href="/admin/jobs"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            View all jobs
+          </Link>
+        </div>
+        {overview.recentBackgroundJobs.length > 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kind</TableHead>
+                    <TableHead>Project</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Detail</TableHead>
+                    <TableHead>When</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {overview.recentBackgroundJobs.map((job) => (
+                    <TableRow key={`${job.kind}-${job.id}`}>
+                      <TableCell>
+                        <Badge variant="outline">{jobKindLabel(job.kind)}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/project/${job.projectId}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {job.projectName}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{job.status}</Badge>
+                      </TableCell>
+                      <TableCell className="max-w-md truncate text-sm text-muted-foreground">
+                        {job.errorMessage ?? job.detail ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatRelativeDate(job.startedAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ) : (
+          <p className="text-sm text-muted-foreground">No recent background jobs.</p>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h3 className="section-heading">Recent job failures</h3>
+          <Link
+            href="/admin/jobs?filter=failed"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            View failures
+          </Link>
+        </div>
         {overview.recentJobFailures.length > 0 ? (
           <Card>
             <CardContent className="pt-6">
@@ -269,7 +334,12 @@ export default async function AdminOverviewPage() {
         </div>
         {overview.connections.length > 0 ? (
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader className="pb-0">
+              <CardDescription>
+                Connection metadata only — access tokens are never shown in the UI.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -278,6 +348,7 @@ export default async function AdminOverviewPage() {
                     <TableHead>Base URL</TableHead>
                     <TableHead>Projects</TableHead>
                     <TableHead>Owner</TableHead>
+                    <TableHead>Created</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -295,6 +366,9 @@ export default async function AdminOverviewPage() {
                       <TableCell>{connection.projectCount}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {connection.ownerEmail ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatRelativeDate(connection.createdAt)}
                       </TableCell>
                     </TableRow>
                   ))}

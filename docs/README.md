@@ -72,6 +72,6 @@ triage-ops/
 | Phase 1 MVP hardening | ✅ Done — [phases](./phases.md) |
 | E2E smoke test | ✅ `npm run test:e2e` |
 | Phase 3 Production infra | Partial — encryption, auto-sync; [production readiness](./production-readiness.md) |
-| Phase 4 Governance | In progress — RBAC + admin + bootstrap largely done; [production readiness](./production-readiness.md) |
+| Phase 4 Governance | In progress — admin console largely done; change log / rollback open — [completion-roadmap.md](./completion-roadmap.md) |
 
 See [Implementation Phases](./phases.md) for the full roadmap.

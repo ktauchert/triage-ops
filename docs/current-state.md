@@ -57,7 +57,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 - **Connections** — add/list GitHub or GitLab connections (provider picker)
 - **Projects** — register repo/project, manual sync, last run status
 - **Authentication** — Auth.js OAuth (GitHub/GitLab), proxy route protection, deployment profiles
-- **RBAC (partial)** — `UserRole`, permission matrix, API enforcement, `/admin` users + audit
+- **RBAC (partial)** — `UserRole`, permission matrix, API enforcement, `/admin` overview + users + audit + **jobs**
 - **API routes:**
   - `GET/POST /api/connections`
   - `GET/POST /api/projects`
@@ -102,7 +102,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 | Auto-sync | Per-project toggle; worker `auto-sync` queue when `AUTO_SYNC_SCHEDULER_ENABLED=true` |
 | Phase 3b | Webhooks not started |
 | Phase 3c | Helm, multi-tenant, billing not started |
-| Phase 4 governance | RBAC, admin UI, audit **partial**; dashboard restructure **in progress** — [dashboard-restructure.md](./dashboard-restructure.md); bootstrap + closed registration **planned** — [on-prem-product.md](./on-prem-product.md) |
+| Phase 4 governance | RBAC, admin UI, audit **largely done** — `/admin/jobs`, invite UX; change log / rollback open (WS5) |
 | Product distribution | Image-based install, `compose.prod.yml`, private registry — [production-readiness.md](./production-readiness.md) |
 
 ---

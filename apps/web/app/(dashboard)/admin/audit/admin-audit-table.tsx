@@ -39,6 +39,8 @@ export function AdminAuditTable({
 }) {
   const [events, setEvents] = useState(initialEvents);
   const [action, setAction] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +53,12 @@ export function AdminAuditTable({
       const params = new URLSearchParams();
       if (action.trim()) {
         params.set("action", action.trim());
+      }
+      if (from.trim()) {
+        params.set("from", new Date(from).toISOString());
+      }
+      if (to.trim()) {
+        params.set("to", new Date(to).toISOString());
       }
       params.set("limit", "200");
 
@@ -95,6 +103,24 @@ export function AdminAuditTable({
                 placeholder="e.g. suggestion.apply"
                 value={action}
                 onChange={(event) => setAction(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="audit-from">From</Label>
+              <Input
+                id="audit-from"
+                type="date"
+                value={from}
+                onChange={(event) => setFrom(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="audit-to">To</Label>
+              <Input
+                id="audit-to"
+                type="date"
+                value={to}
+                onChange={(event) => setTo(event.target.value)}
               />
             </div>
             <Button type="submit" disabled={loading}>

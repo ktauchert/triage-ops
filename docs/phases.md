@@ -244,16 +244,16 @@ flowchart LR
 
 - [x] `/admin` area (Admin role only): users, roles
 - [x] Audit events list (read-only)
-- [ ] Connections overview (PAT metadata only — never show tokens)
-- [ ] Auth status: providers, allowlist summary, setup state, active sessions count
-- [ ] Background jobs: recent sync / LLM / write-back runs and failures
-- [ ] **Invite user** form (email + role) for closed registration
+- [x] Connections overview (PAT metadata only — never show tokens)
+- [x] Auth status: providers, allowlist summary, setup state, active sessions count
+- [x] Background jobs: recent sync / LLM / write-back runs and failures (`/admin/jobs`)
+- [x] **Invite user** form (email + role) for closed registration
 
 ### Step 14 — Audit log — partial (June 2026)
 
 - [x] `AuditEvent` model: `userId`, `action`, `resourceType`, `resourceId`, `metadata`, `createdAt`
-- [x] Log: suggestion apply/dismiss, sync trigger, analysis clear, connection/project CRUD, role changes
-- [ ] `appliedByUserId` on `IssueSuggestion` (link write-back to actor)
+- [x] Log: suggestion apply/dismiss, sync trigger, analysis clear, connection/project CRUD, role changes, setup complete, invite claim, connection favorite
+- [x] `appliedByUserId` on `IssueSuggestion` (link write-back to actor)
 - [x] Admin UI: audit trail (basic list)
 
 ### Step 15 — Change log & affected issues

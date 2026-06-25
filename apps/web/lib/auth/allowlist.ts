@@ -16,6 +16,17 @@ function getAllowlist() {
   };
 }
 
+export function getAllowlistCounts(): {
+  domainCount: number;
+  emailCount: number;
+} {
+  const { domains, emails } = getAllowlist();
+  return {
+    domainCount: domains.length,
+    emailCount: emails.length,
+  };
+}
+
 export function normalizeEmail(
   email: string | null | undefined,
 ): string | null {

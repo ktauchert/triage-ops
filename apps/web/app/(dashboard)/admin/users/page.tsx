@@ -31,10 +31,7 @@ export default async function AdminUsersPage() {
         </p>
       </div>
 
-      <div className="space-y-3">
-        <h3 className="section-heading">Invite user</h3>
-        <InviteUserForm />
-      </div>
+      <InviteUserForm />
 
       <AdminUsersTable
         users={users}
