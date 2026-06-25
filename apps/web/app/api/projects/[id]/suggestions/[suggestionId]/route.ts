@@ -12,7 +12,7 @@ type PatchBody = {
 };
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (session instanceof Response) {
     return session;
   }

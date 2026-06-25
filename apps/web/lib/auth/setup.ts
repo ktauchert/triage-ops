@@ -160,3 +160,15 @@ export async function assertSetupAllowsApiAccess(): Promise<Response | null> {
 export function shouldDenyEmptyAllowlistInProduction(): boolean {
   return isProductionEnvironment() && !isAllowlistConfigured();
 }
+
+export function warnEmptyAllowlistInProduction(): void {
+  if (!shouldDenyEmptyAllowlistInProduction()) {
+    return;
+  }
+
+  console.warn(
+    "[triage-ops] ALLOWED_EMAIL_DOMAINS and ALLOWED_EMAILS are both empty in production. " +
+      "Configure an email/domain allowlist for defense in depth. " +
+      "Closed registration still requires admin-provisioned invites for new users.",
+  );
+}

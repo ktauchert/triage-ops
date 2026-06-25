@@ -1,6 +1,7 @@
 import { UserRole, prisma } from "@triage-ops/db";
 import { errorResponse } from "@/lib/api";
 import { auth } from "@/auth";
+import { enforceApiRateLimit } from "@/lib/rate-limit/enforce";
 import { authConfig, type AuthDataScope } from "./config";
 import { isDevAuthBypassAllowed } from "./environment";
 import { ensureDevUser } from "./dev-user";
@@ -61,11 +62,15 @@ export async function getAuthContext(): Promise<AuthContext> {
   );
 }
 
-export async function requireApiSession(): Promise<AuthContext | Response> {
+export async function requireApiSession(
+  request: Request,
+): Promise<AuthContext | Response> {
   const setupBlocked = await assertSetupAllowsApiAccess();
   if (setupBlocked) {
     return setupBlocked;
   }
+
+  let context: AuthContext;
 
   if (authConfig.disabled) {
     if (!isDevAuthBypassAllowed()) {
@@ -73,20 +78,32 @@ export async function requireApiSession(): Promise<AuthContext | Response> {
     }
 
     const userId = await ensureDevUser();
-    return buildAuthContext(userId, "dev@local", "Local Dev", UserRole.ADMIN);
+    context = await buildAuthContext(
+      userId,
+      "dev@local",
+      "Local Dev",
+      UserRole.ADMIN,
+    );
+  } else {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    context = await buildAuthContext(
+      session.user.id,
+      session.user.email,
+      session.user.name,
+    );
   }
 
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return errorResponse("Unauthorized", 401);
+  const rateLimited = await enforceApiRateLimit(request, context.userId);
+  if (rateLimited) {
+    return rateLimited;
   }
 
-  return buildAuthContext(
-    session.user.id,
-    session.user.email,
-    session.user.name,
-  );
+  return context;
 }
 
 export async function getSessionUser(): Promise<{

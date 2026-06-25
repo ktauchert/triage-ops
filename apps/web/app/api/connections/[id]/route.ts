@@ -16,7 +16,7 @@ type RouteContext = {
 };
 
 export async function DELETE(_request: Request, context: RouteContext) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(_request);
   if (session instanceof Response) {
     return session;
   }
@@ -37,7 +37,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (session instanceof Response) {
     return session;
   }

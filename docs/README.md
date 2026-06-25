@@ -10,7 +10,7 @@ This folder is the single source of truth for project direction, architecture, a
 |----------|---------|
 | [Current State](./current-state.md) | What exists today, what is stubbed, test coverage |
 | [Architecture](./architecture.md) | Monorepo layout, services, data flow, package roles |
-| [Security](./security.md) | Auth, credentials, on-prem hardening, reviewer FAQ |
+| [Security](./security.md) | Auth, credentials, on-prem hardening, rate limits, reviewer FAQ |
 | [Intranet Rollout](./intranet-rollout.md) | Production install checklist (Docker Compose; Helm planned) |
 | [Production Readiness](./production-readiness.md) | **Gate checklist: pilot vs customer install, distribution workstreams** |
 | [Editions (CE / Pro)](./editions.md) | **Community vs Pro feature split, limits, licensing direction** |

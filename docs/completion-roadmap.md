@@ -28,7 +28,7 @@ TriageOps runs **entirely inside the customer network**:
 | Area | Progress | Notes |
 |------|----------|-------|
 | Phases 0–2.5 (core product) | ✅ 100% | Sync, metrics, LLM, write-back |
-| Phase 3a (security) | ~60% | Encryption ✅ · rate limit ❌ · SSO ❌ |
+| Phase 3a (security) | ✅ ~95% | Encryption ✅ · rate limits ✅ · docs ✅ · SSO deferred |
 | Phase 3b (automation) | ~70% | Auto-sync ✅ · webhooks ❌ |
 | Phase 3c (distribution / scale) | ~20% | Dockerfiles ✅ · images/bundle/Helm ❌ |
 | Phase 4 (governance) | ~55% | RBAC, bootstrap, admin, audit partial |
@@ -60,16 +60,16 @@ All must be checked before calling the product complete for on-prem SME customer
 
 **Goal:** Everything else deploys under this security bar.
 
-**Gate:** [security.md](./security.md) checklist fully signed off.
+**Gate:** [security.md](./security.md) checklist fully signed off — **code shipped June 2026**; ops sign-off still open.
 
 ### Tasks
 
-- [ ] API rate limiting middleware on `/api/*` (~2–3 days)
-- [ ] Production `.env` template — secrets called out, no dev defaults (~0.5 day)
-- [ ] Document PAT scope requirements for GitHub and GitLab reviewers (~0.5 day)
-- [ ] Verify `AUTH_DISABLED` blocked at startup when `NODE_ENV=production`
-- [ ] Verify empty allowlist denies sign-in after setup (document behavior)
-- [ ] Document air-gapped / self-hosted GitLab path (OAuth stays on customer network)
+- [x] API rate limiting middleware on `/api/*` (~2–3 days)
+- [x] Production `.env` template — secrets called out, no dev defaults (~0.5 day)
+- [x] Document PAT scope requirements for GitHub and GitLab reviewers (~0.5 day)
+- [x] Verify `AUTH_DISABLED` blocked at startup when `NODE_ENV=production`
+- [x] Verify empty allowlist denies sign-in after setup (document behavior)
+- [x] Document air-gapped / self-hosted GitLab path (OAuth stays on customer network)
 
 ### Deferred (enterprise only)
 
@@ -197,7 +197,7 @@ Work top to bottom. Each block has a clear ship gate before moving on.
 
 | Block | Workstreams | Est. effort | Ship gate |
 |-------|-------------|-------------|-----------|
-| **A** | 1 + 2 | ~2 weeks | Security signed off; admin UI operable |
+| **A** | 1 ✅ + 2 | ~2 weeks | Security signed off; admin UI operable |
 | **B** | 3 | ~1 week | Clean-VM install from bundle |
 | **C** | 4 + ops runbooks | ~1 week | Webhooks + backup/upgrade docs tested |
 | **D** | 5 (Step 15) | ~1 week | Change log + CSV export |
@@ -207,11 +207,13 @@ Work top to bottom. Each block has a clear ship gate before moving on.
 
 **Tag `v1.0.0` after Block F.** Block G is post-v1 unless a customer requires K8s earlier.
 
-### Session 1 starting point (highest leverage)
+### Next up (Block A continued)
 
-1. API rate limiting (Workstream 1)
-2. Admin job overview + auth status (Workstream 2)
-3. `docker-compose.prod.yml` + CI image publish (Workstream 3)
+Workstream 1 is **done**. Continue Block A with Workstream 2:
+
+1. Admin job overview + auth status (Workstream 2)
+2. Admin connections overview + invite polish (Workstream 2)
+3. `docker-compose.prod.yml` + CI image publish (Workstream 3 — Block B)
 
 Then run a clean-VM dry-run from the install bundle.
 
@@ -266,7 +268,7 @@ docker compose -f docker-compose.prod.yml --profile production up -d
 
 | Date | Block | Notes |
 |------|-------|-------|
-| | | |
+| 2026-06-25 | WS 1 | Shipped: API rate limits, `.env.production.example`, security/intranet/running-the-app docs, allowlist startup warning |
 | | | |
 | | | |
 

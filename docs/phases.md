@@ -167,7 +167,7 @@ flowchart LR
 
 | Item | Status | Effort |
 |------|--------|--------|
-| API rate limiting | [ ] | **~2–3 days** — middleware on `/api/*` |
+| API rate limiting | [x] | **~2–3 days** — middleware on `/api/*` (Redis-backed, env-configurable) |
 
 | Item | Status | Effort |
 |------|--------|--------|

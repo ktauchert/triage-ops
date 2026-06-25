@@ -9,7 +9,7 @@ type RouteContext = {
 };
 
 export async function GET(request: Request, context: RouteContext) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (session instanceof Response) {
     return session;
   }

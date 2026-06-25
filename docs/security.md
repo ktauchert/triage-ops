@@ -83,7 +83,7 @@ On-prem customers often use SSO into GitLab (Okta, Azure AD, etc.). TriageOps do
 - Direct SAML/OIDC to corporate IdP (bypassing GitLab/GitHub) — Phase 3
 - Per-action audit search/filter — **Phase 4** (basic list shipped)
 - Write-back rollback / revert — **Phase 4**
-- API rate limiting — Phase 3
+- API rate limiting — **Shipped** (Phase 3a) — Redis-backed limits on `/api/*`; see [Rate limiting](#rate-limiting)
 
 ### Implemented (Phase 4 — partial)
 
@@ -159,6 +159,93 @@ TOKEN_ENCRYPTION_KEY=<output>
 
 ---
 
+## Rate limiting
+
+API rate limiting protects the web app from request floods and runaway clients **inside** your network. Limits are stored in **Redis** (same instance as BullMQ) so they work across multiple web replicas.
+
+### Behaviour
+
+| Scope | Detail |
+|-------|--------|
+| **When active** | Enabled by default when `NODE_ENV=production`; disabled in local dev unless `RATE_LIMIT_ENABLED=true` |
+| **Identity** | Per authenticated **user ID** on protected API routes; per **client IP** on OAuth (`/api/auth/*`) |
+| **Algorithm** | Fixed window counter in Redis; returns **429** with `Retry-After` and `X-RateLimit-*` headers |
+| **Redis failure** | Requests are **allowed** (fail-open) with a server log warning — availability over strict blocking |
+| **Proxy** | Set `RATE_LIMIT_TRUST_PROXY=true` (default) when HTTPS terminates at nginx/Caddy/Traefik |
+
+### Tier limits (per window)
+
+Each request is checked against a **global** bucket plus a **route tier** bucket when applicable:
+
+| Tier | Typical routes | Default max / 60 s |
+|------|----------------|-------------------|
+| `default` | All authenticated `/api/*` | 120 |
+| `sync` | `POST …/sync` | 10 |
+| `analyze` | `POST …/analyze` | 5 |
+| `apply` | `PATCH …/suggestions/[id]` | 20 |
+| `admin` | `/api/admin/*` | 30 |
+| `auth` | `/api/auth/*` (by IP) | 20 |
+
+### Configuration (on-prem)
+
+Set in `.env` on the install host (see [`.env.production.example`](../.env.production.example)). Full variable reference below.
+
+**Increase limits** (busy team, large dashboard): raise `RATE_LIMIT_MAX_REQUESTS` and tier-specific `*_MAX` values.
+
+**Decrease limits** (stricter policy): lower values or shorten the window (e.g. `RATE_LIMIT_SYNC_MAX=3` with `RATE_LIMIT_WINDOW_SECONDS=60`).
+
+**Disable** (locked-down intranet, proxy-only throttling): `RATE_LIMIT_ENABLED=false`.
+
+Restart the **web** container after changes. Worker concurrency (`WORKER_CONCURRENCY`, `LLM_WORKER_CONCURRENCY`) is separate — it limits background jobs, not HTTP requests.
+
+### Environment variables
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `RATE_LIMIT_ENABLED` | `false` in dev, `true` when `NODE_ENV=production` | Master switch. Set `true`/`false` explicitly to override the default. |
+| `RATE_LIMIT_WINDOW_SECONDS` | `60` | Length of each counting window in seconds. All `*_MAX` limits apply **per window**. |
+| `RATE_LIMIT_MAX_REQUESTS` | `120` | Global cap on authenticated `/api/*` requests **per user** (any route). |
+| `RATE_LIMIT_SYNC_MAX` | `10` | Additional cap on `POST …/sync` **per user** (on top of global). |
+| `RATE_LIMIT_ANALYZE_MAX` | `5` | Additional cap on `POST …/analyze` **per user**. |
+| `RATE_LIMIT_APPLY_MAX` | `20` | Additional cap on `PATCH …/suggestions/[id]` **per user** (apply or dismiss). |
+| `RATE_LIMIT_ADMIN_MAX` | `30` | Additional cap on `/api/admin/*` **per user**. |
+| `RATE_LIMIT_AUTH_MAX` | `20` | Cap on `/api/auth/*` **per client IP** (OAuth login/callback). |
+| `RATE_LIMIT_TRUST_PROXY` | `true` | When `true`, use `X-Forwarded-For` / `X-Real-IP` for IP-based limits. Set `true` behind nginx, Caddy, or Traefik. |
+
+Each request is checked against the **global** bucket and the **route tier** bucket when applicable — exceeding either returns **429 Too Many Requests**.
+
+Example production block:
+
+```env
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_WINDOW_SECONDS=60
+RATE_LIMIT_MAX_REQUESTS=120
+RATE_LIMIT_SYNC_MAX=10
+RATE_LIMIT_ANALYZE_MAX=5
+RATE_LIMIT_APPLY_MAX=20
+RATE_LIMIT_ADMIN_MAX=30
+RATE_LIMIT_AUTH_MAX=20
+RATE_LIMIT_TRUST_PROXY=true
+```
+
+---
+
+## Air-gapped and self-hosted GitLab
+
+For deployments with **no outbound internet** except internal services:
+
+| Component | Requirement |
+|-----------|-------------|
+| **GitLab** | Self-hosted GitLab on the customer network; worker sync/write-back uses `baseUrl` + PAT |
+| **OAuth login** | Register OAuth app on **self-hosted GitLab**; set `AUTH_GITLAB_ISSUER=https://gitlab.company.internal` |
+| **GitHub** | Not usable without reachability to `github.com` — GitLab-only for fully air-gapped installs |
+| **Ollama** | Run on the same network; pull models once on a connected maintenance window or mirror images |
+| **TriageOps** | No telemetry or external AI — all issue data stays in customer Postgres |
+
+Corporate IdP (Okta, Azure AD) integrates **via GitLab SSO upstream** — TriageOps does not call the IdP directly.
+
+---
+
 ## Data stored locally
 
 | Data | Location | Sensitivity |
@@ -196,6 +283,8 @@ Use this before exposing TriageOps beyond a single developer machine:
 
 #### Strongly recommended
 
+- [ ] `TOKEN_ENCRYPTION_KEY` set (encrypt VCS PATs at rest)
+- [ ] `RATE_LIMIT_ENABLED=true` (default in production) with limits tuned for your team size
 - [ ] Place web + worker + Postgres + Redis on an internal VLAN / private subnet
 - [ ] Firewall: only HTTPS (443) to the reverse proxy from allowed client networks
 - [ ] Redis: bind to internal network only; add `requirepass` if Redis is shared
@@ -258,7 +347,8 @@ Register the GitLab OAuth application with redirect URI:
 | Unauthenticated API blocked | `curl -i http://localhost:3000/api/projects` → **401** (with `AUTH_DISABLED=false`) |
 | PAT not in API responses | `GET /api/connections` JSON has no `accessToken` field |
 | Allowlist works | Sign in with email outside `ALLOWED_EMAIL_DOMAINS` → access denied |
-| Unit tests | `npm run test -w @triage-ops/web` includes auth and session tests |
+| Rate limit works | Repeat `POST /api/projects/[id]/sync` rapidly → **429** when over `RATE_LIMIT_SYNC_MAX` |
+| Unit tests | `npm run test -w @triage-ops/web` includes auth, session, and rate-limit tests |
 
 ---
 
@@ -268,7 +358,7 @@ Register the GitLab OAuth application with redirect URI:
 Synced issue metadata is stored in your Postgres. The worker calls **your** GitHub/GitLab instance over HTTPS. No TriageOps cloud service receives data in on-prem mode.
 
 **Who can access the dashboard?**  
-Users who pass OAuth login and (if configured) the email/domain allowlist. On-prem `shared` mode: all authorized users see all connections. Use network firewall rules for additional restriction.
+Users who pass OAuth login and (if configured) the email/domain allowlist. After setup, **new** users must be admin-provisioned (closed registration). If `ALLOWED_EMAIL_DOMAINS` and `ALLOWED_EMAILS` are both empty in production, the app logs a startup warning — configure at least one for defense in depth. Existing users with accounts can still sign in; unknown emails are rejected.
 
 **How are passwords stored?**  
 There are no local passwords. Authentication is OAuth-only.
@@ -297,7 +387,7 @@ Cascade delete removes projects, issues, and sync history for that connection. P
 | Audit log + admin dashboard | Planned (Phase 4) |
 | Write-back rollback | Planned (Phase 4) |
 | Enterprise SSO (direct IdP) | Planned (Phase 3) |
-| API rate limiting | Planned (Phase 3) |
+| API rate limiting | Shipped (Phase 3a) — Redis-backed; configure via `RATE_LIMIT_*` env vars |
 | LLM isolation (no token leakage to Ollama) | Shipped |
 | VCS write-back on Apply (worker PAT usage) | Shipped (Phase 2.5) |
 

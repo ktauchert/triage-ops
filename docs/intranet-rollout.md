@@ -164,6 +164,16 @@ AUTO_SYNC_TICK_MINUTES=15
 
 # ── Sicherheit (Pflicht Produktion) ─────────────────────────────────────────
 TOKEN_ENCRYPTION_KEY=<openssl rand -base64 32>
+# API rate limiting (Standard in Produktion) — docs/security.md#environment-variables
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_WINDOW_SECONDS=60
+RATE_LIMIT_MAX_REQUESTS=120
+RATE_LIMIT_SYNC_MAX=10
+RATE_LIMIT_ANALYZE_MAX=5
+RATE_LIMIT_APPLY_MAX=20
+RATE_LIMIT_ADMIN_MAX=30
+RATE_LIMIT_AUTH_MAX=20
+RATE_LIMIT_TRUST_PROXY=true
 AUTH_DISABLED=false
 AUTH_SECRET=<openssl rand -base64 32>
 AUTH_URL=https://triageops.company.internal
@@ -316,6 +326,7 @@ Nach dem Start alle Punkte durchgehen:
 - [ ] Anmeldung mit nicht erlaubter E-Mail wird abgelehnt
 - [ ] `GET /api/connections` enthält **kein** Feld `accessToken`
 - [ ] `TOKEN_ENCRYPTION_KEY` gesetzt; neue Connection speichert verschlüsseltes Token (`enc:v1:…` in DB)
+- [ ] `RATE_LIMIT_ENABLED=true` (Standard); Limits an Teamgröße angepasst — siehe [security.md § Rate limiting](./security.md#environment-variables)
 - [ ] Postgres und Redis von außen nicht erreichbar
 
 ### Funktion
@@ -384,7 +395,6 @@ Kurzablauf für Endnutzer:
 | **Audit-Log-UI** | Phase 4 | Kein UI-Export wer was wann geändert hat |
 | **Write-back Rollback** | Phase 4 | Fehlerhaftes Apply manuell im VCS korrigieren |
 | **Webhooks** (Echtzeit-Sync) | Phase 3b | Polling/Auto-sync statt Push-Events |
-| **API Rate Limiting** | Phase 3a | Schutz nur über Netzwerk/Firewall |
 | **Direktes SAML/OIDC** zum Firmen-IdP | Phase 3 | SSO indirekt über GitLab/GitHub OAuth |
 
 ---
@@ -395,7 +405,7 @@ Kurzablauf für Endnutzer:
 # 1. Klonen & konfigurieren
 git clone <repo-url> triage-ops && cd triage-ops
 cp .env.example .env
-# → .env anpassen (POSTGRES_PASSWORD, Auth, TOKEN_ENCRYPTION_KEY, …)
+# → .env anpassen (POSTGRES_PASSWORD, Auth, TOKEN_ENCRYPTION_KEY, RATE_LIMIT_*, …)
 
 # 2. Stack starten
 npm run docker:up:all

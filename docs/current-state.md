@@ -98,6 +98,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 |------|-------|
 | Milestone sync | Upserted from issue-linked milestones only (no standalone milestones API) |
 | Token security | Optional AES-256-GCM via `TOKEN_ENCRYPTION_KEY` (Phase 3a); legacy plain tokens supported |
+| API rate limiting | Redis-backed; env-configurable tiers (`RATE_LIMIT_*`); enabled by default in production |
 | Auto-sync | Per-project toggle; worker `auto-sync` queue when `AUTO_SYNC_SCHEDULER_ENABLED=true` |
 | Phase 3b | Webhooks not started |
 | Phase 3c | Helm, multi-tenant, billing not started |
@@ -118,7 +119,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ### Phase 3 — Production infrastructure (partial)
 
-- **3a:** PAT encryption (`sealAccessToken` / `openAccessToken`, `TOKEN_ENCRYPTION_KEY`)
+- **3a:** PAT encryption (`sealAccessToken` / `openAccessToken`, `TOKEN_ENCRYPTION_KEY`); API rate limiting (`RATE_LIMIT_*` env vars, Redis-backed)
 - **3b:** Per-project auto-sync + BullMQ scheduler (`AUTO_SYNC_SCHEDULER_ENABLED`)
 - **Open:** webhooks, rate limiting, Helm, multi-tenant — see [phases.md](./phases.md)
 
@@ -161,22 +162,33 @@ npm test
 
 ## Key environment variables
 
-| Variable | Required by | Default (local) |
-|----------|-------------|-----------------|
-| `DATABASE_URL` | db, worker, web | `postgresql://triage_ops:triage_ops@localhost:5433/triage_ops` |
-| `REDIS_URL` | worker, web | `redis://localhost:6379` |
-| `OLLAMA_HOST` | worker | `http://localhost:11434` |
-| `OLLAMA_CHAT_MODEL` | worker | `llama3.2:3b` |
-| `OLLAMA_EMBED_MODEL` | worker | `nomic-embed-text` |
-| `WORKER_CONCURRENCY` | worker | `2` |
-| `LLM_WORKER_CONCURRENCY` | worker | `1` |
-| `WRITEBACK_WORKER_CONCURRENCY` | worker | `2` |
-| `TOKEN_ENCRYPTION_KEY` | web, worker | — (optional; encrypt PATs at rest) |
-| `AUTO_SYNC_SCHEDULER_ENABLED` | worker | `false` |
-| `AUTO_SYNC_TICK_MINUTES` | worker | `15` |
-| `AUTH_DISABLED` | web | `true` (local dev) |
-| `AUTH_SECRET` | web | — (required when auth enabled) |
-| `AUTH_PROVIDERS` | web | `github,gitlab` |
-| `AUTH_DATA_SCOPE` | web | `shared` or `per_user` |
+| Variable | Required by | Default (local) | Meaning |
+|----------|-------------|-----------------|---------|
+| `DATABASE_URL` | db, worker, web | `postgresql://triage_ops:triage_ops@localhost:5433/triage_ops` | Postgres connection string |
+| `REDIS_URL` | worker, web | `redis://localhost:6379` | Redis for BullMQ and API rate limits |
+| `OLLAMA_HOST` | worker | `http://localhost:11434` | Ollama API base URL |
+| `OLLAMA_CHAT_MODEL` | worker | `llama3.2:3b` | Chat model for description drafts |
+| `OLLAMA_EMBED_MODEL` | worker | `nomic-embed-text` | Embedding model for duplicate detection |
+| `WORKER_CONCURRENCY` | worker | `2` | Parallel sync jobs |
+| `LLM_WORKER_CONCURRENCY` | worker | `1` | Parallel LLM analysis jobs |
+| `WRITEBACK_WORKER_CONCURRENCY` | worker | `2` | Parallel write-back jobs |
+| `TOKEN_ENCRYPTION_KEY` | web, worker | — | Encrypt VCS PATs at rest (AES-256-GCM) |
+| `RATE_LIMIT_ENABLED` | web | off in dev / on in prod | Master switch for HTTP rate limiting |
+| `RATE_LIMIT_WINDOW_SECONDS` | web | `60` | Counting window length (seconds) |
+| `RATE_LIMIT_MAX_REQUESTS` | web | `120` | Max authenticated API requests per user per window |
+| `RATE_LIMIT_SYNC_MAX` | web | `10` | Max `POST …/sync` per user per window |
+| `RATE_LIMIT_ANALYZE_MAX` | web | `5` | Max `POST …/analyze` per user per window |
+| `RATE_LIMIT_APPLY_MAX` | web | `20` | Max suggestion PATCH per user per window |
+| `RATE_LIMIT_ADMIN_MAX` | web | `30` | Max `/api/admin/*` per user per window |
+| `RATE_LIMIT_AUTH_MAX` | web | `20` | Max `/api/auth/*` per client IP per window |
+| `RATE_LIMIT_TRUST_PROXY` | web | `true` | Use proxy headers for client IP |
+| `AUTO_SYNC_SCHEDULER_ENABLED` | worker | `false` | BullMQ auto-sync scheduler |
+| `AUTO_SYNC_TICK_MINUTES` | worker | `15` | Scheduler tick interval |
+| `AUTH_DISABLED` | web | `true` (local dev) | Skip OAuth (dev only) |
+| `AUTH_SECRET` | web | — | Session JWT signing secret |
+| `AUTH_PROVIDERS` | web | `github,gitlab` | OAuth providers |
+| `AUTH_DATA_SCOPE` | web | `shared` or `per_user` | Connection visibility model |
+
+Rate limit details: [Security § Environment variables](./security.md#environment-variables).
 
 See [Running the App](./running-the-app.md) for full setup instructions.

@@ -12,6 +12,10 @@ vi.mock("./setup", () => ({
   assertSetupAllowsApiAccess: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock("@/lib/rate-limit/enforce", () => ({
+  enforceApiRateLimit: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@triage-ops/db", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@triage-ops/db")>();
   return {
@@ -39,7 +43,9 @@ describe("requireApiSession", () => {
   it("returns dev context when auth is disabled", async () => {
     vi.stubEnv("AUTH_DISABLED", "true");
 
-    const session = await requireApiSession();
+    const session = await requireApiSession(
+      new Request("http://localhost/api/test"),
+    );
     if (session instanceof Response) {
       throw new Error("Expected AuthContext");
     }
@@ -54,7 +60,9 @@ describe("requireApiSession", () => {
     vi.stubEnv("AUTH_DISABLED", "false");
     mockedAuth.mockResolvedValue(null);
 
-    const session = await requireApiSession();
+    const session = await requireApiSession(
+      new Request("http://localhost/api/test"),
+    );
     expect(session).toBeInstanceOf(Response);
     if (session instanceof Response) {
       expect(session.status).toBe(401);
@@ -73,7 +81,9 @@ describe("requireApiSession", () => {
       expires: new Date().toISOString(),
     });
 
-    const session = await requireApiSession();
+    const session = await requireApiSession(
+      new Request("http://localhost/api/test"),
+    );
     if (session instanceof Response) {
       throw new Error("Expected AuthContext");
     }

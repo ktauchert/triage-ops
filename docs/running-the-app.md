@@ -237,7 +237,23 @@ AUTO_SYNC_TICK_MINUTES=15   # how often the scheduler checks projects
 
 Enable per project on the **Projects** page (Auto-sync column). Default interval per project: 60 minutes (minimum 15).
 
----
+**API rate limiting (3a)** — on the web app (Redis-backed; enabled by default in production):
+
+```env
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_WINDOW_SECONDS=60
+RATE_LIMIT_MAX_REQUESTS=120
+RATE_LIMIT_SYNC_MAX=10
+RATE_LIMIT_ANALYZE_MAX=5
+RATE_LIMIT_APPLY_MAX=20
+RATE_LIMIT_ADMIN_MAX=30
+RATE_LIMIT_AUTH_MAX=20
+RATE_LIMIT_TRUST_PROXY=true
+```
+
+Tune limits for your team size, or set `RATE_LIMIT_ENABLED=false` if you rely on reverse-proxy throttling only. Restart **web** after changes. Full variable reference: [Security § Rate limiting](./security.md#environment-variables).
+
+To test locally: set `RATE_LIMIT_ENABLED=true` and a low cap (e.g. `RATE_LIMIT_SYNC_MAX=2`), then trigger sync repeatedly — the third request within the window should return **429**.
 
 ## Full Docker deployment
 

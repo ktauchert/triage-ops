@@ -11,8 +11,8 @@ import { inviteUser, listPendingInvites, listUsers } from "@/lib/services/admin"
 
 const VALID_ROLES = new Set<string>(Object.values(UserRole));
 
-export async function GET() {
-  const session = await requireApiSession();
+export async function GET(request: Request) {
+  const session = await requireApiSession(request);
   if (session instanceof Response) {
     return session;
   }
@@ -31,7 +31,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (session instanceof Response) {
     return session;
   }

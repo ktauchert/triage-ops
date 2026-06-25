@@ -24,7 +24,7 @@ Use it when you return from a break or start a pilot. For day-to-day dev, see [R
 | Production Dockerfiles | ✅ Ready | Web standalone + worker esbuild bundle |
 | **Image-based customer install** | ❌ Not shipped | No `compose.prod.yml`, no CI publish |
 | **Install bundle for customers** | ❌ Not shipped | ZIP with compose + docs only |
-| API rate limiting | ❌ Open | Phase 3a |
+| API rate limiting | ✅ Ready | Redis-backed; `RATE_LIMIT_*` env vars — [security.md](./security.md#rate-limiting) |
 | Webhook-triggered sync | ❌ Open | Phase 3b — auto-sync is enough for v1 pilot |
 | Change log / reporting / rollback | ❌ Open | Phase 15–17 — post-pilot |
 | Helm / K8s chart | ❌ Open | Only if customer requires K8s |
@@ -99,7 +99,7 @@ See [on-prem-product.md § Production distribution](./on-prem-product.md#chosen-
 | Document PAT scope requirements (GitHub/GitLab) | — | partial |
 | Postgres backup + restore procedure | 0.5 d | [ ] |
 | Log retention / disk monitoring for Ollama + Postgres | 0.5 d | [ ] |
-| API rate limiting middleware | 2–3 d | [ ] |
+| API rate limiting middleware | 2–3 d | [x] |
 
 See [security.md](./security.md) for the full hardening checklist.
 

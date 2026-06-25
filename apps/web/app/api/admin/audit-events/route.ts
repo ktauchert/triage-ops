@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/auth/permissions";
 import { listAuditEvents } from "@/lib/services/audit";
 
 export async function GET(request: Request) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (session instanceof Response) {
     return session;
   }
