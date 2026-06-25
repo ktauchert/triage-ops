@@ -4,7 +4,7 @@ Last updated: June 2026
 
 This document evaluates an **open-core / freemium-on-prem** model for TriageOps: a **Community Edition (CE)** that is genuinely useful for free self-hosting, and a **Pro** edition with paid features for teams that need automation, AI, governance, and write-back.
 
-**Status:** Product direction · **not implemented in code yet** (no license gating). Use this when planning pricing, packaging, and `AppSettings.license` work.
+**Status:** Product direction · **not implemented in code yet** (no license gating). **Today all features below are available without edition checks** — this matrix describes a future packaging split, not current runtime behavior.
 
 **Related:** [On-Prem Product Model](./on-prem-product.md) · [Production Readiness](./production-readiness.md) · [Phases § 3c billing](./phases.md#phase-3c--deployment--scale-optional)
 

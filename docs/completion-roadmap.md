@@ -30,8 +30,8 @@ TriageOps runs **entirely inside the customer network**:
 | Phases 0–2.5 (core product) | ✅ 100% | Sync, metrics, LLM, write-back |
 | Phase 3a (security) | ✅ ~95% | Encryption ✅ · rate limits ✅ · docs ✅ · SSO deferred |
 | Phase 3b (automation) | ~70% | Auto-sync ✅ · webhooks ❌ |
-| Phase 3c (distribution / scale) | ~85% | Images/bundle/CI ✅ · Helm ❌ · dry-run pending |
-| Phase 4 (governance) | ~75% | RBAC, admin console, audit largely done |
+| Phase 3c (distribution / scale) | ~90% | Images/bundle/CI ✅ · clean-VM dry-run pending · Helm ❌ |
+| Phase 4 (governance) | ~75% | RBAC, bootstrap, admin console, audit ✅ — change log / rollback open |
 | Phase 15–17 (change log, reporting, rollback) | 0% | Not started |
 
 **Target release:** tag **`v1.0.0`** after Workstreams 1–5 (Blocks A–F below). Workstream 6 (enterprise tier) → **`v1.x`**.

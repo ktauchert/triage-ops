@@ -51,12 +51,24 @@ apps/worker/src/
 ├── lib/
 │   ├── gitlab/     GitLab REST API client (+ *.test.ts)
 │   ├── github/     GitHub REST API client (+ *.test.ts)
-│   ├── vcs/        Provider router (fetchProjectIssues)
+│   ├── vcs/        Provider router (fetch + write-back)
+│   ├── llm/        Duplicate detection, description drafts, embeddings
+│   ├── ollama/     Ollama client wrapper
 │   ├── lock.ts     Redis distributed locks (+ *.test.ts)
 │   └── redis.ts    Redis singleton
 ├── queues/         BullMQ queue definitions
-├── workers/        Job processors (business logic)
+├── workers/        Job processors (sync, llm, write-back, auto-sync)
 └── index.ts        Daemon entry point
+
+apps/web/
+├── app/
+│   ├── (dashboard)/   Home, project, connections, projects, admin
+│   ├── api/           REST API routes (+ route.test.ts)
+│   ├── setup/         Instance bootstrap
+│   └── login/         OAuth sign-in
+├── auth.config.ts     Auth.js + proxy authorization
+├── lib/auth/          RBAC, session, allowlist, bootstrap
+└── lib/services/      Server-side data helpers
 
 packages/metrics/src/
 ├── ghost.ts        countGhostIssues (+ *.test.ts)

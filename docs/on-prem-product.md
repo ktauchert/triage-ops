@@ -65,20 +65,20 @@ sequenceDiagram
 - Open self-registration after setup
 - Relying only on `.env` without a visible setup completion state
 
-### Implementation checklist (code — not started)
+### Implementation checklist (code — shipped June 2026)
 
-Tracked in [phases.md § Step 12b](./phases.md#step-12b--instance-bootstrap--closed-registration-planned).
+Tracked in [phases.md § Step 12b](./phases.md#step-12b--instance-bootstrap--closed-registration).
 
-- [ ] `AppSettings` or equivalent: `setupComplete`, `setupCompletedAt`, `setupCompletedByUserId`
-- [ ] `/setup` route: redirect all traffic when `setupComplete=false` (except health/auth callbacks)
-- [ ] `signIn` callback: if no admin exists yet → grant `ADMIN` + mark setup complete
-- [ ] `ProvisionedUser` model or `User` with `invitedEmail` + `status=PENDING` before first OAuth link
-- [ ] Admin UI: **Invite user** (email + role) — extends existing users table
-- [ ] Production startup guard: reject `AUTH_DISABLED=true` when `NODE_ENV=production`
-- [ ] Production allowlist guard: warn/fail if allowlist empty and setup complete
-- [ ] Remove `dev@local` from production paths (`ensureDevUser` only in dev bypass)
-- [ ] Tests: bootstrap, closed sign-in, admin promotion
-- [ ] Docs + intranet checklist updated when shipped
+- [x] `AppSettings`: `setupComplete`, `setupCompletedAt`, `setupCompletedByUserId`
+- [x] `/setup` route: redirect all traffic when `setupComplete=false` (except health/auth callbacks)
+- [x] `signIn` callback: if no admin exists yet → grant `ADMIN` + mark setup complete
+- [x] `ProvisionedUser` model — invite email + role before first OAuth link
+- [x] Admin UI: **Invite user** (email + role)
+- [x] Production startup guard: reject `AUTH_DISABLED=true` when `NODE_ENV=production`
+- [x] Production allowlist guard: refuse empty allowlist when setup complete
+- [x] `dev@local` / `ensureDevUser` only in dev bypass — blocked in production
+- [x] Tests: bootstrap, closed sign-in, admin promotion
+- [x] Docs + intranet checklist updated
 
 ---
 
@@ -93,9 +93,9 @@ Customers should **not** need `git clone` or Node.js on the server. Developers k
 | **Development** | Contributors, you | `git clone` + `npm run docker:up` / `build:` in Compose | Now (unchanged) |
 | **Product (on-prem)** | Customer IT / pilot | Pull images from private registry + `docker-compose.prod.yml` | **Shipped** — install bundle via GitHub Release |
 
-### Target customer install (preview — when shipped)
+### Target customer install (shipped)
 
-Customers receive an **install bundle** (ZIP or private release), not repository access:
+Customers receive an **install bundle** (ZIP from GitHub Release), not repository access:
 
 ```
 triage-ops-install-1.0.0/
@@ -164,16 +164,18 @@ gantt
   title On-prem product milestones
   dateFormat YYYY-MM
   section Phase 4
-  RBAC + Admin UI (in progress)     :done, 2026-06, 2026-07
-  Instance bootstrap + closed reg     :active, 2026-06, 2026-08
+  RBAC + Admin UI                    :done, 2026-06, 2026-06
+  Instance bootstrap + closed reg      :done, 2026-06, 2026-06
+  Change log + rollback              :active, 2026-06, 2026-09
   section Phase 3c / Release
-  compose.prod.yml + CI image push    :2026-08, 2026-09
-  Install bundle + customer docs      :2026-09, 2026-10
+  compose.prod.yml + CI image push     :done, 2026-06, 2026-06
+  Install bundle + customer docs       :done, 2026-06, 2026-06
+  Clean-VM dry-run validation        :active, 2026-06, 2026-07
   section Optional
-  License / activation                :2026-10, 2026-12
+  License / activation                 :2026-09, 2026-12
 ```
 
-**Gate for “product install”:** Phase 4 bootstrap shipped **and** image pipeline green on a semver tag.
+**Gate for “product install”:** Phase 4 bootstrap shipped **and** image pipeline green on a semver tag — **both met** (June 2026). Remaining: ops dry-run on clean VM before first external customer.
 
 ---
 

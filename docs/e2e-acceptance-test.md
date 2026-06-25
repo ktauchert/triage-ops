@@ -6,7 +6,7 @@ A **manual, follow-along acceptance test** for a real production deployment, per
 - **Audience:** you (vendor) doing a release dry-run, or a customer doing install acceptance.
 - **Time budget:** ~60–90 min (model pulls dominate).
 
-> This guide intentionally covers **flows and integration points**, not unit-level behavior. The items in [Already covered by automated tests](#already-covered-by-automated-tests) are verified by 355 Vitest cases and are **not** re-tested by hand here.
+> This guide intentionally covers **flows and integration points**, not unit-level behavior. The items in [Already covered by automated tests](#already-covered-by-automated-tests) are verified by ~320+ Vitest cases and are **not** re-tested by hand here.
 
 ---
 
@@ -26,7 +26,7 @@ docker compose -f docker-compose.prod.yml logs --tail=200 web worker postgres re
 
 ## Already covered by automated tests
 
-Don't hand-test these — they are green in `npm test` (db 7, metrics 17, worker 103, web 228):
+Don't hand-test these — they are green in `npm test` (db 7, metrics 17, worker 100+, web 190+, e2e 3):
 
 - Triage metric math, label/threshold logic (`packages/metrics`).
 - VCS/Ollama API client request shaping, error mapping, pagination (MSW).

@@ -17,7 +17,7 @@ This folder is the single source of truth for project direction, architecture, a
 | [On-Prem Product Model](./on-prem-product.md) | **Bootstrap auth, closed registration, image-based distribution (decisions + roadmap)** |
 | [Implementation Phases](./phases.md) | Phase roadmap with step-by-step plan |
 | [**Completion Roadmap**](./completion-roadmap.md) | **Master todo: final steps to v1.0 (on-prem complete)** |
-| [Dashboard restructure](./dashboard-restructure.md) | **Role-aware routes, home/project/admin shells (in progress)** |
+| [Dashboard restructure](./dashboard-restructure.md) | **Role-aware routes, home/project/admin shells** |
 | [MVP Definition of Done](./mvp-definition-of-done.md) | Checklist that marks Phase 1 MVP as shippable |
 | [Running the App](./running-the-app.md) | Local dev, Docker, migrations, troubleshooting |
 | [Development Guide](./development-guide.md) | Conventions, TDD workflow, adding features |

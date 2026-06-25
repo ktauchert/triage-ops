@@ -394,11 +394,14 @@ Kurzablauf für Endnutzer:
 | Feature | Status | Auswirkung |
 |---------|--------|------------|
 | **Helm-Chart** | Geplant Phase 3c | K8s-Deploys manuell oder Compose bis Chart verfügbar |
-| **RBAC** (Admin/Operator/Viewer) | Phase 4 | Alle eingeloggten Nutzer gleiche Rechte |
-| **Audit-Log-UI** | Phase 4 | Kein UI-Export wer was wann geändert hat |
-| **Write-back Rollback** | Phase 4 | Fehlerhaftes Apply manuell im VCS korrigieren |
-| **Webhooks** (Echtzeit-Sync) | Phase 3b | Polling/Auto-sync statt Push-Events |
-| **Direktes SAML/OIDC** zum Firmen-IdP | Phase 3 | SSO indirekt über GitLab/GitHub OAuth |
+| **Change log + CSV-Export** | Phase 15 | Angewandte Vorschläge nur über Audit-Log / VCS nachvollziehbar |
+| **Impact-Reporting** (Metrik-Snapshots) | Phase 16 | Keine Kampagnen-Timeline im Dashboard |
+| **Write-back Rollback** | Phase 17 | Fehlerhaftes Apply manuell im VCS korrigieren |
+| **Webhooks** (Echtzeit-Sync) | Phase 3b | Auto-sync + manueller Sync statt Push-Events |
+| **Direktes SAML/OIDC** zum Firmen-IdP | Phase 3a deferred | SSO indirekt über GitLab/GitHub OAuth |
+| **`ProjectMembership`** | Phase 4 optional | Alle Projekte für eingeloggte Nutzer sichtbar (je nach `AUTH_DATA_SCOPE`) |
+
+**Bereits verfügbar (Phase 4):** RBAC (vier Rollen), Admin-Konsole (`/admin`, Users, Audit, Jobs), Instance-Bootstrap (`/setup`), geschlossene Registrierung, Audit-Log.
 
 ---
 

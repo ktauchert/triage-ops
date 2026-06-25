@@ -129,4 +129,4 @@ A reviewer should be able to perform this flow without assistance:
 | Version / commit | 644ffe7 (+ Phase 1 closure work) |
 | Reviewer | Karsten / Cursor Agent |
 | Provider tested (GitHub / GitLab) | GitHub (e2e smoke + MSW); GitLab (manual dev) |
-| Notes | Phase 1 MVP functionally complete. Route-handler tests (11 API routes, 51 cases). Docker full stack verified via `npm run docker:verify`. Worker Docker image fixed (esbuild bundles shared-types; `@triage-ops/db` compiles to ESM dist). Production hardening (HTTPS, auth enabled) documented in security.md — not blockers for intranet MVP. |
+| Notes | Phase 1 MVP functionally complete (sign-off 2026-06-21). Subsequent phases added RBAC, admin, LLM write-back, and expanded API test coverage (~16 route files, 190+ web tests) without changing MVP scope. Docker full stack verified via `npm run docker:verify`. Production hardening documented in [security.md](./security.md). |

@@ -2,7 +2,7 @@
 
 Last updated: June 2026
 
-This document tracks the **role-aware navigation refactor** — moving from a single flat triage dashboard to a home → project workspace → admin console model.
+This document tracks the **role-aware navigation refactor** — home → project workspace → admin console model. **Core refactor complete** (June 2026); remaining items are Phase 15–17 governance features.
 
 See [Implementation Phases](./phases.md) Step 13 (admin dashboard) for the original roadmap item.
 
@@ -28,6 +28,7 @@ See [Implementation Phases](./phases.md) Step 13 (admin dashboard) for the origi
 | `/admin` | ADMIN | **Admin overview** — user counts, pending invites, quick links |
 | `/admin/users` | ADMIN | User list, invites, role changes |
 | `/admin/audit` | ADMIN | Audit event log |
+| `/admin/jobs` | ADMIN | Background job runs and failures |
 | `/login`, `/setup` | Bootstrap | Unchanged |
 
 ### Redirects
@@ -65,11 +66,12 @@ flowchart LR
   Home --> Admin["/admin"]
   Admin --> Users["/admin/users"]
   Admin --> Audit["/admin/audit"]
+  Admin --> Jobs["/admin/jobs"]
   Home --> Project
 ```
 
 - Workspace sidebar includes **Admin** → `/admin`.
-- Inside `/admin/*`, sidebar switches to **admin console** nav (Overview, Users, Audit) with “Back to workspace”.
+- Inside `/admin/*`, sidebar switches to **admin console** nav (Overview, Users, Audit, Jobs) with “Back to workspace”.
 
 ---
 
@@ -142,6 +144,7 @@ Suggested order: **polish (health strip + empty state) → user CRUD → admin e
 | `apps/web/app/(dashboard)/admin/layout.tsx` | ADMIN role guard |
 | `apps/web/app/(dashboard)/admin/users/page.tsx` | User management |
 | `apps/web/app/(dashboard)/admin/audit/page.tsx` | Audit log |
+| `apps/web/app/(dashboard)/admin/jobs/page.tsx` | Background jobs |
 
 ### Components
 

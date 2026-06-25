@@ -22,14 +22,14 @@ Use it when you return from a break or start a pilot. For day-to-day dev, see [R
 | Auto-sync scheduler | ✅ Ready | Optional; `AUTO_SYNC_SCHEDULER_ENABLED=true` |
 | CI (test, lint, build) | ✅ Ready | GitHub Actions on push/PR |
 | Production Dockerfiles | ✅ Ready | Web standalone + worker esbuild bundle |
-| **Image-based customer install** | ❌ Not shipped | No `compose.prod.yml`, no CI publish |
-| **Install bundle for customers** | ❌ Not shipped | ZIP with compose + docs only |
+| **Image-based customer install** | ✅ Ready | `docker-compose.prod.yml` + GHCR images on tag |
+| **Install bundle for customers** | ✅ Ready | Release ZIP via `.github/workflows/release.yml` |
 | API rate limiting | ✅ Ready | Redis-backed; `RATE_LIMIT_*` env vars — [security.md](./security.md#rate-limiting) |
 | Webhook-triggered sync | ❌ Open | Phase 3b — auto-sync is enough for v1 pilot |
 | Change log / reporting / rollback | ❌ Open | Phase 15–17 — post-pilot |
 | Helm / K8s chart | ❌ Open | Only if customer requires K8s |
 
-**Bottom line:** The app is **pilot-capable** once ops config is correct. The main engineering gap before external customers is **product distribution** (pre-built images + install bundle), not core features.
+**Bottom line:** The app is **pilot-capable** once ops config is correct. **Product distribution** (images + install bundle) is shipped; remaining gaps are **ops validation** (clean-VM dry-run, backup/restore) and **governance depth** (change log, rollback).
 
 ---
 
@@ -109,7 +109,7 @@ See [on-prem-product.md § Production distribution](./on-prem-product.md#chosen-
 
 | Task | Est. | Done |
 |------|------|------|
-| Production `.env` template (secrets called out, no dev defaults) | 0.5 d | [ ] |
+| Production `.env` template (secrets called out, no dev defaults) | 0.5 d | [x] (`.env.production.example`) |
 | Verify `instrumentation.ts` blocks `AUTH_DISABLED` in production | — | [x] |
 | Verify empty allowlist denies sign-in after setup | — | [x] |
 | Document PAT scope requirements (GitHub/GitLab) | — | partial |

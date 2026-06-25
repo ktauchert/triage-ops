@@ -62,7 +62,7 @@ flowchart TB
 | **Deployment profiles** | On-prem: `AUTH_DATA_SCOPE=shared` + GitLab OAuth + allowlist. Hosted solo: `per_user` isolation |
 | **Dev bypass** | `AUTH_DISABLED=true` skips all auth — **refused at startup** when `NODE_ENV=production` unless `ALLOW_AUTH_DISABLED=true` (CI only) |
 
-### Planned — instance bootstrap (Phase 4)
+### Instance bootstrap (Phase 4 — shipped)
 
 **Decision doc:** [on-prem-product.md](./on-prem-product.md)
 
@@ -70,29 +70,30 @@ flowchart TB
 |---------|--------|
 | **Setup wizard** | Fresh install → `/setup` → first OAuth login becomes first `ADMIN` |
 | **More admins** | Existing admins promote users via Admin UI (no shared recovery password) |
-| **Closed registration** | After setup, only admin-provisioned emails may sign in |
+| **Closed registration** | After setup, only admin-provisioned emails may sign in (`ProvisionedUser`) |
 | **Allowlist default** | Empty allowlist in production → **startup fails** (configure `ALLOWED_EMAIL_DOMAINS` or `ALLOWED_EMAILS`) |
 
 ### Corporate SSO (GitLab)
 
 On-prem customers often use SSO into GitLab (Okta, Azure AD, etc.). TriageOps does **not** integrate with the IdP directly. Users sign in with **GitLab OAuth**; GitLab handles corporate SSO upstream. This is the recommended on-prem login path.
 
-### Not implemented (planned — Phase 4 unless noted)
+### Not yet implemented
 
-- Instance bootstrap wizard + closed registration — [on-prem-product.md](./on-prem-product.md)
-- Production startup guards (`AUTH_DISABLED`, empty allowlist) — **Shipped**
-- Direct SAML/OIDC to corporate IdP (bypassing GitLab/GitHub) — Phase 3
-- Per-action audit search/filter — **Phase 4** (basic list shipped)
-- Write-back rollback / revert — **Phase 4**
-- API rate limiting — **Shipped** (Phase 3a) — Redis-backed limits on `/api/*`; see [Rate limiting](#rate-limiting)
+- Direct SAML/OIDC to corporate IdP (bypassing GitLab/GitHub) — Phase 3a deferred
+- Unified change log + CSV export — Phase 15
+- Impact reporting / metric snapshots — Phase 16
+- Write-back rollback / revert — Phase 17
+- `ProjectMembership` (per-user project access) — optional Phase 4
 
-### Implemented (Phase 4 — partial)
+### Implemented governance (Phase 4)
 
 | Control | Detail |
 |---------|--------|
 | **RBAC** | `ADMIN`, `LEAD`, `OPERATOR`, `VIEWER` with API enforcement |
-| **Admin UI** | `/admin` users + roles, audit event list |
+| **Admin UI** | `/admin` overview, users, audit, jobs |
 | **Audit log** | `AuditEvent` model + logging on critical actions |
+| **Bootstrap** | `/setup`, closed registration, production startup guards |
+| **API rate limiting** | Redis-backed limits on `/api/*` — see [Rate limiting](#rate-limiting) |
 
 ### Production hardening (June 2026)
 
@@ -405,9 +406,9 @@ Cascade delete removes projects, issues, and sync history for that connection. P
 | Encrypt `accessToken` at rest | Shipped (Phase 3a) — set `TOKEN_ENCRYPTION_KEY` in production |
 | Per-project auto-sync | Shipped (Phase 3b) — `AUTO_SYNC_SCHEDULER_ENABLED` on worker |
 | Webhook-triggered sync | Planned (Phase 3b) |
-| RBAC (admin / operator / viewer) | Planned (Phase 4) |
-| Audit log + admin dashboard | Planned (Phase 4) |
-| Write-back rollback | Planned (Phase 4) |
+| RBAC (admin / operator / viewer) | Shipped (Phase 4) — four roles, API enforcement |
+| Audit log + admin dashboard | Shipped (Phase 4) — `/admin`, `/admin/audit`, `/admin/jobs` |
+| Write-back rollback | Open (Phase 17) — not implemented |
 | Enterprise SSO (direct IdP) | Planned (Phase 3) |
 | API rate limiting | Shipped (Phase 3a) — Redis-backed; configure via `RATE_LIMIT_*` env vars |
 | LLM isolation (no token leakage to Ollama) | Shipped |

@@ -91,7 +91,7 @@ Scaffolding and core pipeline infrastructure.
 - [x] Document auth setup in `docs/running-the-app.md`
 - [x] Unit test: unauthenticated API session returns 401 when auth enabled
 
-**Out of scope for Step 8:** multi-tenant billing, enterprise SSO (direct IdP). **RBAC, admin UI, audit log, rollback** → [Phase 4](./phases.md#phase-4--governance-admin--operations-planned).
+**Out of scope for Step 8:** multi-tenant billing, enterprise SSO (direct IdP). **RBAC, admin UI, audit log** → shipped in [Phase 4](./phases.md#phase-4--governance-admin--operations-in-progress). **Change log / rollback** → Steps 15–17 (open).
 
 ---
 
@@ -215,7 +215,7 @@ flowchart LR
 - [ ] Optional `ProjectMembership` (user ↔ project + role override)
 - [x] Permission matrix for API actions: manage connections, sync, analyze, apply, dismiss, admin
 - [x] Enforce permissions in route handlers + `lib/auth/` helpers (not UI-only)
-- [ ] Bootstrap first admin via setup wizard (replaces env-only `ADMIN_EMAILS` as primary path) — see [Step 12b](#step-12b--instance-bootstrap--closed-registration-planned)
+- [x] Bootstrap first admin via setup wizard (replaces env-only `ADMIN_EMAILS` as primary path) — see [Step 12b](#step-12b--instance-bootstrap--closed-registration)
 
 **Suggested roles:**
 
@@ -226,7 +226,7 @@ flowchart LR
 | Operator | Apply write-back (description / duplicate), no connection management |
 | Viewer | Read metrics and suggestions only |
 
-### Step 12b — Instance bootstrap & closed registration — partial (June 2026)
+### Step 12b — Instance bootstrap & closed registration ✅ (June 2026)
 
 > **Chosen model:** [on-prem-product.md § Bootstrap](./on-prem-product.md#chosen-approach--instance-bootstrap-auth) — first OAuth login = first admin; admins can promote more admins; closed registration after setup.
 
@@ -240,7 +240,7 @@ flowchart LR
 - [x] Keep `ADMIN_EMAILS` as optional automation fallback on sign-in
 - [x] Tests + migration backfill for existing installs
 
-### Step 13 — Admin dashboard — partial (June 2026)
+### Step 13 — Admin dashboard ✅ (June 2026)
 
 - [x] `/admin` area (Admin role only): users, roles
 - [x] Audit events list (read-only)
@@ -249,7 +249,7 @@ flowchart LR
 - [x] Background jobs: recent sync / LLM / write-back runs and failures (`/admin/jobs`)
 - [x] **Invite user** form (email + role) for closed registration
 
-### Step 14 — Audit log — partial (June 2026)
+### Step 14 — Audit log ✅ (June 2026)
 
 - [x] `AuditEvent` model: `userId`, `action`, `resourceType`, `resourceId`, `metadata`, `createdAt`
 - [x] Log: suggestion apply/dismiss, sync trigger, analysis clear, connection/project CRUD, role changes, setup complete, invite claim, connection favorite
@@ -286,8 +286,8 @@ Phases 0–2.5 and Phase 1 MVP are complete (June 2026).
 
 Legacy quick picks by deployment maturity:
 
-1. **Phase 4 — Bootstrap + governance** — [setup wizard + closed registration](./on-prem-product.md#chosen-approach--instance-bootstrap-auth); finish admin invite UX
-2. **Small intranet team (interim)** — `AUTH_DISABLED=false`, mandatory allowlist, `TOKEN_ENCRYPTION_KEY`, optional `AUTO_SYNC_SCHEDULER_ENABLED=true`
+1. **Phase 4 — Governance depth** — change log, impact reporting, rollback (Steps 15–17)
+2. **Small intranet team** — `AUTH_DISABLED=false`, mandatory allowlist, `TOKEN_ENCRYPTION_KEY`, optional `AUTO_SYNC_SCHEDULER_ENABLED=true`
 3. **Phase 3b** — webhooks when near-real-time sync matters
-4. **Phase 3c — Product distribution** — [production-readiness.md § Workstream 1](./production-readiness.md#1-product-distribution--essential-for-gate-b) before first external pilot
+4. **Ops validation** — clean-VM install dry-run from release bundle; backup/restore procedure
 5. **Phase 3c** — Helm/K8s or multi-tenant only when required

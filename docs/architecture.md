@@ -61,7 +61,9 @@ flowchart LR
 
 | Path | Purpose |
 |------|---------|
-| `app/(dashboard)/` | Dashboard, connections, projects pages |
+| `app/(dashboard)/` | Home, project workspace, connections, projects, admin pages |
+| `app/setup/` | Instance bootstrap (first admin OAuth) |
+| `lib/auth/` | RBAC permissions, session, allowlist, bootstrap |
 | `app/api/` | REST API routes |
 | `components/` | Shadcn UI components, layout shell |
 | `lib/services/` | `projects.ts`, `metrics.ts` — server-side data helpers |
@@ -230,7 +232,9 @@ OAuth login via **Auth.js v5** with HTTP-only session cookies (Prisma adapter). 
 | Data ownership | `VcsConnection.userId` — filtered when `per_user`, shared when `shared` |
 | Login page | `/login` with provider buttons |
 | VCS sync tokens | Separate from login OAuth — users still add PATs per connection |
-| RBAC / admin | Not implemented — all authenticated users share the same capabilities today ([Phase 4](./phases.md#phase-4--governance-admin--operations-planned)) |
+| RBAC | Four roles (`ADMIN`, `LEAD`, `OPERATOR`, `VIEWER`); permission matrix in `lib/auth/permissions.ts`; enforced on API routes |
+| Admin console | `/admin` (users, audit, jobs) — ADMIN role only |
+| Instance bootstrap | `/setup` until `AppSettings.setupComplete`; closed registration via `ProvisionedUser` invites |
 
 See [Running the App](./running-the-app.md) for OAuth app setup and env vars. For production hardening and security review, see [security.md](./security.md).
 
@@ -241,9 +245,11 @@ See [Running the App](./running-the-app.md) for OAuth app setup and env vars. Fo
 - **Framework:** Vitest (TypeScript-native, fast)
 - **HTTP mocking:** MSW (Mock Service Worker) — no real network calls in unit tests
 - **Locations:**
-  - `apps/worker/src/**/*.test.ts` — VCS clients, locks, sync helpers, write-back (78 tests)
+  - `apps/worker/src/**/*.test.ts` — VCS clients, locks, sync helpers, write-back (100+ tests)
   - `packages/metrics/src/**/*.test.ts` — metric functions (17 tests)
-  - `apps/web/lib/**/*.test.ts` — API validation, auth helpers, suggestion services (43+ tests)
+  - `packages/db/src/**/*.test.ts` — PAT encryption (7 tests)
+  - `apps/web/**/*.test.ts` — API routes, auth, RBAC, services, rate limits (190+ tests)
+  - `packages/e2e/src/**/*.test.ts` — integration smoke (3 tests)
 - **TDD rule:** Write test contract before implementing core utilities
 
 See [Development Guide](./development-guide.md) for the full TDD checklist.
