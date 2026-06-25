@@ -280,7 +280,11 @@ flowchart LR
 
 ## Suggested immediate next steps
 
-Phases 0–2.5 and Phase 1 MVP are complete (June 2026). Choose by deployment maturity:
+Phases 0–2.5 and Phase 1 MVP are complete (June 2026).
+
+**Active tracking:** use the checkbox list in [**Completion Roadmap**](./completion-roadmap.md) — workstreams, build order, and v1.0 definition of done.
+
+Legacy quick picks by deployment maturity:
 
 1. **Phase 4 — Bootstrap + governance** — [setup wizard + closed registration](./on-prem-product.md#chosen-approach--instance-bootstrap-auth); finish admin invite UX
 2. **Small intranet team (interim)** — `AUTH_DISABLED=false`, mandatory allowlist, `TOKEN_ENCRYPTION_KEY`, optional `AUTO_SYNC_SCHEDULER_ENABLED=true`
