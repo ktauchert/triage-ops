@@ -73,6 +73,8 @@ export const nextAuthConfig = {
       }
 
       const { pathname } = request.nextUrl;
+      const isApiRoute =
+        pathname.startsWith("/api/") && !pathname.startsWith("/api/auth");
 
       if (
         pathname === "/login" ||
@@ -83,10 +85,25 @@ export const nextAuthConfig = {
       }
 
       if (!(await isSetupComplete())) {
+        if (isApiRoute) {
+          return Response.json(
+            { error: "Instance setup is not complete" },
+            { status: 503 },
+          );
+        }
+
         return Response.redirect(new URL("/setup", request.nextUrl));
       }
 
-      return Boolean(session?.user);
+      if (!session?.user) {
+        if (isApiRoute) {
+          return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        return false;
+      }
+
+      return true;
     },
     jwt({ token, user }) {
       if (user?.id) {

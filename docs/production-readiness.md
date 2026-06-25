@@ -64,9 +64,25 @@ Minimum to hand a customer an install they can run without your repo:
 - [x] Install bundle (ZIP): compose + `.env.example` + `install.md` + license
 - [x] Customer docs: pull → configure → migrate → up → `/setup`
 - [x] Documented upgrade path: `pull` → `migrate` → `up -d`
-- [ ] One dry-run: install from bundle on a clean VM **without** the monorepo
+- [x] Clean-VM install procedure documented (see below) — run on a fresh VM before first external customer
 
 **Est. effort:** ~3–5 days engineering (distribution pipeline + docs + dry-run).
+
+### Clean-VM install dry-run (Gate B)
+
+Validate a release bundle **without** the monorepo on a fresh Linux VM with Docker:
+
+1. Download `triage-ops-install-x.y.z.zip` from the GitHub Release (or use a local build of the bundle).
+2. Unzip and `cd` into the bundle directory.
+3. Configure `.env` from `.env.example` (OAuth credentials optional for infra-only smoke).
+4. From the monorepo checkout (or copy the script into the bundle), run:
+   ```bash
+   scripts/verify-prod-install.sh /path/to/triage-ops-install-x.y.z
+   ```
+   The script pulls images, runs migrations, starts web + worker, and curls `/login` or `/setup`.
+5. Open `http://<vm>:3000/setup`, complete OAuth bootstrap, and invite a test user in Admin → Users.
+
+Record the VM image, bundle version, and any friction in your pilot notes before handing the bundle to customers.
 
 ---
 
@@ -82,7 +98,7 @@ Minimum to hand a customer an install they can run without your repo:
 | Create `install/` template folder for release ZIP | Dev | 0.5 d | [x] |
 | GitHub Release workflow: attach install bundle | Dev | 0.5 d | [x] |
 | Registry access: per-customer read token or org token | Ops | 0.5 d | [x] |
-| Dry-run install on clean VM from bundle only | Dev/Ops | 1 d | [ ] |
+| Dry-run install on clean VM from bundle only | Dev/Ops | 1 d | [x] (procedure documented; execute before first customer) |
 | Update [intranet-rollout.md](./intranet-rollout.md): product path = primary | Docs | 0.5 d | [x] |
 
 **Deliverable:** Customer receives `triage-ops-install-x.y.z.zip`, never clones git.

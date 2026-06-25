@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMock = vi.hoisted(() => ({
   appSettings: {
@@ -48,10 +48,11 @@ vi.mock("@/lib/services/audit", () => ({
   logAuditEvent: vi.fn().mockResolvedValue({ id: "audit-1" }),
 }));
 
-import { isAuthDisabled } from "./config";
+import { isAuthDisabled, isAdminEmail } from "./config";
 import { isEmailAllowed } from "./allowlist";
 import {
   applySignInUserState,
+  assertAllowlistConfigured,
   canSignInWithEmail,
   completeSetup,
   isSetupComplete,
@@ -194,5 +195,62 @@ describe("setup auth", () => {
     expect(prismaMock.user.update).not.toHaveBeenCalledWith(
       expect.objectContaining({ data: { role: "ADMIN" } }),
     );
+  });
+
+  it("does not re-escalate ADMIN_EMAILS users demoted below VIEWER", async () => {
+    vi.mocked(isAdminEmail).mockReturnValue(true);
+    prismaMock.appSettings.upsert.mockResolvedValue({
+      id: "default",
+      setupComplete: true,
+    });
+    prismaMock.user.findUnique.mockResolvedValue({ role: "LEAD" });
+
+    await applySignInUserState("user-1", "admin@company.com");
+
+    expect(prismaMock.user.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: { role: "ADMIN" } }),
+    );
+  });
+
+  it("promotes VIEWER users listed in ADMIN_EMAILS", async () => {
+    vi.mocked(isAdminEmail).mockReturnValue(true);
+    prismaMock.appSettings.upsert.mockResolvedValue({
+      id: "default",
+      setupComplete: true,
+    });
+    prismaMock.user.findUnique.mockResolvedValue({ role: "VIEWER" });
+
+    await applySignInUserState("user-1", "admin@company.com");
+
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { role: "ADMIN" },
+    });
+  });
+});
+
+describe("assertAllowlistConfigured", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("is a no-op outside production", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    expect(() => assertAllowlistConfigured()).not.toThrow();
+  });
+
+  it("throws in production when the allowlist is empty", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("AUTH_DISABLED", "false");
+    vi.stubEnv("ALLOWED_EMAIL_DOMAINS", "");
+    vi.stubEnv("ALLOWED_EMAILS", "");
+    expect(() => assertAllowlistConfigured()).toThrow(/ALLOWED_EMAIL/);
+  });
+
+  it("passes in production when an allowlist is configured", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("AUTH_DISABLED", "false");
+    vi.stubEnv("ALLOWED_EMAIL_DOMAINS", "company.com");
+    expect(() => assertAllowlistConfigured()).not.toThrow();
   });
 });

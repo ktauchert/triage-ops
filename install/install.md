@@ -31,13 +31,16 @@ Edit `.env` and replace every `<placeholder>`:
 | Variable | Notes |
 |----------|--------|
 | `POSTGRES_PASSWORD` | Strong password; must match `DATABASE_URL` |
+| `REDIS_PASSWORD` | Strong password; must match `REDIS_URL` (`redis://:<password>@redis:6379`) |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
 | `TOKEN_ENCRYPTION_KEY` | `openssl rand -base64 32` — required for VCS PAT encryption |
 | `AUTH_URL` | Public HTTPS URL users open in the browser |
 | `AUTH_*` OAuth | Client ID/secret from GitHub or GitLab |
-| `ALLOWED_EMAIL_DOMAINS` or `ALLOWED_EMAILS` | Closed registration after setup |
+| `ALLOWED_EMAIL_DOMAINS` or `ALLOWED_EMAILS` | **Required** in production — the web app refuses to start without one |
 
 Do **not** set `AUTH_DISABLED=true` in production.
+
+The bundled `docker-compose.prod.yml` pins the Ollama image to `ollama/ollama:0.30.10` and requires Redis authentication via `REDIS_PASSWORD`.
 
 ## 3. First install
 
@@ -156,6 +159,8 @@ To create a GitHub PAT for registry pull:
 3. Vendor grants your account access to `triage-ops-web` and `triage-ops-worker` packages
 
 ## Troubleshooting
+
+The worker container uses a no-op Docker `HEALTHCHECK` by design. Process recovery relies on `restart: unless-stopped` in Compose — if the worker exits, Docker restarts it automatically.
 
 ```bash
 # Service status

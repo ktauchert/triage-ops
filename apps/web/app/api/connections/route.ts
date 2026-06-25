@@ -20,6 +20,11 @@ export async function GET(request: Request) {
     return session;
   }
 
+  const denied = requirePermission(session, "connections.manage");
+  if (denied) {
+    return denied;
+  }
+
   const connections = await listConnections(session);
   return jsonResponse({ connections });
 }

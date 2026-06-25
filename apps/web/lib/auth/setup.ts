@@ -1,7 +1,7 @@
 import { UserRole, prisma } from "@triage-ops/db";
 import { isEmailAllowed, normalizeEmail } from "./allowlist";
 import { isAdminEmail, isAuthDisabled } from "./config";
-import { isProductionEnvironment } from "./environment";
+import { isDevAuthBypassAllowed, isProductionEnvironment } from "./environment";
 import { logAuditEvent } from "@/lib/services/audit";
 
 const SETTINGS_ID = "default";
@@ -186,10 +186,19 @@ export async function applySignInUserState(
   }
 
   if (isAdminEmail(normalized)) {
-    await prisma.user.update({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
-      data: { role: UserRole.ADMIN },
+      select: { role: true },
     });
+
+    // Automation escape hatch: only promote default VIEWER accounts so admin
+    // demotions to LEAD/OPERATOR are not undone on the next sign-in.
+    if (user?.role === UserRole.VIEWER) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { role: UserRole.ADMIN },
+      });
+    }
   }
 }
 
@@ -208,18 +217,17 @@ export async function assertSetupAllowsApiAccess(): Promise<Response | null> {
   return errorResponse("Instance setup is not complete", 503);
 }
 
-export function shouldDenyEmptyAllowlistInProduction(): boolean {
-  return isProductionEnvironment() && !isAllowlistConfigured();
-}
-
-export function warnEmptyAllowlistInProduction(): void {
-  if (!shouldDenyEmptyAllowlistInProduction()) {
+export function assertAllowlistConfigured(): void {
+  if (
+    !isProductionEnvironment() ||
+    isDevAuthBypassAllowed() ||
+    isAllowlistConfigured()
+  ) {
     return;
   }
 
-  console.warn(
-    "[triage-ops] ALLOWED_EMAIL_DOMAINS and ALLOWED_EMAILS are both empty in production. " +
-      "Configure an email/domain allowlist for defense in depth. " +
-      "Closed registration still requires admin-provisioned invites for new users.",
+  throw new Error(
+    "ALLOWED_EMAIL_DOMAINS or ALLOWED_EMAILS must be configured in production. " +
+      "Set at least one allowlist to restrict who can sign in via OAuth.",
   );
 }

@@ -57,9 +57,10 @@ flowchart TB
 | **Sessions** | JWT strategy, delivered as **HTTP-only** cookies (not accessible to browser JavaScript) |
 | **Route protection** | Next.js `proxy.ts` blocks unauthenticated access to dashboard and `/api/*` |
 | **API enforcement** | Route handlers call `requireApiSession()`; unauthenticated requests return **401** |
-| **Allowlist** | Optional `ALLOWED_EMAIL_DOMAINS` / `ALLOWED_EMAILS` for on-prem (reject sign-in before session is created) |
+| **API proxy behaviour** | `proxy.ts` returns JSON **401** / **503** for `/api/*` (not browser redirects) when unauthenticated or setup is incomplete |
+| **Allowlist** | `ALLOWED_EMAIL_DOMAINS` / `ALLOWED_EMAILS` — required in production; empty allowlist **refuses web startup** |
 | **Deployment profiles** | On-prem: `AUTH_DATA_SCOPE=shared` + GitLab OAuth + allowlist. Hosted solo: `per_user` isolation |
-| **Dev bypass** | `AUTH_DISABLED=true` skips all auth — **must be `false` in production** (future: refused at startup when `NODE_ENV=production`) |
+| **Dev bypass** | `AUTH_DISABLED=true` skips all auth — **refused at startup** when `NODE_ENV=production` unless `ALLOW_AUTH_DISABLED=true` (CI only) |
 
 ### Planned — instance bootstrap (Phase 4)
 
@@ -70,7 +71,7 @@ flowchart TB
 | **Setup wizard** | Fresh install → `/setup` → first OAuth login becomes first `ADMIN` |
 | **More admins** | Existing admins promote users via Admin UI (no shared recovery password) |
 | **Closed registration** | After setup, only admin-provisioned emails may sign in |
-| **Allowlist default** | Empty allowlist in production → **deny** (today: allow — will change) |
+| **Allowlist default** | Empty allowlist in production → **startup fails** (configure `ALLOWED_EMAIL_DOMAINS` or `ALLOWED_EMAILS`) |
 
 ### Corporate SSO (GitLab)
 
@@ -79,7 +80,7 @@ On-prem customers often use SSO into GitLab (Okta, Azure AD, etc.). TriageOps do
 ### Not implemented (planned — Phase 4 unless noted)
 
 - Instance bootstrap wizard + closed registration — [on-prem-product.md](./on-prem-product.md)
-- Production startup guards (`AUTH_DISABLED`, empty allowlist) — Phase 4 Step 12b
+- Production startup guards (`AUTH_DISABLED`, empty allowlist) — **Shipped**
 - Direct SAML/OIDC to corporate IdP (bypassing GitLab/GitHub) — Phase 3
 - Per-action audit search/filter — **Phase 4** (basic list shipped)
 - Write-back rollback / revert — **Phase 4**
@@ -92,6 +93,20 @@ On-prem customers often use SSO into GitLab (Okta, Azure AD, etc.). TriageOps do
 | **RBAC** | `ADMIN`, `LEAD`, `OPERATOR`, `VIEWER` with API enforcement |
 | **Admin UI** | `/admin` users + roles, audit event list |
 | **Audit log** | `AuditEvent` model + logging on critical actions |
+
+### Production hardening (June 2026)
+
+Review-driven fixes for on-prem / Gate B readiness:
+
+| Control | Behaviour |
+|---------|-----------|
+| **Allowlist fail-fast** | On web startup (`instrumentation.ts`), production with auth enabled throws if both `ALLOWED_EMAIL_DOMAINS` and `ALLOWED_EMAILS` are empty — same guard as `TOKEN_ENCRYPTION_KEY` and `AUTH_SECRET`. |
+| **JWT lifecycle** | `requireApiSession()` and `getAuthContext()` load `deactivatedAt` from the DB each request; deactivated or deleted users get **401**, not a default role. |
+| **`ADMIN_EMAILS` fallback** | Optional env list for scripted installs. Promotes to `ADMIN` only when the user's current role is `VIEWER` — demotions to `LEAD` / `OPERATOR` are not undone on the next sign-in. See [on-prem-product.md](./on-prem-product.md). |
+| **Connections API RBAC** | `GET` and `POST /api/connections` require `connections.manage` (**ADMIN** only). PATs are never returned in list responses. |
+| **API clients vs browsers** | Middleware (`auth.config.ts` `authorized`): `/api/*` (except `/api/auth/*`) returns JSON `{ error: "Unauthorized" }` (**401**) or `{ error: "Instance setup is not complete" }` (**503**). Dashboard routes still redirect to `/login` or `/setup`. |
+| **Redis in prod compose** | `docker-compose.prod.yml` requires `REDIS_PASSWORD`; web and worker use `REDIS_URL=redis://:<password>@redis:6379`. Redis is not exposed on host ports. |
+| **Pinned Ollama image** | Product compose pins `ollama/ollama:0.30.10` (dev `docker-compose.yml` may still use `latest`). |
 
 ---
 
@@ -151,7 +166,7 @@ TOKEN_ENCRYPTION_KEY=<output>
 | `AUTH_SECRET` | Signs session JWTs | Environment variable only |
 | `AUTH_GITHUB_SECRET` / `AUTH_GITLAB_SECRET` | OAuth client secrets | Environment variable only |
 | `DATABASE_URL` | Postgres connection | Environment variable only |
-| `REDIS_URL` | Job queue | Environment variable only |
+| `REDIS_PASSWORD` / `REDIS_URL` | Job queue (BullMQ + rate limits) | Environment variable only; prod compose requires a password |
 
 - `.env` is **gitignored** (`.env*`); never commit secrets to version control.
 - Generate `AUTH_SECRET` with: `openssl rand -base64 32`
@@ -330,7 +345,9 @@ POSTGRES_USER=triage_ops
 POSTGRES_PASSWORD=<strong-password>
 POSTGRES_DB=triage_ops
 
-REDIS_URL=redis://redis:6379
+REDIS_PASSWORD=<strong-password>
+REDIS_URL=redis://:<strong-password>@redis:6379
+TOKEN_ENCRYPTION_KEY=<openssl rand -base64 32>
 NODE_ENV=production
 ```
 
@@ -344,7 +361,9 @@ Register the GitLab OAuth application with redirect URI:
 
 | Check | How to verify |
 |-------|----------------|
-| Unauthenticated API blocked | `curl -i http://localhost:3000/api/projects` → **401** (with `AUTH_DISABLED=false`) |
+| Unauthenticated API blocked | `curl -i http://localhost:3000/api/projects` → **401** JSON (with `AUTH_DISABLED=false`) |
+| Setup-incomplete API blocked | Before `/setup` completes, `curl -i http://localhost:3000/api/projects` → **503** JSON (not a redirect) |
+| Connections list RBAC | `GET /api/connections` as `VIEWER` → **403**; as `ADMIN` → **200** (no `accessToken` in body) |
 | PAT not in API responses | `GET /api/connections` JSON has no `accessToken` field |
 | Allowlist works | Sign in with email outside `ALLOWED_EMAIL_DOMAINS` → access denied |
 | Rate limit works | Repeat `POST /api/projects/[id]/sync` rapidly → **429** when over `RATE_LIMIT_SYNC_MAX` |
@@ -358,7 +377,7 @@ Register the GitLab OAuth application with redirect URI:
 Synced issue metadata is stored in your Postgres. The worker calls **your** GitHub/GitLab instance over HTTPS. No TriageOps cloud service receives data in on-prem mode.
 
 **Who can access the dashboard?**  
-Users who pass OAuth login and (if configured) the email/domain allowlist. After setup, **new** users must be admin-provisioned (closed registration). If `ALLOWED_EMAIL_DOMAINS` and `ALLOWED_EMAILS` are both empty in production, the app logs a startup warning — configure at least one for defense in depth. Existing users with accounts can still sign in; unknown emails are rejected.
+Users who pass OAuth login and (if configured) the email/domain allowlist. After setup, **new** users must be admin-provisioned (closed registration). If `ALLOWED_EMAIL_DOMAINS` and `ALLOWED_EMAILS` are both empty in production, the web app **refuses to start** — configure at least one before deploying.
 
 **How are passwords stored?**  
 There are no local passwords. Authentication is OAuth-only.
@@ -366,8 +385,11 @@ There are no local passwords. Authentication is OAuth-only.
 **Can we use our corporate IdP?**  
 Indirectly via GitLab (or GitHub) OAuth. Direct SAML/OIDC to the IdP is not implemented in the current release.
 
+**What does `ADMIN_EMAILS` do?**  
+Optional automation fallback for first install or scripted ops. On sign-in, matching emails are promoted to `ADMIN` only if their current role is `VIEWER`. Admins who demote someone to `LEAD` or `OPERATOR` will not see that user re-promoted on the next login. Primary path for admins is the setup wizard and Admin → Users.
+
 **Is the app safe on the public internet?**  
-It can be, with HTTPS, auth, allowlists, and hardened infrastructure — but the product is **optimized for intranet on-prem**. Plain-text PAT storage and lack of RBAC should be weighed before internet exposure.
+It can be, with HTTPS, auth, allowlists, and hardened infrastructure — but the product is **optimized for intranet on-prem**. Weigh network exposure and operational hardening (Redis password, allowlist, encrypted PATs) before internet-facing deployment.
 
 **What happens if someone deletes a connection?**  
 Cascade delete removes projects, issues, and sync history for that connection. PAT is removed from the database.

@@ -56,7 +56,7 @@ sequenceDiagram
 | **Allowlist in production** | Empty `ALLOWED_EMAIL_*` → **deny** (not allow). Explicit domains/emails or provisioned-user list. |
 | **Dev bypass** | `AUTH_DISABLED=true` only when `NODE_ENV=development` (or explicit `ALLOW_AUTH_DISABLED=true` for CI). **Refused at startup in production.** |
 | **No break-glass password (v1)** | OAuth + multiple admins is enough for recovery. Optional local break-glass account deferred unless customers ask. |
-| **Env fallback** | `ADMIN_EMAILS` may remain as an **automation escape hatch** for scripted installs, not the primary UX. |
+| **Env fallback** | `ADMIN_EMAILS` may remain as an **automation escape hatch** for scripted installs, not the primary UX. Matching emails are promoted to `ADMIN` on sign-in only when the user's current role is `VIEWER` (admin demotions to `LEAD`/`OPERATOR` are preserved). |
 
 ### What we are **not** doing
 

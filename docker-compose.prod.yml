@@ -23,16 +23,17 @@ services:
     image: redis:7-alpine
     container_name: triage-ops-redis
     restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:?set REDIS_PASSWORD}
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.30.10
     container_name: triage-ops-ollama
     restart: unless-stopped
     volumes:
@@ -50,7 +51,7 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-triage_ops}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       NODE_ENV: production
     depends_on:
       postgres:
@@ -68,7 +69,7 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-triage_ops}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       OLLAMA_HOST: http://ollama:11434
       NODE_ENV: production
     depends_on:

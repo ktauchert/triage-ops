@@ -33,8 +33,19 @@ describe("GET /api/connections", () => {
   it("returns 401 when unauthenticated", async () => {
     requireApiSessionMock.mockResolvedValue(unauthorizedResponse());
 
-    const response = await GET();
+    const response = await GET(new Request("http://localhost/api/connections"));
     expect(response.status).toBe(401);
+  });
+
+  it("returns 403 for VIEWER", async () => {
+    requireApiSessionMock.mockResolvedValue(
+      testAuthContextWithRole(UserRole.VIEWER),
+    );
+
+    await expectForbidden(
+      await GET(new Request("http://localhost/api/connections")),
+    );
+    expect(listConnectionsMock).not.toHaveBeenCalled();
   });
 
   it("returns connections list", async () => {
@@ -43,7 +54,7 @@ describe("GET /api/connections", () => {
     ]);
 
     const data = await readJson<{ connections: { id: string }[] }>(
-      await GET(),
+      await GET(new Request("http://localhost/api/connections")),
       200,
     );
 
