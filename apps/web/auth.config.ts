@@ -1,3 +1,4 @@
+import "@/lib/auth/assert-web-startup";
 import type { NextAuthConfig } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import GitLab from "next-auth/providers/gitlab";

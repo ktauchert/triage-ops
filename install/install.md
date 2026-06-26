@@ -4,11 +4,37 @@ Install TriageOps on a server **without** cloning the source repository. You rec
 
 ## Prerequisites
 
-- Linux host with Docker Engine and Docker Compose v2
-- Minimum 4 GB RAM (more if using large Ollama models)
-- HTTPS reverse proxy in front of the web service (recommended)
-- GitHub or GitLab OAuth application credentials
-- Registry read token from your vendor (see [Registry access](#registry-access))
+Prepare the following **before** you start the install steps below.
+
+### Server
+
+- Linux host with **Docker Engine** and **Docker Compose v2** (`docker compose`, not the legacy `docker-compose` binary)
+- **4 GB RAM** minimum; **8 GB+** recommended if you use larger Ollama models
+- **Disk space** for container images, Postgres data, and Ollama model weights (budget roughly 15–30 GB depending on models)
+
+### Network
+
+- Users can reach the host on **port 3000** (HTTP), or you terminate TLS at a **reverse proxy** in front of it — see [Security — network hardening](https://github.com/ktauchert/triage-ops/blob/main/docs/security.md#network-and-infrastructure-hardening)
+- The **worker** container needs outbound HTTPS to your GitLab or GitHub API (issue sync and write-back)
+- Outbound HTTPS to **ghcr.io** (or your vendor's registry mirror) to pull images
+- Outbound access to download **Ollama models** on first use (or mirror models internally)
+
+Postgres, Redis, and Ollama are **not** exposed on host ports in the bundled Compose file.
+
+### Credentials and configuration
+
+| Item | Purpose |
+|------|---------|
+| **Registry read token** | Pull private `triage-ops-web` and `triage-ops-worker` images — [Registry access](#registry-access) |
+| **OAuth application** | User login via GitHub and/or GitLab — redirect URI must be `{AUTH_URL}/api/auth/callback/<provider>` — see [OAuth registration (docs)](https://github.com/ktauchert/triage-ops/blob/main/docs/running-the-app.md#oauth-app-registration) |
+| **Email allowlist** | `ALLOWED_EMAIL_DOMAINS` or `ALLOWED_EMAILS` — **required** in production; the web app refuses to start without one |
+| **Secrets** | Plan strong values for `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `AUTH_SECRET`, and `TOKEN_ENCRYPTION_KEY` (`openssl rand -base64 32`) |
+
+Login OAuth is **separate** from VCS sync tokens. After sign-in, users add a personal access token on the **Connections** page. See [Security](https://github.com/ktauchert/triage-ops/blob/main/docs/security.md) for PAT scopes and hardening guidance.
+
+### HTTPS reverse proxy (recommended, not bundled)
+
+TriageOps serves **HTTP on port 3000** only; it does not ship a reverse proxy or TLS certificates. You may run it directly over HTTP on a trusted intranet — set `AUTH_URL` to your `http://…` URL and register matching OAuth redirect URIs. Use a reverse proxy (nginx, Caddy, Traefik, etc.) when you need HTTPS — **required for GitHub OAuth on non-`localhost` hostnames**, and recommended for internet-facing deployments.
 
 ## 1. Registry login
 
@@ -34,7 +60,7 @@ Edit `.env` and replace every `<placeholder>`:
 | `REDIS_PASSWORD` | Strong password; must match `REDIS_URL` (`redis://:<password>@redis:6379`) |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
 | `TOKEN_ENCRYPTION_KEY` | `openssl rand -base64 32` — required for VCS PAT encryption |
-| `AUTH_URL` | Public HTTPS URL users open in the browser |
+| `AUTH_URL` | Public URL users open in the browser (`https://…` behind a proxy, or `http://…` on a trusted intranet) — must match OAuth redirect URIs exactly |
 | `AUTH_*` OAuth | Client ID/secret from GitHub or GitLab |
 | `ALLOWED_EMAIL_DOMAINS` or `ALLOWED_EMAILS` | **Required** in production — the web app refuses to start without one |
 
@@ -53,7 +79,7 @@ docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate
 docker compose -f docker-compose.prod.yml --profile production up -d
 ```
 
-Postgres, Redis, and Ollama are **not** exposed on host ports. Only the web service listens on `:3000` for your reverse proxy.
+Postgres, Redis, and Ollama are **not** exposed on host ports. Only the web service listens on `:3000` (direct HTTP or behind your reverse proxy).
 
 ### Ollama models
 
@@ -68,9 +94,9 @@ Adjust model names if you changed `OLLAMA_CHAT_MODEL` / `OLLAMA_EMBED_MODEL` in 
 
 ## 4. Complete setup
 
-1. Configure your reverse proxy to forward HTTPS to `http://127.0.0.1:3000`.
-2. Open your public URL in a browser.
-3. Visit `/setup` and sign in with GitHub or GitLab — the first successful login becomes the instance admin.
+1. If using HTTPS: configure your reverse proxy to forward to `http://127.0.0.1:3000`. If using HTTP on the intranet, ensure users can reach `http://<host>:3000` and that `AUTH_URL` matches.
+2. Open `AUTH_URL` in a browser.
+3. Visit `/setup` and sign in with GitHub or GitLab — the first successful login becomes the instance admin. See [On-prem bootstrap (docs)](https://github.com/ktauchert/triage-ops/blob/main/docs/on-prem-product.md) for closed registration after setup.
 4. In **Admin → Users**, invite additional users before they sign in.
 
 ## 5. Upgrades
@@ -172,6 +198,18 @@ docker compose -f docker-compose.prod.yml logs -f web worker
 # Re-run migrations after failed upgrade
 docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate
 ```
+
+## Further documentation
+
+These guides live in the TriageOps repository (not included in the install bundle):
+
+| Topic | Document |
+|-------|----------|
+| Security hardening & reviewer FAQ | [security.md](https://github.com/ktauchert/triage-ops/blob/main/docs/security.md) |
+| Intranet rollout checklist (extended) | [intranet-rollout.md](https://github.com/ktauchert/triage-ops/blob/main/docs/intranet-rollout.md) |
+| OAuth app registration details | [running-the-app.md — Authentication](https://github.com/ktauchert/triage-ops/blob/main/docs/running-the-app.md#authentication) |
+| First-admin bootstrap & closed registration | [on-prem-product.md](https://github.com/ktauchert/triage-ops/blob/main/docs/on-prem-product.md) |
+| Production acceptance test checklist | [e2e-acceptance-test.md](https://github.com/ktauchert/triage-ops/blob/main/docs/e2e-acceptance-test.md) |
 
 ## Bundle contents
 

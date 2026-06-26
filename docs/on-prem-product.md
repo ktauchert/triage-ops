@@ -120,7 +120,14 @@ docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d postgres redis ollama
 docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate
 docker compose -f docker-compose.prod.yml --profile production up -d
+
+# 4. Ollama models (required for LLM analysis — not included in compose pull)
+docker exec triage-ops-ollama ollama pull llama3.2:3b
+docker exec triage-ops-ollama ollama pull nomic-embed-text
+# Match names to OLLAMA_CHAT_MODEL / OLLAMA_EMBED_MODEL in .env if customized
 ```
+
+`docker compose pull` downloads the **Ollama runtime image only**; model weights are stored in the `ollama_data` volume and must be pulled separately (once per fresh install, or after volume loss). Without this step, **Run analysis** fails with an Ollama 404 (“model not found”).
 
 **Updates:**
 

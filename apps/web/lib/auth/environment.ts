@@ -26,8 +26,12 @@ export function assertProductionAuthConfig(): void {
   if (isProductionEnvironment() && !isDevAuthBypassAllowed()) {
     const secret = process.env.AUTH_SECRET?.trim() ?? "";
     if (secret.length < 32) {
+      const detail =
+        secret.length === 0
+          ? "AUTH_SECRET is missing from your .env file."
+          : "AUTH_SECRET in your .env file is too short.";
       throw new Error(
-        "AUTH_SECRET must be set to a strong random value (>= 32 chars) in production. Generate one with: openssl rand -base64 32",
+        `${detail} Set it to a strong random value (at least 32 characters) in production. Generate one with: openssl rand -base64 32`,
       );
     }
   }

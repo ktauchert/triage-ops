@@ -278,6 +278,42 @@ flowchart LR
 
 ---
 
+## Phase 5 — Product presence (optional, post-validation)
+
+**Goal:** After the on-prem install path and core functionality are validated, give prospects and customers a **public-facing** place to learn about TriageOps — separate from the technical install bundle.
+
+**When:** After clean-VM install dry-run, functional acceptance testing ([e2e-acceptance-test.md](./e2e-acceptance-test.md)), and a stable support/runbook path. **Not a blocker for `v1.0.0`** — ship the product first, market it second.
+
+**Prerequisites before starting:**
+
+- [ ] Install bundle works on a clean VM without the monorepo
+- [ ] Sync → analyze → apply verified on GitHub and/or GitLab
+- [ ] Install docs (`install/install.md`) and security story are stable enough to link from a public site
+
+### Step 18 — Landing page & marketing site
+
+> **Build plan:** [landing-page-plan.md](./landing-page-plan.md) — React + Vite + Tailwind + Framer Motion + React Router; phased from marketing shell → docs → billing. Agent must complete the questionnaire in §9 before coding.
+
+- [ ] Public landing page (`apps/site` — React SPA, not Next.js dashboard)
+- [ ] Value proposition: on-prem, local LLM, no cloud AI, closed registration
+- [ ] Architecture / trust diagram for security reviewers (can reuse content from [security.md](./security.md))
+- [ ] Screenshots or short demo from the validated workflow (not mockups)
+- [ ] Clear CTA: contact / pilot request / link to public docs — **not** public GHCR credentials
+- [ ] Optional: extended docs site (install guide HTML, intranet checklist, FAQ) linked from landing page
+- [ ] Optional: comparison page (vs manual triage, vs cloud tools) when positioning is clear
+
+**Keep separate:**
+
+| Audience | Channel |
+|----------|---------|
+| Customer IT installing the product | Install bundle (`install.md`, Compose, `.env.example`) |
+| Prospect / security reviewer / buyer | Landing page + public docs |
+| Existing customer upgrading | Release notes + install bundle |
+
+**Out of scope for Step 18:** in-app upsell, SaaS self-signup, license enforcement UI (see Phase 3c billing if commercial tier later).
+
+---
+
 ## Suggested immediate next steps
 
 Phases 0–2.5 and Phase 1 MVP are complete (June 2026).
@@ -291,3 +327,4 @@ Legacy quick picks by deployment maturity:
 3. **Phase 3b** — webhooks when near-real-time sync matters
 4. **Ops validation** — clean-VM install dry-run from release bundle; backup/restore procedure
 5. **Phase 3c** — Helm/K8s or multi-tenant only when required
+6. **Phase 5** — landing page & marketing site **after** on-prem workflow is validated (not before)

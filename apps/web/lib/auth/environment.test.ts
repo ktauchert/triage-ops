@@ -40,11 +40,22 @@ describe("environment auth guards", () => {
     expect(() => assertProductionAuthConfig()).toThrow(/AUTH_DISABLED/);
   });
 
-  it("throws when AUTH_SECRET is missing or weak in production", () => {
+  it("throws when AUTH_SECRET is missing in production", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("AUTH_DISABLED", "false");
+    vi.stubEnv("AUTH_SECRET", "");
+    expect(() => assertProductionAuthConfig()).toThrow(
+      /AUTH_SECRET is missing from your \.env file/,
+    );
+  });
+
+  it("throws when AUTH_SECRET is too short in production", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("AUTH_DISABLED", "false");
     vi.stubEnv("AUTH_SECRET", "too-short");
-    expect(() => assertProductionAuthConfig()).toThrow(/AUTH_SECRET/);
+    expect(() => assertProductionAuthConfig()).toThrow(
+      /AUTH_SECRET in your \.env file is too short/,
+    );
   });
 
   it("passes in production with a strong AUTH_SECRET", () => {
