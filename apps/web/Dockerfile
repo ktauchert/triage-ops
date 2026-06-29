@@ -6,6 +6,7 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/db/package.json ./packages/db/
+COPY packages/metrics/package.json ./packages/metrics/
 COPY packages/shared-types/package.json ./packages/shared-types/
 RUN npm ci
 
@@ -13,7 +14,7 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run db:generate -w @triage-ops/db
+RUN npm run build -w @triage-ops/db
 RUN npm run build -w @triage-ops/web
 
 FROM base AS runner
