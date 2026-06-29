@@ -98,6 +98,8 @@ jobs:
           sed "s/{{VERSION}}/${VERSION}/g" install/.env.example > "${BUNDLE_DIR}/.env.example"
           cp install/install.md "${BUNDLE_DIR}/install.md"
           cp install/LICENSE.txt "${BUNDLE_DIR}/LICENSE.txt"
+          cp install/EULA.md "${BUNDLE_DIR}/EULA.md"
+          cp install/PRIVACY.md "${BUNDLE_DIR}/PRIVACY.md"
 
           zip -r "triage-ops-install-${VERSION}.zip" "${BUNDLE_DIR}"
           ls -la "triage-ops-install-${VERSION}.zip"

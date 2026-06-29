@@ -1,16 +1,18 @@
-TriageOps — Proprietary Software License
+TriageOps — Proprietary Software License (Summary)
 
-Copyright (c) 2026 TriageOps contributors. All rights reserved.
+Copyright (c) 2026 Karsten Tauchert (TriageOps). All rights reserved.
 
-This software is licensed, not sold. You may use TriageOps only under a
-written agreement with the vendor or under the terms provided with your
-install bundle.
+This software is licensed, not sold. Full terms are in EULA.md (End User License
+Agreement) and PRIVACY.md included with your install bundle.
 
-You may not copy, modify, merge, publish, distribute, sublicense, or sell
-copies of this software except as expressly permitted by your license agreement.
+You may use TriageOps only if you agree to the EULA — including by completing
+initial setup in the web application.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+You may not copy, modify, merge, publish, distribute, sublicense, or sell copies
+of this software except as expressly permitted in the EULA.
 
-For licensing inquiries, contact your TriageOps vendor representative.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. See EULA.md for
+disclaimers and limitation of liability.
+
+For licensing inquiries, contact: Karsten Tauchert, developer@ktauchert.de
+(c/o Block Services, Stuttgarter Str. 106, 70736 Fellbach, Germany).

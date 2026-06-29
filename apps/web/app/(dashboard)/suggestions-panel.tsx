@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { previewMarkdownLines } from "@/lib/markdown-preview";
 import { readResponseJson } from "@/lib/fetch-json";
+import { APPLY_VCS_DISCLAIMER } from "@/lib/legal/paths";
 
 type SuggestionIssue = {
   id: string;
@@ -452,6 +453,9 @@ export function SuggestionsPanel({
             Local Ollama analysis on synced issues. Apply updates the linked
             issue on GitLab or GitHub (description or duplicate close).
           </CardDescription>
+          {canApply ? (
+            <p className="text-xs text-muted-foreground">{APPLY_VCS_DISCLAIMER}</p>
+          ) : null}
         </div>
         <div className="flex shrink-0 gap-2">
           {canAnalyze ? (

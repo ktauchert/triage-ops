@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth, signIn } from "@/auth";
+import { auth } from "@/auth";
 import { signOutTo } from "@/lib/auth/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
 import { getConfiguredProviders, isAuthDisabled } from "@/lib/auth/config";
 import { isDevAuthBypassAllowed } from "@/lib/auth/environment";
 import { isSetupComplete } from "@/lib/auth/setup";
+import { SetupOAuthPanel } from "./setup-oauth-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -91,33 +92,17 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
               <code className="text-xs">AUTH_GITHUB_*</code> or{" "}
               <code className="text-xs">AUTH_GITLAB_*</code> in your environment.
             </div>
-          ) : null}
-
-          {providers.map((provider) => (
-            <form
-              key={provider}
-              action={async () => {
-                "use server";
-                await signIn(provider, {
-                  redirectTo: "/",
-                });
-              }}
-            >
-              <Button
-                type="submit"
-                className="w-full"
-                variant="default"
-                disabled={hasStaleSession}
-              >
-                Continue with {provider === "github" ? "GitHub" : "GitLab"}
-              </Button>
-            </form>
-          ))}
+          ) : (
+            <SetupOAuthPanel
+              providers={providers}
+              hasStaleSession={hasStaleSession}
+            />
+          )}
 
           {hasStaleSession ? (
             <p className="text-center text-xs text-muted-foreground">
-              Or use a private/incognito window after clearing site data for{" "}
-              <code className="text-xs">localhost</code>.
+              Or use a private/incognito window after clearing site data for this
+              host.
             </p>
           ) : null}
         </CardContent>

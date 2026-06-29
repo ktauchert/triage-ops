@@ -4,7 +4,7 @@
 
 **Status:** Planning only — **do not implement until** [Phase 5 prerequisites](./phases.md#phase-5--product-presence-optional-post-validation) are met (on-prem workflow validated).
 
-**Related:** [phases.md § Step 18](./phases.md#step-18--landing-page--marketing-site) · [editions.md](./editions.md) · [security.md](./security.md) · [install/install.md](../install/install.md)
+**Related:** [phases.md § Step 18](./phases.md#step-18--landing-page--marketing-site) · [landing-page-content.md](./landing-page-content.md) · [landing-page-agent-prompt.md](./landing-page-agent-prompt.md) · [editions.md](./editions.md) · [security.md](./security.md) · [install/install.md](../install/install.md)
 
 ---
 

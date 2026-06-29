@@ -66,6 +66,8 @@ Edit `.env` and replace every `<placeholder>`:
 
 Do **not** set `AUTH_DISABLED=true` in production.
 
+By completing **initial setup** in the web UI, the first administrator accepts the **EULA** and **Privacy Policy** included in this bundle (`EULA.md`, `PRIVACY.md`). The same texts are available in the app at `/legal/eula` and `/legal/privacy`.
+
 The bundled `docker-compose.prod.yml` pins the Ollama image to `ollama/ollama:0.30.10` and requires Redis authentication via `REDIS_PASSWORD`.
 
 ## 3. First install
@@ -210,6 +212,7 @@ These guides live in the TriageOps repository (not included in the install bundl
 | OAuth app registration details | [running-the-app.md — Authentication](https://github.com/ktauchert/triage-ops/blob/main/docs/running-the-app.md#authentication) |
 | First-admin bootstrap & closed registration | [on-prem-product.md](https://github.com/ktauchert/triage-ops/blob/main/docs/on-prem-product.md) |
 | Production acceptance test checklist | [e2e-acceptance-test.md](https://github.com/ktauchert/triage-ops/blob/main/docs/e2e-acceptance-test.md) |
+| Legal (EULA, privacy, disclaimers) | [legal.md](https://github.com/ktauchert/triage-ops/blob/main/docs/legal.md) |
 
 ## Bundle contents
 
@@ -218,7 +221,9 @@ triage-ops-install-x.y.z/
 ├── docker-compose.prod.yml   # pinned image tags for this release
 ├── .env.example
 ├── install.md                # this file
-└── LICENSE.txt
+├── LICENSE.txt               # proprietary summary (see EULA.md)
+├── EULA.md                   # End User License Agreement
+└── PRIVACY.md                # Privacy Policy
 ```
 
 No source code, Node.js, or `npm install` is required on the install host.
