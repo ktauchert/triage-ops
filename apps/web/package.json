@@ -1,5 +1,5 @@
 {
-  "name": "@triage-ops/web",
+  "name": "@gridnull/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,9 +15,9 @@
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
-    "@triage-ops/db": "*",
-    "@triage-ops/metrics": "*",
-    "@triage-ops/shared-types": "*",
+    "@gridnull/db": "*",
+    "@gridnull/metrics": "*",
+    "@gridnull/shared-types": "*",
     "bullmq": "^5.56.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

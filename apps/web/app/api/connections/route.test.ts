@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UserRole } from "@triage-ops/db";
+import { UserRole } from "@gridnull/db";
 import {
   expectForbidden,
   jsonRequest,

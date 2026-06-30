@@ -1,16 +1,16 @@
 import type { MetricIssue, MetricIssueSummary } from "./types";
 import { isInactiveSince } from "./utils";
 
-export type ZombieIssuesResult = {
+export type StaleIssuesResult = {
   count: number;
   issues: MetricIssueSummary[];
 };
 
-export function countZombieIssues(
+export function countStaleIssues(
   issues: MetricIssue[],
   thresholdDays: number,
   now: Date = new Date(),
-): ZombieIssuesResult {
+): StaleIssuesResult {
   if (thresholdDays < 0) {
     throw new Error("thresholdDays must be non-negative");
   }
@@ -18,18 +18,20 @@ export function countZombieIssues(
   const matches = issues.filter(
     (issue) =>
       issue.state === "OPEN" &&
-      issue.assigneeUsername !== null &&
-      issue.milestoneId === null &&
       isInactiveSince(issue.lastActivityAt, thresholdDays, now),
   );
 
   return {
     count: matches.length,
-    issues: matches.map((issue) => ({
-      id: issue.id,
-      gitlabIssueIid: issue.gitlabIssueIid,
-      title: issue.title,
-      lastActivityAt: issue.lastActivityAt,
-    })),
+    issues: matches.map(toIssueSummary),
+  };
+}
+
+function toIssueSummary(issue: MetricIssue): MetricIssueSummary {
+  return {
+    id: issue.id,
+    gitlabIssueIid: issue.gitlabIssueIid,
+    title: issue.title,
+    lastActivityAt: issue.lastActivityAt,
   };
 }

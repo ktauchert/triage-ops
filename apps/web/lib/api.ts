@@ -60,7 +60,7 @@ export function requireOptionalPositiveInt(
   return parsed;
 }
 
-import { VcsProvider } from "@triage-ops/db";
+import { VcsProvider } from "@gridnull/db";
 
 export function requireVcsProvider(value: unknown): VcsProvider | Response {
   if (value === VcsProvider.GITLAB || value === VcsProvider.GITHUB) {

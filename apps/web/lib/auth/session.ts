@@ -1,4 +1,4 @@
-import { UserRole, prisma } from "@triage-ops/db";
+import { UserRole, prisma } from "@gridnull/db";
 import { errorResponse } from "@/lib/api";
 import { auth } from "@/auth";
 import { enforceApiRateLimit } from "@/lib/rate-limit/enforce";

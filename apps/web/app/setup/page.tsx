@@ -46,7 +46,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
       <Card className="w-full max-w-md shadow-2xl shadow-primary/10">
         <CardHeader className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">
-            TriageOps
+            Gridnull
           </p>
           <CardTitle className="text-2xl">Initial setup</CardTitle>
           <CardDescription>

@@ -53,7 +53,7 @@ jobs:
 
       - run: npm run db:generate
 
-      - run: npm run build -w @triage-ops/db
+      - run: npm run build -w @gridnull/db
 
       - run: npm run db:migrate:deploy
 
@@ -61,4 +61,4 @@ jobs:
 
       - run: npm run lint
 
-      - run: npm run build -w @triage-ops/web
+      - run: npm run build -w @gridnull/web

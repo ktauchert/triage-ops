@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TriageOps",
+  title: "Gridnull",
   description: "GitHub and GitLab issue triage metrics dashboard",
 };
 

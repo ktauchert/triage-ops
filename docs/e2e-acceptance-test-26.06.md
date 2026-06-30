@@ -1,6 +1,6 @@
-# TriageOps — End-to-End Acceptance Test (Production Install)
+# Gridnull — End-to-End Acceptance Test (Production Install)
 
-A **manual, follow-along acceptance test** for a real production deployment, performed the way an end-user/customer installs and operates TriageOps: pre-built images from the registry + the install bundle (no `git clone`, no `npm`). Work top to bottom and tick each checkbox.
+A **manual, follow-along acceptance test** for a real production deployment, performed the way an end-user/customer installs and operates Gridnull: pre-built images from the registry + the install bundle (no `git clone`, no `npm`). Work top to bottom and tick each checkbox.
 
 - **Goal:** prove the shipped product installs, secures itself, and performs the full triage workflow (connect → sync → analyze → apply) on a clean host.
 - **Audience:** you (vendor) doing a release dry-run, or a customer doing install acceptance.
@@ -119,7 +119,7 @@ Fill in once and reuse:
 ### 1.2 Container health
 - **Goal:** everything is running/healthy.
 - **Steps:** `docker compose -f docker-compose.prod.yml ps`.
-- **Expected:** `triage-ops-postgres` & `triage-ops-redis` show **healthy**; `web` and `worker` **running**; `migrate` exited `0`.
+- **Expected:** `gridnull-postgres` & `gridnull-redis` show **healthy**; `web` and `worker` **running**; `migrate` exited `0`.
 - Result: `[ ]`
 
 ### 1.3 Network isolation
@@ -136,7 +136,7 @@ Fill in once and reuse:
 
 ### 1.5 Worker runs as non-root
 - **Goal:** container hardening (fix C1).
-- **Steps:** `docker exec triage-ops-worker id`.
+- **Steps:** `docker exec gridnull-worker id`.
 - **Expected:** `uid=1001` (user `worker`), **not** `uid=0(root)`.
 - Result: `[ ]`
 
@@ -267,8 +267,8 @@ Fill in once and reuse:
 ### 6.1 Pull models
 - **Steps:**
   ```bash
-  docker exec triage-ops-ollama ollama pull llama3.2:3b
-  docker exec triage-ops-ollama ollama pull nomic-embed-text
+  docker exec gridnull-ollama ollama pull llama3.2:3b
+  docker exec gridnull-ollama ollama pull nomic-embed-text
   ```
   (match any custom `OLLAMA_CHAT_MODEL` / `OLLAMA_EMBED_MODEL`).
 - **Expected:** both models download successfully.
@@ -363,7 +363,7 @@ Fill in once and reuse:
 - **Steps:**
   ```bash
   docker compose -f docker-compose.prod.yml exec -T postgres \
-    pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB" > triage-ops-acceptance.dump
+    pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB" > gridnull-acceptance.dump
   ```
 - **Expected:** a non-empty `.dump` file is produced without errors.
 - Result: `[ ]`
@@ -376,7 +376,7 @@ Fill in once and reuse:
 
 ### 9.5 Upgrade then rollback (install.md §5/§7)
 - **Goal:** the documented rollback path works.
-- **Steps:** take a pre-upgrade backup; bump `TRIAGE_OPS_VERSION` to a newer tag, `pull`, run `migrate`, bring up. Then follow §7 rollback: pin the previous tag, restore the pre-upgrade dump, bring up the old version.
+- **Steps:** take a pre-upgrade backup; bump `GRIDNULL_VERSION` to a newer tag, `pull`, run `migrate`, bring up. Then follow §7 rollback: pin the previous tag, restore the pre-upgrade dump, bring up the old version.
 - **Expected:** upgrade succeeds; rollback returns the instance to the previous working version with data intact and no schema mismatch errors.
 - Result: `[ ]`
 

@@ -1,5 +1,5 @@
-import { UserRole, VcsProvider, prisma } from "@triage-ops/db";
-import { DEFAULT_GITHUB_API_URL } from "@triage-ops/shared-types";
+import { UserRole, VcsProvider, prisma } from "@gridnull/db";
+import { DEFAULT_GITHUB_API_URL } from "@gridnull/shared-types";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildCommandPaletteItems } from "@/lib/command-palette";
 import type { AuthContext } from "@/lib/auth/session";

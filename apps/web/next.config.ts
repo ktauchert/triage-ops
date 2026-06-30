@@ -8,7 +8,7 @@ loadEnvConfig(monorepoRoot);
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
-  transpilePackages: ["@triage-ops/db", "@triage-ops/metrics"],
+  transpilePackages: ["@gridnull/db", "@gridnull/metrics"],
 };
 
 export default nextConfig;

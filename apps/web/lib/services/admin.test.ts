@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { UserRole } from "@triage-ops/db";
+import { UserRole } from "@gridnull/db";
 import {
   countUsersByRole,
   mergeBackgroundJobs,

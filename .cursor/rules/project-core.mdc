@@ -1,9 +1,9 @@
 ---
-description: TriageOps monorepo essentials — always apply
+description: Gridnull monorepo essentials — always apply
 alwaysApply: true
 ---
 
-# TriageOps core
+# Gridnull core
 
 Read `AGENTS.md` for setup and phase status. Human docs live in `docs/`.
 
@@ -29,7 +29,7 @@ Read `AGENTS.md` for setup and phase status. Human docs live in `docs/`.
 npm run docker:up && npm run db:migrate
 npm run dev          # web
 npm run dev:worker   # workers
-npm test && npm run build -w @triage-ops/web
+npm test && npm run build -w @gridnull/web
 ```
 
 After schema changes: `npm run db:generate` and restart dev servers if Prisma types are stale.

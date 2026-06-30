@@ -1,4 +1,4 @@
-import { assertEncryptionConfigured } from "@triage-ops/db";
+import { assertEncryptionConfigured } from "@gridnull/db";
 import { assertProductionAuthConfig } from "@/lib/auth/environment";
 import { assertAllowlistConfigured } from "@/lib/auth/setup";
 

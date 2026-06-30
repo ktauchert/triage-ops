@@ -1,4 +1,4 @@
-import { IssueSuggestionStatus, UserRole, prisma } from "@triage-ops/db";
+import { IssueSuggestionStatus, UserRole, prisma } from "@gridnull/db";
 import { normalizeEmail, getAllowlistCounts } from "@/lib/auth/allowlist";
 import {
   getConfiguredProviders,

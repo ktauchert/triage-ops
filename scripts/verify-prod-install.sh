@@ -27,7 +27,7 @@ wait_for_healthy() {
   while [ "$i" -lt "$attempts" ]; do
     if docker compose -f "$COMPOSE_FILE" ps --status running "$service" 2>/dev/null | grep -q "$service"; then
       local health
-      health="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "triage-ops-${service}" 2>/dev/null || echo "missing")"
+      health="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "gridnull-${service}" 2>/dev/null || echo "missing")"
       if [ "$health" = "healthy" ] || [ "$health" = "none" ]; then
         return 0
       fi

@@ -2,7 +2,7 @@
 
 ## System overview
 
-TriageOps follows a **sync-and-analyze** pattern: a background worker pulls issue data from GitHub or GitLab into Postgres; the web app reads that local data to compute and display triage metrics without hammering the VCS API on every page load.
+Gridnull follows a **sync-and-analyze** pattern: a background worker pulls issue data from GitHub or GitLab into Postgres; the web app reads that local data to compute and display triage metrics without hammering the VCS API on every page load.
 
 ```mermaid
 flowchart LR
@@ -11,7 +11,7 @@ flowchart LR
     GL[GitLab API]
   end
 
-  subgraph TriageOps
+  subgraph Gridnull
     WEB[apps/web\nNext.js]
     WORKER[apps/worker\nBullMQ daemon]
     METRICS[packages/metrics]
@@ -45,13 +45,13 @@ flowchart LR
 |---------|------------|
 | Framework | Next.js 16 App Router |
 | Styling | Tailwind CSS v4 + Shadcn UI |
-| Data access | `@triage-ops/db` (Prisma) |
-| Metrics | `@triage-ops/metrics` |
+| Data access | `@gridnull/db` (Prisma) |
+| Metrics | `@gridnull/metrics` |
 | Job enqueue | BullMQ `Queue` via `lib/queue.ts` |
 | Deployment | Standalone Docker image on port 3000 |
 
 **Responsibilities:**
-- Display overview counts and triage metrics (ghost, zombie, milestone decay)
+- Display overview counts and triage metrics (stale, stuck, milestone decay)
 - Manage VCS connections (GitHub or GitLab) and registered projects
 - Trigger sync jobs by enqueueing to BullMQ via Redis
 - Run LLM analysis and review AI suggestions (dismiss / apply)
@@ -164,10 +164,10 @@ Triggered from web when user clicks **Apply** on a suggestion (`PATCH` → `APPL
 **Scripts:**
 
 ```bash
-npm run db:generate -w @triage-ops/db   # Regenerate Prisma client
-npm run db:migrate -w @triage-ops/db    # Dev migration
-npm run db:migrate:deploy -w @triage-ops/db  # Production deploy
-npm run db:seed -w @triage-ops/db       # Sample connections + projects
+npm run db:generate -w @gridnull/db   # Regenerate Prisma client
+npm run db:migrate -w @gridnull/db    # Dev migration
+npm run db:migrate:deploy -w @gridnull/db  # Production deploy
+npm run db:seed -w @gridnull/db       # Sample connections + projects
 ```
 
 ---
@@ -178,8 +178,8 @@ npm run db:seed -w @triage-ops/db       # Sample connections + projects
 
 | Function | Definition |
 |----------|------------|
-| `countGhostIssues` | Open issues with `lastActivityAt` older than threshold (default 30 days) |
-| `countZombieIssues` | Open + assigned issues stale beyond threshold (default 14 days) |
+| `countStaleIssues` | Open issues with `lastActivityAt` older than threshold (default 30 days) |
+| `countStuckIssues` | Open + assigned issues stale beyond threshold (default 14 days) |
 | `getMilestoneDecay` | Active milestones past `dueDate` with open issues attached |
 
 Used by `apps/web/lib/services/metrics.ts` and exposed via `GET /api/projects/[id]/metrics`.

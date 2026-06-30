@@ -1,5 +1,5 @@
 /**
- * Seed a GitLab project with milestones and issues for TriageOps local testing.
+ * Seed a GitLab project with milestones and issues for Gridnull local testing.
  *
  * Usage (from repo root):
  *   npm run gitlab:seed
@@ -20,8 +20,8 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
-const GHOST_DAYS = 30;
-const ZOMBIE_DAYS = 14;
+const STALE_DAYS = 30;
+const STUCK_DAYS = 14;
 
 type GitLabMilestone = {
   id: number;
@@ -215,9 +215,9 @@ const ISSUES: IssueSeed[] = [
     labels: ["chore"],
   },
 
-  // Zombie — assigned, no milestone, stale
+  // Stuck — assigned, no milestone, stale
   {
-    key: "zombie-1",
+    key: "stuck-1",
     title: "Password reset email never arrives",
     assignee: true,
     description: reproductionBody({
@@ -226,11 +226,11 @@ const ISSUES: IssueSeed[] = [
       expected: "Reset email is delivered promptly",
       actual: "No email in inbox or spam; mail logs show no outbound message",
     }),
-    ageDays: ZOMBIE_DAYS + 6,
+    ageDays: STUCK_DAYS + 6,
     labels: ["bug", "auth"],
   },
   {
-    key: "zombie-2",
+    key: "stuck-2",
     title: "Users do not receive password recovery mail",
     assignee: true,
     description: reproductionBody({
@@ -239,13 +239,13 @@ const ISSUES: IssueSeed[] = [
       expected: "User receives password reset link by email",
       actual: "No recovery email is sent; support sees empty mail queue entries",
     }),
-    ageDays: ZOMBIE_DAYS + 10,
+    ageDays: STUCK_DAYS + 10,
     labels: ["bug", "auth"],
   },
 
-  // Ghost — unassigned, stale
+  // Stale — unassigned, stale
   {
-    key: "ghost-1",
+    key: "stale-1",
     title: "Dashboard loads slowly on mobile Safari",
     description: reproductionBody({
       area: "Dashboard on iOS Safari",
@@ -253,11 +253,11 @@ const ISSUES: IssueSeed[] = [
       expected: "Dashboard becomes interactive within 2 seconds",
       actual: "Blank screen for several seconds; charts load very late",
     }),
-    ageDays: GHOST_DAYS + 15,
+    ageDays: STALE_DAYS + 15,
     labels: ["performance", "mobile"],
   },
   {
-    key: "ghost-2",
+    key: "stale-2",
     title: "Mobile dashboard performance regression on Safari",
     description: reproductionBody({
       area: "Dashboard (mobile web)",
@@ -265,7 +265,7 @@ const ISSUES: IssueSeed[] = [
       expected: "Dashboard is usable immediately after navigation",
       actual: "Long white screen on Safari iOS; widgets pop in one by one",
     }),
-    ageDays: GHOST_DAYS + 20,
+    ageDays: STALE_DAYS + 20,
     labels: ["performance", "mobile"],
   },
 
@@ -691,16 +691,16 @@ async function main(): Promise<void> {
   }
 
   console.log("\nSeed complete.");
-  console.log("\nDashboard metrics (after sync in TriageOps):");
+  console.log("\nDashboard metrics (after sync in Gridnull):");
   console.log(`  milestone decay: 1 overdue sprint with 2 open issues`);
-  console.log(`  zombie issues:   2 (assigned, no milestone, >${ZOMBIE_DAYS}d stale)`);
-  console.log(`  ghost issues:    2 (unassigned, >${GHOST_DAYS}d stale)`);
+  console.log(`  stuck issues:   2 (assigned, no milestone, >${STUCK_DAYS}d stale)`);
+  console.log(`  stale issues:    2 (unassigned, >${STALE_DAYS}d stale)`);
   console.log(`  labels:          synced from GitLab on re-sync`);
   console.log("\nLLM test data (dashboard → Run analysis):");
   console.log(`  duplicate pairs: 3 pairs with similar titles/descriptions`);
   console.log(`  negative ctrl:   2 similar-topic issues that should not pair`);
   console.log(`  empty desc:      3 issues for description drafting`);
-  console.log("\nRegister the project in TriageOps and run sync to import issues and labels.");
+  console.log("\nRegister the project in Gridnull and run sync to import issues and labels.");
 }
 
 main().catch((error: unknown) => {

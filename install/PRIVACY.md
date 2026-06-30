@@ -1,4 +1,4 @@
-# TriageOps — Privacy Policy
+# Gridnull — Privacy Policy
 
 **Version:** 1.0 · **Effective:** June 2026
 
@@ -6,13 +6,13 @@
 
 ## 1. Scope
 
-This Privacy Policy explains how **TriageOps** (“we”, “the software”) handles information when you install and use it. TriageOps is typically deployed **on infrastructure you control** (on-prem or your cloud). In most pilots, **you** (the organization running the instance) are the **data controller** for your users’ and issue data; we provide the software.
+This Privacy Policy explains how **Gridnull** (“we”, “the software”) handles information when you install and use it. Gridnull is typically deployed **on infrastructure you control** (on-prem or your cloud). In most pilots, **you** (the organization running the instance) are the **data controller** for your users’ and issue data; we provide the software.
 
 **Software provider:** Karsten Tauchert · c/o Block Services, Stuttgarter Str. 106, 70736 Fellbach, Germany · developer@ktauchert.de.
 
 ## 2. What data the application processes
 
-Depending on configuration, TriageOps may store and process:
+Depending on configuration, Gridnull may store and process:
 
 | Category | Examples | Purpose |
 |----------|----------|---------|
@@ -48,7 +48,7 @@ On-prem use does not require Licensor-hosted sub-processors for core operation. 
 
 ## 7. Your rights
 
-Subject to applicable law, individuals may have rights to access, rectify, erase, restrict, or port personal data. **Contact your organization’s administrator** (TriageOps admin) for requests relating to data in your instance.
+Subject to applicable law, individuals may have rights to access, rectify, erase, restrict, or port personal data. **Contact your organization’s administrator** (Gridnull admin) for requests relating to data in your instance.
 
 ## 8. Contact
 

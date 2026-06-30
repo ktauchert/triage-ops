@@ -1,8 +1,8 @@
-import { prisma } from "@triage-ops/db";
+import { prisma } from "@gridnull/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { syncIssueLabels } from "./sync-labels.js";
 
-vi.mock("@triage-ops/db", () => ({
+vi.mock("@gridnull/db", () => ({
   prisma: {
     label: {
       upsert: vi.fn(),

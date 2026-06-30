@@ -19,7 +19,7 @@ For real sync testing, you need **one** of:
 
 ### Personal access token scopes
 
-TriageOps uses the connection PAT for two things: **listing repos/projects** on the Projects page and **syncing issues** in the worker.
+Gridnull uses the connection PAT for two things: **listing repos/projects** on the Projects page and **syncing issues** in the worker.
 
 | Provider | Required scope | Notes |
 |----------|----------------|-------|
@@ -36,8 +36,8 @@ If the token lacks list permissions, the Projects page shows an error asking you
 
 ```bash
 # 1. Clone and install
-git clone <repo-url> triage-ops
-cd triage-ops
+git clone <repo-url> gridnull
+cd gridnull
 npm install
 
 # 2. Environment
@@ -62,7 +62,7 @@ Verify containers are healthy:
 docker compose ps
 ```
 
-Expected: `triage-ops-postgres`, `triage-ops-redis`, and `triage-ops-ollama` running.
+Expected: `gridnull-postgres`, `gridnull-redis`, and `gridnull-ollama` running.
 
 ---
 
@@ -134,8 +134,8 @@ After syncing issues, the dashboard **AI suggestions** panel can run local analy
 With Ollama running (`npm run docker:up`):
 
 ```bash
-docker exec triage-ops-ollama ollama pull llama3.2:3b
-docker exec triage-ops-ollama ollama pull nomic-embed-text
+docker exec gridnull-ollama ollama pull llama3.2:3b
+docker exec gridnull-ollama ollama pull nomic-embed-text
 ```
 
 ### Workflow
@@ -301,14 +301,14 @@ docker compose down -v
 | `npm run db:migrate:deploy` | Apply pending migrations (production/CI) |
 | `npm run db:seed` | Insert sample connections and projects (optional; delete placeholders in UI if unused) |
 | `npm run gitlab:seed` | Create GitLab milestones/issues for local metrics + LLM testing (see below) |
-| `npm run db:push -w @triage-ops/db` | Push schema without migration file (prototyping only) |
-| `npm run db:studio -w @triage-ops/db` | Open Prisma Studio GUI |
+| `npm run db:push -w @gridnull/db` | Push schema without migration file (prototyping only) |
+| `npm run db:studio -w @gridnull/db` | Open Prisma Studio GUI |
 
 ---
 
 ## Local GitLab test data
 
-Use a self-hosted GitLab (e.g. Docker) to sync real issues into TriageOps. After creating a project and PAT in GitLab, add these to `.env`:
+Use a self-hosted GitLab (e.g. Docker) to sync real issues into Gridnull. After creating a project and PAT in GitLab, add these to `.env`:
 
 ```env
 GITLAB_URL=http://gitlab.local
@@ -328,8 +328,8 @@ The script creates:
 | Category | Count | Purpose |
 |----------|-------|---------|
 | Milestone decay | 1 overdue sprint, 2 open issues | `getMilestoneDecay` |
-| Zombie issues | 2 assigned, no milestone, stale | `countZombieIssues` (>14d) |
-| Ghost issues | 2 unassigned, stale | `countGhostIssues` (>30d) |
+| Stuck issues | 2 assigned, no milestone, stale | `countStuckIssues` (>14d) |
+| Stale issues | 2 unassigned, stale | `countStaleIssues` (>30d) |
 | Duplicate pairs | 3 pairs | similar titles/descriptions for LLM dedup |
 | Empty descriptions | 3 issues | future description drafting |
 
@@ -337,7 +337,7 @@ GitLab’s REST API cannot set historical `updated_at` values. The seed script b
 
 > **Note:** Re-running the seed on the same project creates duplicate milestones/issues. Use a fresh project or delete the old data first.
 
-Then register the project in TriageOps (Connections → Projects) and trigger sync. **Re-sync** after upgrading to pick up labels if issues were seeded before label sync shipped.
+Then register the project in Gridnull (Connections → Projects) and trigger sync. **Re-sync** after upgrading to pick up labels if issues were seeded before label sync shipped.
 
 ---
 
@@ -348,7 +348,7 @@ Before starting Phase 2 (LLM), confirm:
 1. `npm run db:migrate` — applies latest schema (including per-project thresholds)
 2. `npm test` and `npm run lint` pass
 3. Sync a project — labels appear in the **All synced issues** table
-4. Dashboard **Metric thresholds** — change ghost/zombie days and confirm counts update
+4. Dashboard **Metric thresholds** — change stale/stuck days and confirm counts update
 5. Optional full Docker stack:
    ```bash
    npm run docker:verify
@@ -362,8 +362,8 @@ Before starting Phase 2 (LLM), confirm:
 ```bash
 npm test                              # All workspace tests (incl. e2e smoke)
 npm run test:e2e                      # E2E smoke only (needs Postgres + Redis)
-npm run test -w @triage-ops/worker    # Worker tests only
-npm run test -w @triage-ops/metrics    # Metrics tests only
+npm run test -w @gridnull/worker    # Worker tests only
+npm run test -w @gridnull/metrics    # Metrics tests only
 npm run lint                          # TypeScript + ESLint all packages
 npm run build                         # Production build all packages
 ```
@@ -398,7 +398,7 @@ Another Ollama instance may be running locally. Stop it or change the host port 
 
 ### Local GitLab is slow or freezes the machine
 
-GitLab CE is memory-heavy (often 4 GB+ RAM). On a laptop, limit Docker memory in Docker Desktop settings or stop GitLab when not testing (`docker compose -f <your-gitlab-compose>.yml stop`). TriageOps itself only needs Postgres + Redis + worker for sync testing.
+GitLab CE is memory-heavy (often 4 GB+ RAM). On a laptop, limit Docker memory in Docker Desktop settings or stop GitLab when not testing (`docker compose -f <your-gitlab-compose>.yml stop`). Gridnull itself only needs Postgres + Redis + worker for sync testing.
 
 ### Worker exits with "Missing required environment variable"
 
@@ -440,7 +440,7 @@ npm run db:migrate
 Run tests outside restricted sandboxes:
 
 ```bash
-npm run test -w @triage-ops/worker
+npm run test -w @gridnull/worker
 ```
 
 ---
@@ -449,8 +449,8 @@ npm run test -w @triage-ops/worker
 
 | Process | Package | Port | Depends on |
 |---------|---------|------|------------|
-| Web dev server | `@triage-ops/web` | 3000 | Postgres, Redis |
-| Worker daemon | `@triage-ops/worker` | — | Postgres, Redis |
+| Web dev server | `@gridnull/web` | 3000 | Postgres, Redis |
+| Worker daemon | `@gridnull/worker` | — | Postgres, Redis |
 | Postgres | Docker | 5433 | — |
 | Redis | Docker | 6379 | — |
 | Ollama | Docker | 11434 | — (Phase 2 app code) |

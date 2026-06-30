@@ -2,9 +2,9 @@ import type {
   FetchGitHubReposParams,
   GitHubRepoRaw,
   GitHubReposPage,
-} from "@triage-ops/shared-types";
-import { DEFAULT_GITHUB_API_URL } from "@triage-ops/shared-types";
-import { VcsProvider } from "@triage-ops/db";
+} from "@gridnull/shared-types";
+import { DEFAULT_GITHUB_API_URL } from "@gridnull/shared-types";
+import { VcsProvider } from "@gridnull/db";
 import { VcsApiError } from "./errors";
 
 export type FetchFn = typeof fetch;

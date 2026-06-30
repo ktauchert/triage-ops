@@ -1,4 +1,4 @@
-import { IssueSuggestionType, VcsProvider } from "@triage-ops/db";
+import { IssueSuggestionType, VcsProvider } from "@gridnull/db";
 import {
   addGitHubIssueComment,
   closeGitHubIssueAsDuplicate,

@@ -4,7 +4,7 @@ globs: packages/metrics/**
 alwaysApply: false
 ---
 
-# Metrics (`@triage-ops/metrics`)
+# Metrics (`@gridnull/metrics`)
 
 Pure functions only — **no Prisma, no fetch, no env vars**.
 
@@ -12,8 +12,8 @@ Pure functions only — **no Prisma, no fetch, no env vars**.
 
 | Module | Export |
 |--------|--------|
-| `ghost.ts` | `countGhostIssues(issues, thresholdDays, now?)` |
-| `zombie.ts` | `countZombieIssues(issues, thresholdDays, now?)` |
+| `stale.ts` | `countStaleIssues(issues, thresholdDays, now?)` |
+| `stuck.ts` | `countStuckIssues(issues, thresholdDays, now?)` |
 | `milestone-decay.ts` | `getMilestoneDecay(milestones, issues, now?)` |
 
 ## TDD required

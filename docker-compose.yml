@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: triage-ops-postgres
+    container_name: gridnull-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-triage_ops}
@@ -19,7 +19,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: triage-ops-redis
+    container_name: gridnull-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -33,7 +33,7 @@ services:
 
   ollama:
     image: ollama/ollama:latest
-    container_name: triage-ops-ollama
+    container_name: gridnull-ollama
     restart: unless-stopped
     ports:
       - "11434:11434"
@@ -44,7 +44,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    container_name: triage-ops-web
+    container_name: gridnull-web
     restart: unless-stopped
     profiles:
       - production
@@ -66,7 +66,7 @@ services:
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
-    container_name: triage-ops-worker
+    container_name: gridnull-worker
     restart: unless-stopped
     profiles:
       - production
@@ -87,7 +87,7 @@ services:
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
-    container_name: triage-ops-migrate
+    container_name: gridnull-migrate
     profiles:
       - migrate
     environment:

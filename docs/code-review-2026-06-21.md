@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-TriageOps ist ein gut strukturiertes npm-Workspace-Monorepo mit klarer Trennung: **Web** (Next.js + API), **Worker** (BullMQ), **DB** (Prisma), **Metrics** (reine Funktionen), **Shared Types** (Queue-Verträge). Die Architektur „Sync-and-Analyze“ ist konsistent umgesetzt; der LLM-Pfad liest ausschließlich Postgres, Write-back läuft über einen separaten Worker mit gespeicherten PATs.
+Gridnull ist ein gut strukturiertes npm-Workspace-Monorepo mit klarer Trennung: **Web** (Next.js + API), **Worker** (BullMQ), **DB** (Prisma), **Metrics** (reine Funktionen), **Shared Types** (Queue-Verträge). Die Architektur „Sync-and-Analyze“ ist konsistent umgesetzt; der LLM-Pfad liest ausschließlich Postgres, Write-back läuft über einen separaten Worker mit gespeicherten PATs.
 
 **Gesamtbewertung: Gut — produktionsreif für On-Prem/Intranet mit dokumentierten MVP-Einschränkungen.**
 
@@ -142,10 +142,10 @@ Referenz: [`docs/security.md`](./security.md)
 
 | Paket | Tests | Status |
 |-------|-------|--------|
-| `@triage-ops/worker` | 78 | ✅ bestanden |
-| `@triage-ops/web` | 41 | ✅ bestanden |
-| `@triage-ops/metrics` | 17 | ✅ bestanden |
-| `@triage-ops/e2e` | 1 | Nicht in diesem Lauf (benötigt Postgres + Redis) |
+| `@gridnull/worker` | 78 | ✅ bestanden |
+| `@gridnull/web` | 41 | ✅ bestanden |
+| `@gridnull/metrics` | 17 | ✅ bestanden |
+| `@gridnull/e2e` | 1 | Nicht in diesem Lauf (benötigt Postgres + Redis) |
 
 **32 Testdateien** insgesamt, colocated als `*.test.ts`.
 

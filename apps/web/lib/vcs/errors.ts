@@ -1,4 +1,4 @@
-import { VcsProvider } from "@triage-ops/db";
+import { VcsProvider } from "@gridnull/db";
 
 export class VcsApiError extends Error {
   constructor(

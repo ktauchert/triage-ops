@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { listRemoteProjects } from "./list-remote-projects";
-import { VcsProvider } from "@triage-ops/db";
+import { VcsProvider } from "@gridnull/db";
 
 const server = setupServer();
 

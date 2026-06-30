@@ -1,4 +1,4 @@
-import { IssueSuggestionStatus, SyncStatus, prisma } from "@triage-ops/db";
+import { IssueSuggestionStatus, SyncStatus, prisma } from "@gridnull/db";
 import { forceReleaseLock } from "./lock.js";
 import { getRedis } from "./redis.js";
 

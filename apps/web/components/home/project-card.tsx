@@ -33,11 +33,11 @@ export function HomeProjectCard({ project }: { project: HomeProjectCard }) {
           </p>
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{project.openIssues} open</Badge>
-            {project.ghostCount > 0 ? (
-              <Badge variant="outline">{project.ghostCount} ghost</Badge>
+            {project.staleCount > 0 ? (
+              <Badge variant="outline">{project.staleCount} stale</Badge>
             ) : null}
-            {project.zombieCount > 0 ? (
-              <Badge variant="outline">{project.zombieCount} zombie</Badge>
+            {project.stuckCount > 0 ? (
+              <Badge variant="outline">{project.stuckCount} stuck</Badge>
             ) : null}
           </div>
         </CardContent>

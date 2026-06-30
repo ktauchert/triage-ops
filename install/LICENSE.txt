@@ -1,11 +1,11 @@
-TriageOps — Proprietary Software License (Summary)
+Gridnull — Proprietary Software License (Summary)
 
-Copyright (c) 2026 Karsten Tauchert (TriageOps). All rights reserved.
+Copyright (c) 2026 Karsten Tauchert (Gridnull). All rights reserved.
 
 This software is licensed, not sold. Full terms are in EULA.md (End User License
 Agreement) and PRIVACY.md included with your install bundle.
 
-You may use TriageOps only if you agree to the EULA — including by completing
+You may use Gridnull only if you agree to the EULA — including by completing
 initial setup in the web application.
 
 You may not copy, modify, merge, publish, distribute, sublicense, or sell copies

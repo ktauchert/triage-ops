@@ -63,20 +63,20 @@ export async function PATCH(request: Request, context: RouteContext) {
     return body;
   }
 
-  const ghostThresholdDays = parseOptionalNonNegativeInt(
-    body.ghostThresholdDays,
-    "ghostThresholdDays",
+  const staleThresholdDays = parseOptionalNonNegativeInt(
+    body.staleThresholdDays,
+    "staleThresholdDays",
   );
-  if (ghostThresholdDays instanceof Response) {
-    return ghostThresholdDays;
+  if (staleThresholdDays instanceof Response) {
+    return staleThresholdDays;
   }
 
-  const zombieThresholdDays = parseOptionalNonNegativeInt(
-    body.zombieThresholdDays,
-    "zombieThresholdDays",
+  const stuckThresholdDays = parseOptionalNonNegativeInt(
+    body.stuckThresholdDays,
+    "stuckThresholdDays",
   );
-  if (zombieThresholdDays instanceof Response) {
-    return zombieThresholdDays;
+  if (stuckThresholdDays instanceof Response) {
+    return stuckThresholdDays;
   }
 
   if (
@@ -88,20 +88,20 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   if (
     body.isFavorite === undefined &&
-    ghostThresholdDays === undefined &&
-    zombieThresholdDays === undefined &&
+    staleThresholdDays === undefined &&
+    stuckThresholdDays === undefined &&
     body.autoSyncEnabled === undefined &&
     body.autoSyncIntervalMinutes === undefined
   ) {
     return errorResponse(
-      "Provide isFavorite, ghostThresholdDays, zombieThresholdDays, autoSyncEnabled, and/or autoSyncIntervalMinutes",
+      "Provide isFavorite, staleThresholdDays, stuckThresholdDays, autoSyncEnabled, and/or autoSyncIntervalMinutes",
       400,
     );
   }
 
   const settingsRequested =
-    ghostThresholdDays !== undefined ||
-    zombieThresholdDays !== undefined ||
+    staleThresholdDays !== undefined ||
+    stuckThresholdDays !== undefined ||
     body.autoSyncEnabled !== undefined ||
     body.autoSyncIntervalMinutes !== undefined;
 
@@ -139,8 +139,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     const project = await updateProjectSettings(session, id, {
       isFavorite:
         typeof body.isFavorite === "boolean" ? body.isFavorite : undefined,
-      ghostThresholdDays,
-      zombieThresholdDays,
+      staleThresholdDays,
+      stuckThresholdDays,
       autoSyncEnabled:
         typeof body.autoSyncEnabled === "boolean"
           ? body.autoSyncEnabled

@@ -1,4 +1,4 @@
-import type { AutoSyncJobPayload } from "@triage-ops/shared-types";
+import type { AutoSyncJobPayload } from "@gridnull/shared-types";
 import type { Job } from "bullmq";
 import { runAutoSyncTick } from "../lib/enqueue-project-sync.js";
 

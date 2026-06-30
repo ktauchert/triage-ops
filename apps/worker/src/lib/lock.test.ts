@@ -36,9 +36,9 @@ describe("acquireLock", () => {
     const lock = await acquireLock(redis as never, "project:abc");
 
     expect(lock).not.toBeNull();
-    expect(lock?.key).toBe("triage-ops:lock:project:abc");
+    expect(lock?.key).toBe("gridnull:lock:project:abc");
     expect(redis.set).toHaveBeenCalledWith(
-      "triage-ops:lock:project:abc",
+      "gridnull:lock:project:abc",
       expect.any(String),
       "EX",
       300,
@@ -61,7 +61,7 @@ describe("isLockHeld", () => {
     redis.exists = vi.fn().mockResolvedValue(1);
 
     await expect(isLockHeld(redis as never, "llm:project-1")).resolves.toBe(true);
-    expect(redis.exists).toHaveBeenCalledWith("triage-ops:lock:llm:project-1");
+    expect(redis.exists).toHaveBeenCalledWith("gridnull:lock:llm:project-1");
   });
 });
 
@@ -72,7 +72,7 @@ describe("releaseLock", () => {
 
     const released = await releaseLock(
       redis as never,
-      "triage-ops:lock:project:abc",
+      "gridnull:lock:project:abc",
       "token-123",
     );
 
@@ -86,7 +86,7 @@ describe("releaseLock", () => {
 
     const released = await releaseLock(
       redis as never,
-      "triage-ops:lock:project:abc",
+      "gridnull:lock:project:abc",
       "wrong-token",
     );
 
@@ -101,7 +101,7 @@ describe("renewLock", () => {
 
     const renewed = await renewLock(
       redis as never,
-      "triage-ops:lock:project:abc",
+      "gridnull:lock:project:abc",
       "token-123",
       300,
     );
@@ -110,7 +110,7 @@ describe("renewLock", () => {
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining("pexpire"),
       1,
-      "triage-ops:lock:project:abc",
+      "gridnull:lock:project:abc",
       "token-123",
       "300000",
     );
@@ -128,7 +128,7 @@ describe("startLockHeartbeat", () => {
 
     const stop = startLockHeartbeat(
       redis as never,
-      { key: "triage-ops:lock:sync:p1", token: "t1", release: async () => true },
+      { key: "gridnull:lock:sync:p1", token: "t1", release: async () => true },
       300,
     );
 

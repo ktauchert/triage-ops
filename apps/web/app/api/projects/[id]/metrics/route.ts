@@ -34,10 +34,10 @@ export async function GET(request: Request, context: RouteContext) {
     return errorResponse("Project not found", 404);
   }
 
-  const ghostDays = parseOptionalInt(searchParams.get("ghostDays"));
-  const zombieDays = parseOptionalInt(searchParams.get("zombieDays"));
+  const staleDays = parseOptionalInt(searchParams.get("staleDays"));
+  const stuckDays = parseOptionalInt(searchParams.get("stuckDays"));
 
-  const metrics = await getProjectMetrics(projectId, { ghostDays, zombieDays });
+  const metrics = await getProjectMetrics(projectId, { staleDays, stuckDays });
 
   if (!metrics) {
     return errorResponse("Project not found", 404);

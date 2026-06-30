@@ -4,7 +4,7 @@ globs: packages/db/**
 alwaysApply: false
 ---
 
-# Database (`@triage-ops/db`)
+# Database (`@gridnull/db`)
 
 ## Workflow
 

@@ -1,7 +1,7 @@
 export {
-  countGhostIssues,
-  type GhostIssuesResult,
-} from "./ghost";
+  countStaleIssues,
+  type StaleIssuesResult,
+} from "./stale";
 export {
   getMilestoneDecay,
   type MilestoneDecayResult,
@@ -14,4 +14,4 @@ export {
   type MetricThresholds,
   type MilestoneDecayEntry,
 } from "./types";
-export { countZombieIssues, type ZombieIssuesResult } from "./zombie";
+export { countStuckIssues, type StuckIssuesResult } from "./stuck";

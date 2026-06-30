@@ -2,7 +2,7 @@
 
 **Stand / Effective:** Juni 2026
 
-> Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz). This legal notice is provided under German law for the operator of this website and the TriageOps software.
+> Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz). This legal notice is provided under German law for the operator of this website and the Gridnull software.
 
 ## Diensteanbieter / Operator
 
@@ -41,7 +41,7 @@ Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir
 
 Die durch den Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
 
-TriageOps und die zugehörige Software sind proprietär; die Nutzung richtet sich nach der [EULA](/legal/eula).
+Gridnull und die zugehörige Software sind proprietär; die Nutzung richtet sich nach der [EULA](/legal/eula).
 
 ---
 

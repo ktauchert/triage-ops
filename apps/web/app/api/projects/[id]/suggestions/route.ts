@@ -1,4 +1,4 @@
-import { IssueSuggestionStatus } from "@triage-ops/db";
+import { IssueSuggestionStatus } from "@gridnull/db";
 import { errorResponse, jsonResponse } from "@/lib/api";
 import { listSuggestions } from "@/lib/services/suggestions";
 import { requireApiSession } from "@/lib/auth/session";

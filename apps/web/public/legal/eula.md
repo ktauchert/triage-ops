@@ -1,4 +1,4 @@
-# TriageOps — End User License Agreement (EULA)
+# Gridnull — End User License Agreement (EULA)
 
 **Version:** 1.0 · **Effective:** June 2026
 
@@ -6,15 +6,15 @@
 
 ## 1. Parties and acceptance
 
-This End User License Agreement (“**Agreement**”) is between you (“**Licensee**”, “**you**”) and the owner of the TriageOps software, **Karsten Tauchert** (c/o Block Services, Stuttgarter Str. 106, 70736 Fellbach, Germany) (“**Licensor**”, “**we**”, “**us**”).
+This End User License Agreement (“**Agreement**”) is between you (“**Licensee**”, “**you**”) and the owner of the Gridnull software, **Karsten Tauchert** (c/o Block Services, Stuttgarter Str. 106, 70736 Fellbach, Germany) (“**Licensor**”, “**we**”, “**us**”).
 
-By **installing**, **accessing**, or **using** TriageOps (including completing initial setup and signing in), you agree to this Agreement and to the [Privacy Policy](/legal/privacy). If you do not agree, do not install or use the software.
+By **installing**, **accessing**, or **using** Gridnull (including completing initial setup and signing in), you agree to this Agreement and to the [Privacy Policy](/legal/privacy). If you do not agree, do not install or use the software.
 
 If you accept on behalf of an organization, you represent that you have authority to bind that organization.
 
 ## 2. Eligibility (SME / pilot)
 
-TriageOps is currently offered for **evaluation and production use by small and medium-sized organizations** only, unless otherwise agreed in writing.
+Gridnull is currently offered for **evaluation and production use by small and medium-sized organizations** only, unless otherwise agreed in writing.
 
 **“Eligible Licensee”** means an organization that, at the time of first use, has:
 
@@ -40,11 +40,11 @@ Except as expressly permitted in writing, Licensee must **not**:
 - remove or alter proprietary notices;  
 - use the software in violation of applicable law or third-party terms (including GitHub/GitLab terms).
 
-**Ownership:** TriageOps, its name, logos, and all related intellectual property remain the exclusive property of Licensor. This Agreement does not transfer ownership.
+**Ownership:** Gridnull, its name, logos, and all related intellectual property remain the exclusive property of Licensor. This Agreement does not transfer ownership.
 
 ## 5. Third-party services and components
 
-TriageOps integrates with **GitHub**, **GitLab**, and other services you configure. Your use of those services is governed by **their** terms. The software also incorporates open-source components; applicable third-party licenses are provided separately where required.
+Gridnull integrates with **GitHub**, **GitLab**, and other services you configure. Your use of those services is governed by **their** terms. The software also incorporates open-source components; applicable third-party licenses are provided separately where required.
 
 Licensor is **not** responsible for outages, API changes, or actions taken by third-party platforms.
 
@@ -59,7 +59,7 @@ Licensee is solely responsible for:
 
 ## 7. AI suggestions and VCS write-back (important)
 
-TriageOps may suggest duplicate closures, description updates, and similar changes. **Apply** (or equivalent actions) may **modify, close, or comment on issues** in your connected GitHub or GitLab repositories.
+Gridnull may suggest duplicate closures, description updates, and similar changes. **Apply** (or equivalent actions) may **modify, close, or comment on issues** in your connected GitHub or GitLab repositories.
 
 You acknowledge that:
 
@@ -117,4 +117,4 @@ Full provider details are in the [Impressum](/legal/impressum).
 
 ---
 
-*Copyright © 2026 Karsten Tauchert (TriageOps). All rights reserved.*
+*Copyright © 2026 Karsten Tauchert (Gridnull). All rights reserved.*

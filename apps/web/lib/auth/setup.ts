@@ -1,4 +1,4 @@
-import { UserRole, prisma } from "@triage-ops/db";
+import { UserRole, prisma } from "@gridnull/db";
 import { isEmailAllowed, normalizeEmail } from "./allowlist";
 import { isAdminEmail, isAuthDisabled } from "./config";
 import { isDevAuthBypassAllowed, isProductionEnvironment } from "./environment";

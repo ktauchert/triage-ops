@@ -4,8 +4,8 @@ import {
   IssueSuggestionType,
   SyncStatus,
   prisma,
-} from "@triage-ops/db";
-import type { LlmAnalysisJobPayload } from "@triage-ops/shared-types";
+} from "@gridnull/db";
+import type { LlmAnalysisJobPayload } from "@gridnull/shared-types";
 import type { Job } from "bullmq";
 import { getOllamaConfig, chat, embed } from "../lib/ollama/client.js";
 import { acquireLock, startLockHeartbeat } from "../lib/lock.js";

@@ -1,5 +1,5 @@
 import { Queue, Worker, type ConnectionOptions } from "bullmq";
-import { QUEUE_NAMES, type WriteBackJobPayload } from "@triage-ops/shared-types";
+import { QUEUE_NAMES, type WriteBackJobPayload } from "@gridnull/shared-types";
 import { getQueueConnection } from "./sync-queue.js";
 
 export { getQueueConnection, Worker };

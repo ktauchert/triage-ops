@@ -16,7 +16,7 @@ const prismaMock = vi.hoisted(() => ({
 const getProjectByIdMock = vi.hoisted(() => vi.fn());
 const enqueueWriteBackJobMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@triage-ops/db", () => ({
+vi.mock("@gridnull/db", () => ({
   IssueSuggestionStatus: {
     PENDING: "PENDING",
     APPLYING: "APPLYING",

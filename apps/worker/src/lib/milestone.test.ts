@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MilestoneState } from "@triage-ops/db";
+import { MilestoneState } from "@gridnull/db";
 import { mapMilestoneState, parseMilestoneDueDate } from "./milestone.js";
 
 describe("parseMilestoneDueDate", () => {

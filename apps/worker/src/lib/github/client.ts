@@ -2,8 +2,8 @@ import type {
   FetchGitHubIssuesParams,
   GitHubIssueRaw,
   GitHubIssuesPage,
-} from "@triage-ops/shared-types";
-import { DEFAULT_GITHUB_API_URL } from "@triage-ops/shared-types";
+} from "@gridnull/shared-types";
+import { DEFAULT_GITHUB_API_URL } from "@gridnull/shared-types";
 import { fetchWithResilience } from "../http.js";
 
 export class GitHubApiError extends Error {

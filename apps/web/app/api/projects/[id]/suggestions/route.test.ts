@@ -18,7 +18,7 @@ vi.mock("@/lib/services/suggestions", () => ({
   listSuggestions: listSuggestionsMock,
 }));
 
-vi.mock("@triage-ops/db", () => ({
+vi.mock("@gridnull/db", () => ({
   IssueSuggestionStatus: {
     PENDING: "PENDING",
     APPLYING: "APPLYING",

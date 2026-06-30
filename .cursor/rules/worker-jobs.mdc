@@ -4,14 +4,14 @@ globs: apps/worker/**
 alwaysApply: false
 ---
 
-# Worker (`@triage-ops/worker`)
+# Worker (`@gridnull/worker`)
 
 ## Layout
 
 - `src/workers/` — job processors (business logic)
 - `src/queues/` — BullMQ queue factories
 - `src/lib/github/`, `src/lib/gitlab/` — VCS REST clients (+ MSW tests)
-- `src/lib/lock.ts` — Redis locks (`triage-ops:lock:{resource}`)
+- `src/lib/lock.ts` — Redis locks (`gridnull:lock:{resource}`)
 - `src/index.ts` — register workers, startup recovery
 
 ## Adding a queue

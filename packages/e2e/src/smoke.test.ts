@@ -1,9 +1,9 @@
-import { SyncStatus, VcsProvider, prisma } from "@triage-ops/db";
+import { SyncStatus, VcsProvider, prisma } from "@gridnull/db";
 import {
   DEFAULT_GITHUB_API_URL,
   QUEUE_NAMES,
   type SyncJobPayload,
-} from "@triage-ops/shared-types";
+} from "@gridnull/shared-types";
 import { Worker } from "bullmq";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getProjectMetrics } from "@/lib/services/metrics";
@@ -31,7 +31,7 @@ function buildSmokeIssues() {
     {
       id: 9_001_001,
       number: 1,
-      title: "Ghost issue",
+      title: "Stale issue",
       body: "No activity for weeks",
       state: "open" as const,
       created_at: daysAgoIso(90),
@@ -45,7 +45,7 @@ function buildSmokeIssues() {
     {
       id: 9_001_002,
       number: 2,
-      title: "Zombie issue",
+      title: "Stuck issue",
       body: "Assigned but stale",
       state: "open" as const,
       created_at: daysAgoIso(60),
@@ -202,8 +202,8 @@ describe("e2e smoke: register → sync → metrics", () => {
     expect(metrics?.overview.openIssues).toBe(3);
     expect(metrics?.overview.closedIssues).toBe(1);
     expect(metrics?.overview.totalMilestones).toBe(1);
-    expect(metrics?.ghost.count).toBeGreaterThanOrEqual(1);
-    expect(metrics?.zombie.count).toBeGreaterThanOrEqual(1);
+    expect(metrics?.stale.count).toBeGreaterThanOrEqual(1);
+    expect(metrics?.stuck.count).toBeGreaterThanOrEqual(1);
     expect(metrics?.milestoneDecay.count).toBeGreaterThanOrEqual(1);
     expect(metrics?.lastSyncedAt).not.toBeNull();
 

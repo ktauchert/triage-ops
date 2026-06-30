@@ -1,5 +1,5 @@
-import { assertEncryptionConfigured } from "@triage-ops/db";
-import { QUEUE_NAMES } from "@triage-ops/shared-types";
+import { assertEncryptionConfigured } from "@gridnull/db";
+import { QUEUE_NAMES } from "@gridnull/shared-types";
 import { Worker } from "bullmq";
 import { getOptionalEnv } from "./config/env.js";
 import { recoverInterruptedLlmRuns } from "./lib/llm/recover.js";

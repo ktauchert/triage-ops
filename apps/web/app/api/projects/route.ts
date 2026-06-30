@@ -1,4 +1,4 @@
-import { VcsProvider, prisma } from "@triage-ops/db";
+import { VcsProvider, prisma } from "@gridnull/db";
 import {
   createProject,
   listProjects,

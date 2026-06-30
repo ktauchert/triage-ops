@@ -1,4 +1,4 @@
-import { prisma } from "@triage-ops/db";
+import { prisma } from "@gridnull/db";
 import type { Prisma } from "@prisma/client";
 
 export type AuditEventInput = {

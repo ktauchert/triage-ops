@@ -1,6 +1,6 @@
 # On-Prem Product Model — Bootstrap, Auth & Distribution
 
-This document records **decisions** for production on-prem deployments: how the first admin is created, how access stays closed, and how customers install TriageOps **without cloning the source repository**.
+This document records **decisions** for production on-prem deployments: how the first admin is created, how access stays closed, and how customers install Gridnull **without cloning the source repository**.
 
 **Status:** Decided direction · **bootstrap shipped** · **distribution pipeline shipped** (June 2026)
 
@@ -33,7 +33,7 @@ sequenceDiagram
   participant Admin
   participant Setup as /setup
   participant OAuth as GitHub/GitLab
-  participant App as TriageOps
+  participant App as Gridnull
 
   Note over App: Fresh DB, setupComplete=false
   Admin->>Setup: Open app URL
@@ -98,7 +98,7 @@ Customers should **not** need `git clone` or Node.js on the server. Developers k
 Customers receive an **install bundle** (ZIP from GitHub Release), not repository access:
 
 ```
-triage-ops-install-1.0.0/
+gridnull-install-1.0.0/
 ├── docker-compose.prod.yml    # image: only, pinned tags
 ├── .env.example
 ├── install.md                 # short steps (this doc → intranet-rollout)
@@ -122,8 +122,8 @@ docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate
 docker compose -f docker-compose.prod.yml --profile production up -d
 
 # 4. Ollama models (required for LLM analysis — not included in compose pull)
-docker exec triage-ops-ollama ollama pull llama3.2:3b
-docker exec triage-ops-ollama ollama pull nomic-embed-text
+docker exec gridnull-ollama ollama pull llama3.2:3b
+docker exec gridnull-ollama ollama pull nomic-embed-text
 # Match names to OLLAMA_CHAT_MODEL / OLLAMA_EMBED_MODEL in .env if customized
 ```
 
@@ -145,7 +145,7 @@ Tracked in [phases.md § Phase 3c — Product distribution](./phases.md#phase-3c
 
 | Item | Purpose | Status |
 |------|---------|--------|
-| `docker-compose.prod.yml` | `image: ghcr.io/ktauchert/triage-ops-web:1.x` — no `build:` | ✅ |
+| `docker-compose.prod.yml` | `image: ghcr.io/ktauchert/gridnull-web:1.x` — no `build:` | ✅ |
 | CI job: build & push web/worker images on tag | `.github/workflows/release.yml` | ✅ |
 | Private GHCR (or customer registry mirror) | No public pull without credentials | ✅ |
 | GitHub Release asset: install bundle | Compose + docs, no source | ✅ |

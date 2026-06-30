@@ -35,7 +35,7 @@ export default async function AdminAuditPage() {
       <div>
         <h2 className="page-heading">Audit log</h2>
         <p className="page-subheading">
-          Who did what in TriageOps — applies, syncs, connection changes, and
+          Who did what in Gridnull — applies, syncs, connection changes, and
           role updates.
         </p>
       </div>

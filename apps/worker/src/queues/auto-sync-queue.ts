@@ -2,7 +2,7 @@ import { Queue } from "bullmq";
 import {
   QUEUE_NAMES,
   type AutoSyncJobPayload,
-} from "@triage-ops/shared-types";
+} from "@gridnull/shared-types";
 import { getOptionalEnv } from "../config/env.js";
 import { getQueueConnection } from "./sync-queue.js";
 

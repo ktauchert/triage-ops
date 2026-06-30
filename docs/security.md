@@ -1,8 +1,8 @@
 # Security
 
-This document describes how TriageOps handles authentication, credentials, and data — written for **on-prem / intranet** deployments and for security reviewers evaluating the product before rollout.
+This document describes how Gridnull handles authentication, credentials, and data — written for **on-prem / intranet** deployments and for security reviewers evaluating the product before rollout.
 
-**Summary:** TriageOps is designed to run **inside your network**. User login is OAuth-based with optional allowlists. VCS personal access tokens (PATs) are stored in your Postgres instance and used server-side only to sync issue metadata. **Production requires explicit hardening** (auth enabled, HTTPS, strong DB passwords, network isolation). Some MVP limitations (plain-text PAT storage) are documented below with mitigations and roadmap.
+**Summary:** Gridnull is designed to run **inside your network**. User login is OAuth-based with optional allowlists. VCS personal access tokens (PATs) are stored in your Postgres instance and used server-side only to sync issue metadata. **Production requires explicit hardening** (auth enabled, HTTPS, strong DB passwords, network isolation). Some MVP limitations (plain-text PAT storage) are documented below with mitigations and roadmap.
 
 ---
 
@@ -16,8 +16,8 @@ flowchart TB
 
   subgraph CustomerNetwork["Customer network / intranet"]
     Proxy[HTTPS reverse proxy]
-    Web[TriageOps Web]
-    Worker[TriageOps Worker]
+    Web[Gridnull Web]
+    Worker[Gridnull Worker]
     PG[(PostgreSQL)]
     Redis[(Redis)]
   end
@@ -40,9 +40,9 @@ flowchart TB
 
 | Boundary | What crosses it |
 |----------|-----------------|
-| User → TriageOps | HTTPS, OAuth login, HTTP-only session cookie |
-| TriageOps → VCS | HTTPS only; PAT sent in `Authorization` / `PRIVATE-TOKEN` headers |
-| TriageOps → third parties | **No** SaaS telemetry, analytics, or external AI in MVP (Ollama is local, Phase 2) |
+| User → Gridnull | HTTPS, OAuth login, HTTP-only session cookie |
+| Gridnull → VCS | HTTPS only; PAT sent in `Authorization` / `PRIVATE-TOKEN` headers |
+| Gridnull → third parties | **No** SaaS telemetry, analytics, or external AI in MVP (Ollama is local, Phase 2) |
 | Data residency | All synced issue data stays in **your** Postgres |
 
 ---
@@ -75,7 +75,7 @@ flowchart TB
 
 ### Corporate SSO (GitLab)
 
-On-prem customers often use SSO into GitLab (Okta, Azure AD, etc.). TriageOps does **not** integrate with the IdP directly. Users sign in with **GitLab OAuth**; GitLab handles corporate SSO upstream. This is the recommended on-prem login path.
+On-prem customers often use SSO into GitLab (Okta, Azure AD, etc.). Gridnull does **not** integrate with the IdP directly. Users sign in with **GitLab OAuth**; GitLab handles corporate SSO upstream. This is the recommended on-prem login path.
 
 ### Not yet implemented
 
@@ -256,9 +256,9 @@ For deployments with **no outbound internet** except internal services:
 | **OAuth login** | Register OAuth app on **self-hosted GitLab**; set `AUTH_GITLAB_ISSUER=https://gitlab.company.internal` |
 | **GitHub** | Not usable without reachability to `github.com` — GitLab-only for fully air-gapped installs |
 | **Ollama** | Run on the same network; pull models once on a connected maintenance window or mirror images |
-| **TriageOps** | No telemetry or external AI — all issue data stays in customer Postgres |
+| **Gridnull** | No telemetry or external AI — all issue data stays in customer Postgres |
 
-Corporate IdP (Okta, Azure AD) integrates **via GitLab SSO upstream** — TriageOps does not call the IdP directly.
+Corporate IdP (Okta, Azure AD) integrates **via GitLab SSO upstream** — Gridnull does not call the IdP directly.
 
 ---
 
@@ -284,7 +284,7 @@ Synced data is a **cache** of VCS issue metadata for triage metrics. Deleting a 
 
 ### Production checklist
 
-Use this before exposing TriageOps beyond a single developer machine:
+Use this before exposing Gridnull beyond a single developer machine:
 
 #### Required
 
@@ -368,14 +368,14 @@ Register the GitLab OAuth application with redirect URI:
 | PAT not in API responses | `GET /api/connections` JSON has no `accessToken` field |
 | Allowlist works | Sign in with email outside `ALLOWED_EMAIL_DOMAINS` → access denied |
 | Rate limit works | Repeat `POST /api/projects/[id]/sync` rapidly → **429** when over `RATE_LIMIT_SYNC_MAX` |
-| Unit tests | `npm run test -w @triage-ops/web` includes auth, session, and rate-limit tests |
+| Unit tests | `npm run test -w @gridnull/web` includes auth, session, and rate-limit tests |
 
 ---
 
 ## FAQ for security reviewers
 
 **Does user data leave our network?**  
-Synced issue metadata is stored in your Postgres. The worker calls **your** GitHub/GitLab instance over HTTPS. No TriageOps cloud service receives data in on-prem mode.
+Synced issue metadata is stored in your Postgres. The worker calls **your** GitHub/GitLab instance over HTTPS. No Gridnull cloud service receives data in on-prem mode.
 
 **Who can access the dashboard?**  
 Users who pass OAuth login and (if configured) the email/domain allowlist. After setup, **new** users must be admin-provisioned (closed registration). If `ALLOWED_EMAIL_DOMAINS` and `ALLOWED_EMAILS` are both empty in production, the web app **refuses to start** — configure at least one before deploying.

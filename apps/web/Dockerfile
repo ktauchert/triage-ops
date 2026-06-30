@@ -14,8 +14,8 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build -w @triage-ops/db
-RUN npm run build -w @triage-ops/web
+RUN npm run build -w @gridnull/db
+RUN npm run build -w @gridnull/web
 
 FROM base AS runner
 ENV NODE_ENV=production

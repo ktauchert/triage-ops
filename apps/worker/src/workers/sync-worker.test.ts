@@ -12,7 +12,7 @@ const lockMock = vi.hoisted(() => ({
   startLockHeartbeat: vi.fn(() => () => {}),
 }));
 
-vi.mock("@triage-ops/db", () => ({
+vi.mock("@gridnull/db", () => ({
   IssueState: { OPEN: "OPEN", CLOSED: "CLOSED" },
   SyncStatus: {
     PENDING: "PENDING",

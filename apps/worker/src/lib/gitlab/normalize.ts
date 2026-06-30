@@ -1,4 +1,4 @@
-import type { GitLabIssueRaw, NormalizedIssue } from "@triage-ops/shared-types";
+import type { GitLabIssueRaw, NormalizedIssue } from "@gridnull/shared-types";
 
 export function normalizeGitLabIssue(issue: GitLabIssueRaw): NormalizedIssue {
   return {

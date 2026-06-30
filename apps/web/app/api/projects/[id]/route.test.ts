@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UserRole } from "@triage-ops/db";
+import { UserRole } from "@gridnull/db";
 import {
   expectForbidden,
   jsonRequest,
@@ -75,7 +75,7 @@ describe("PATCH /api/projects/[id]", () => {
     requireApiSessionMock.mockResolvedValue(unauthorizedResponse());
 
     const response = await PATCH(
-      jsonRequest("PATCH", "http://localhost", { ghostThresholdDays: 30 }),
+      jsonRequest("PATCH", "http://localhost", { staleThresholdDays: 30 }),
       ctx,
     );
     expect(response.status).toBe(401);
@@ -96,7 +96,7 @@ describe("PATCH /api/projects/[id]", () => {
 
     await expectForbidden(
       await PATCH(
-        jsonRequest("PATCH", "http://localhost", { ghostThresholdDays: 30 }),
+        jsonRequest("PATCH", "http://localhost", { staleThresholdDays: 30 }),
         ctx,
       ),
     );
@@ -127,24 +127,24 @@ describe("PATCH /api/projects/[id]", () => {
   it("updates metric thresholds", async () => {
     updateProjectSettingsMock.mockResolvedValue({
       id: "project-1",
-      ghostThresholdDays: 45,
-      zombieThresholdDays: 21,
+      staleThresholdDays: 45,
+      stuckThresholdDays: 21,
     });
 
     const data = await readJson<{
-      project: { ghostThresholdDays: number; zombieThresholdDays: number };
+      project: { staleThresholdDays: number; stuckThresholdDays: number };
     }>(
       await PATCH(
         jsonRequest("PATCH", "http://localhost", {
-          ghostThresholdDays: 45,
-          zombieThresholdDays: 21,
+          staleThresholdDays: 45,
+          stuckThresholdDays: 21,
         }),
         ctx,
       ),
       200,
     );
 
-    expect(data.project.ghostThresholdDays).toBe(45);
-    expect(data.project.zombieThresholdDays).toBe(21);
+    expect(data.project.staleThresholdDays).toBe(45);
+    expect(data.project.stuckThresholdDays).toBe(21);
   });
 });

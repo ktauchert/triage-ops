@@ -1,4 +1,4 @@
-import type { GitHubIssueRaw, NormalizedIssue } from "@triage-ops/shared-types";
+import type { GitHubIssueRaw, NormalizedIssue } from "@gridnull/shared-types";
 
 export function isGitHubPullRequest(issue: GitHubIssueRaw): boolean {
   return issue.pull_request !== undefined;

@@ -16,8 +16,8 @@ vi.mock("@/lib/rate-limit/enforce", () => ({
   enforceApiRateLimit: vi.fn().mockResolvedValue(null),
 }));
 
-vi.mock("@triage-ops/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@triage-ops/db")>();
+vi.mock("@gridnull/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@gridnull/db")>();
   return {
     ...actual,
     prisma: {
@@ -29,7 +29,7 @@ vi.mock("@triage-ops/db", async (importOriginal) => {
 });
 
 import { auth } from "@/auth";
-import { UserRole, prisma } from "@triage-ops/db";
+import { UserRole, prisma } from "@gridnull/db";
 import { requireApiSession } from "./session";
 
 const mockedAuth = vi.mocked(auth);

@@ -1,5 +1,5 @@
-import type { NormalizedIssue } from "@triage-ops/shared-types";
-import { VcsProvider } from "@triage-ops/db";
+import type { NormalizedIssue } from "@gridnull/shared-types";
+import { VcsProvider } from "@gridnull/db";
 import { fetchGitHubIssues } from "../github/client.js";
 import {
   isGitHubPullRequest,

@@ -1,16 +1,16 @@
 import {
-  countGhostIssues,
-  countZombieIssues,
+  countStaleIssues,
+  countStuckIssues,
   getMilestoneDecay,
   type MetricIssue,
   type MetricMilestone,
-} from "@triage-ops/metrics";
-import { IssueSuggestionStatus, prisma } from "@triage-ops/db";
+} from "@gridnull/metrics";
+import { IssueSuggestionStatus, prisma } from "@gridnull/db";
 import { PANEL_SUGGESTION_STATUSES } from "@/lib/services/suggestions";
 
 export type MetricsQuery = {
-  ghostDays?: number;
-  zombieDays?: number;
+  staleDays?: number;
+  stuckDays?: number;
 };
 
 function issueLabels(
@@ -39,8 +39,8 @@ export async function getProjectMetrics(
       id: true,
       name: true,
       lastSyncedAt: true,
-      ghostThresholdDays: true,
-      zombieThresholdDays: true,
+      staleThresholdDays: true,
+      stuckThresholdDays: true,
       issues: {
         select: {
           id: true,
@@ -74,8 +74,8 @@ export async function getProjectMetrics(
     return null;
   }
 
-  const ghostDays = query.ghostDays ?? project.ghostThresholdDays;
-  const zombieDays = query.zombieDays ?? project.zombieThresholdDays;
+  const staleDays = query.staleDays ?? project.staleThresholdDays;
+  const stuckDays = query.stuckDays ?? project.stuckThresholdDays;
   const now = new Date();
 
   const labelsByIssueId = new Map(
@@ -105,8 +105,8 @@ export async function getProjectMetrics(
     (milestone) => milestone.state === "ACTIVE",
   );
 
-  const ghost = countGhostIssues(issues, ghostDays, now);
-  const zombie = countZombieIssues(issues, zombieDays, now);
+  const stale = countStaleIssues(issues, staleDays, now);
+  const stuck = countStuckIssues(issues, stuckDays, now);
   const milestoneDecay = getMilestoneDecay(milestones, issues, now);
 
   const [panelSuggestions, pendingCount, latestAnalysisRun] =
@@ -143,7 +143,7 @@ export async function getProjectMetrics(
     projectName: project.name,
     lastSyncedAt: project.lastSyncedAt,
     computedAt: now.toISOString(),
-    thresholds: { ghostDays, zombieDays },
+    thresholds: { staleDays, stuckDays },
     overview: {
       totalIssues: issues.length,
       openIssues: openIssues.length,
@@ -173,15 +173,15 @@ export async function getProjectMetrics(
         dueDate: milestone.dueDate,
       }))
       .sort((a, b) => a.title.localeCompare(b.title)),
-    ghost: {
-      count: ghost.count,
-      issues: ghost.issues.map((issue) =>
+    stale: {
+      count: stale.count,
+      issues: stale.issues.map((issue) =>
         enrichIssueSummary(issue, labelsByIssueId),
       ),
     },
-    zombie: {
-      count: zombie.count,
-      issues: zombie.issues.map((issue) =>
+    stuck: {
+      count: stuck.count,
+      issues: stuck.issues.map((issue) =>
         enrichIssueSummary(issue, labelsByIssueId),
       ),
     },

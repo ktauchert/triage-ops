@@ -1,4 +1,4 @@
-import { IssueSuggestionStatus, prisma } from "@triage-ops/db";
+import { IssueSuggestionStatus, prisma } from "@gridnull/db";
 
 export type ProjectHealthSignal = {
   id: string;

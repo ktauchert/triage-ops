@@ -58,8 +58,8 @@ jobs:
           file: apps/web/Dockerfile
           push: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}/triage-ops-web:${{ steps.meta.outputs.version }}
-            ${{ env.IMAGE_PREFIX }}/triage-ops-web:latest
+            ${{ env.IMAGE_PREFIX }}/gridnull-web:${{ steps.meta.outputs.version }}
+            ${{ env.IMAGE_PREFIX }}/gridnull-web:latest
 
       - name: Build and push worker image
         uses: docker/build-push-action@v7
@@ -68,8 +68,8 @@ jobs:
           file: apps/worker/Dockerfile
           push: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}/triage-ops-worker:${{ steps.meta.outputs.version }}
-            ${{ env.IMAGE_PREFIX }}/triage-ops-worker:latest
+            ${{ env.IMAGE_PREFIX }}/gridnull-worker:${{ steps.meta.outputs.version }}
+            ${{ env.IMAGE_PREFIX }}/gridnull-worker:latest
 
   release-bundle:
     needs: build-and-push
@@ -86,7 +86,7 @@ jobs:
         env:
           VERSION: ${{ needs.build-and-push.outputs.version }}
         run: |
-          BUNDLE_DIR="triage-ops-install-${VERSION}"
+          BUNDLE_DIR="gridnull-install-${VERSION}"
           mkdir -p "${BUNDLE_DIR}"
 
           sed \
@@ -101,25 +101,25 @@ jobs:
           cp install/EULA.md "${BUNDLE_DIR}/EULA.md"
           cp install/PRIVACY.md "${BUNDLE_DIR}/PRIVACY.md"
 
-          zip -r "triage-ops-install-${VERSION}.zip" "${BUNDLE_DIR}"
-          ls -la "triage-ops-install-${VERSION}.zip"
+          zip -r "gridnull-install-${VERSION}.zip" "${BUNDLE_DIR}"
+          ls -la "gridnull-install-${VERSION}.zip"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', needs.build-and-push.outputs.version) || github.ref_name }}
-          name: TriageOps ${{ needs.build-and-push.outputs.version }}
+          name: Gridnull ${{ needs.build-and-push.outputs.version }}
           generate_release_notes: true
-          files: triage-ops-install-${{ needs.build-and-push.outputs.version }}.zip
+          files: gridnull-install-${{ needs.build-and-push.outputs.version }}.zip
           body: |
             ## Container images
 
-            - `${{ env.IMAGE_PREFIX }}/triage-ops-web:${{ needs.build-and-push.outputs.version }}`
-            - `${{ env.IMAGE_PREFIX }}/triage-ops-worker:${{ needs.build-and-push.outputs.version }}`
+            - `${{ env.IMAGE_PREFIX }}/gridnull-web:${{ needs.build-and-push.outputs.version }}`
+            - `${{ env.IMAGE_PREFIX }}/gridnull-worker:${{ needs.build-and-push.outputs.version }}`
 
             ## Install
 
-            1. Download `triage-ops-install-${{ needs.build-and-push.outputs.version }}.zip`
+            1. Download `gridnull-install-${{ needs.build-and-push.outputs.version }}.zip`
             2. Follow `install.md` inside the bundle
             3. `docker login ghcr.io` with your read token
 

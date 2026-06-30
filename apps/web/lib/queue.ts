@@ -4,7 +4,7 @@ import {
   type LlmAnalysisJobPayload,
   type SyncJobPayload,
   type WriteBackJobPayload,
-} from "@triage-ops/shared-types";
+} from "@gridnull/shared-types";
 
 let syncQueue: Queue<SyncJobPayload> | null = null;
 let llmAnalysisQueue: Queue<LlmAnalysisJobPayload> | null = null;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserRole } from "@triage-ops/db";
+import { UserRole } from "@gridnull/db";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

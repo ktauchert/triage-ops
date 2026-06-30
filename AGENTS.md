@@ -1,6 +1,6 @@
-# TriageOps — Agent guide
+# Gridnull — Agent guide
 
-TriageOps syncs GitHub/GitLab issues into Postgres and surfaces triage metrics plus local LLM suggestions (Ollama). Monorepo: `apps/web`, `apps/worker`, `packages/db`, `packages/metrics`, `packages/shared-types`.
+Gridnull syncs GitHub/GitLab issues into Postgres and surfaces triage metrics plus local LLM suggestions (Ollama). Monorepo: `apps/web`, `apps/worker`, `packages/db`, `packages/metrics`, `packages/shared-types`.
 
 **Human docs:** start at [`docs/README.md`](docs/README.md). Update [`docs/current-state.md`](docs/current-state.md) when shipping phase work.
 

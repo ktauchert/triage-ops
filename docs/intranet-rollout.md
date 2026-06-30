@@ -2,7 +2,7 @@
 
 Schritt-für-Schritt-Anleitung für den **Produktivbetrieb im Firmen-Intranet** mit Docker Compose.
 
-**Zielgruppe:** IT/Ops, die TriageOps einmalig aufsetzen und an ein Team ausrollen.
+**Zielgruppe:** IT/Ops, die Gridnull einmalig aufsetzen und an ein Team ausrollen.
 
 **Verwandte Docs:** [Security](./security.md) (Härtung, Reviewer-FAQ) · [On-Prem Product Model](./on-prem-product.md) (Bootstrap + Image-Auslieferung) · [Running the App](./running-the-app.md) (lokale Entwicklung) · [Architecture](./architecture.md)
 
@@ -15,7 +15,7 @@ Schritt-für-Schritt-Anleitung für den **Produktivbetrieb im Firmen-Intranet** 
 | **Images pullen (Prod)** | Kunde / Pilot ohne Source | ✅ Verfügbar | [install/install.md](../install/install.md) · [§ 1.1 Produkt](#11-produkt-installation) |
 | **git clone + build** | Entwicklung, eigener Fork | ✅ Jetzt | [§ 1.2 Dev](#12-entwicklung--interner-build) |
 
-> Kunden sollen **kein** Repository klonen müssen. Unterstützter Weg: privates Container-Registry-Token + Install-Bundle (`triage-ops-install-x.y.z.zip` von GitHub Release).
+> Kunden sollen **kein** Repository klonen müssen. Unterstützter Weg: privates Container-Registry-Token + Install-Bundle (`gridnull-install-x.y.z.zip` von GitHub Release).
 
 ---
 
@@ -40,8 +40,8 @@ flowchart TB
 
   subgraph Intranet["Internes Netzwerk"]
   Proxy[Reverse Proxy\nnginx / Caddy / Traefik]
-  Web[TriageOps Web :3000]
-  Worker[TriageOps Worker]
+  Web[Gridnull Web :3000]
+  Worker[Gridnull Worker]
   PG[(PostgreSQL)]
   Redis[(Redis)]
   Ollama[Ollama :11434]
@@ -63,11 +63,11 @@ flowchart TB
 
 | Service | Container | Interner Port | Nach außen exponieren? |
 |---------|-----------|---------------|------------------------|
-| Web | `triage-ops-web` | 3000 | Nur via Reverse Proxy (HTTPS) |
-| Worker | `triage-ops-worker` | — | Nein |
-| Postgres | `triage-ops-postgres` | 5432 | **Nein** |
-| Redis | `triage-ops-redis` | 6379 | **Nein** |
-| Ollama | `triage-ops-ollama` | 11434 | **Nein** (nur Worker-Zugriff) |
+| Web | `gridnull-web` | 3000 | Nur via Reverse Proxy (HTTPS) |
+| Worker | `gridnull-worker` | — | Nein |
+| Postgres | `gridnull-postgres` | 5432 | **Nein** |
+| Redis | `gridnull-redis` | 6379 | **Nein** |
+| Ollama | `gridnull-ollama` | 11434 | **Nein** (nur Worker-Zugriff) |
 
 ---
 
@@ -108,15 +108,15 @@ Danach: HTTPS-URL öffnen → **`/setup`** → erster Admin meldet sich per GitH
 
 **Upgrade:** `pull` → `migrate` → `up -d` (siehe `install.md`).
 
-**Images:** `ghcr.io/ktauchert/triage-ops-web`, `ghcr.io/ktauchert/triage-ops-worker` — Tags via Release (`v*` → GitHub Actions).
+**Images:** `ghcr.io/ktauchert/gridnull-web`, `ghcr.io/ktauchert/gridnull-worker` — Tags via Release (`v*` → GitHub Actions).
 
 ### 1.2 Entwicklung / interner Build
 
 #### Repository & Abhängigkeiten
 
 ```bash
-git clone <repo-url> triage-ops
-cd triage-ops
+git clone <repo-url> gridnull
+cd gridnull
 ```
 
 Auf dem Zielserver:
@@ -256,8 +256,8 @@ Erwartung: `migrate deploy` ohne Fehler.
 ### 3.3 Ollama-Modelle laden (für KI-Triage)
 
 ```bash
-docker exec triage-ops-ollama ollama pull llama3.2:3b
-docker exec triage-ops-ollama ollama pull nomic-embed-text
+docker exec gridnull-ollama ollama pull llama3.2:3b
+docker exec gridnull-ollama ollama pull nomic-embed-text
 ```
 
 Ohne Modelle funktioniert Sync und Metriken; **Run analysis** schlägt fehl.
@@ -276,7 +276,7 @@ Prüft Build, Start, Migration und HTTP-Health — sinnvoll vor dem ersten Rollo
 
 ## Phase 4 — HTTPS & Reverse Proxy
 
-TriageOps terminiert TLS **nicht selbst**. Ein Reverse Proxy vor `web:3000` ist Pflicht.
+Gridnull terminiert TLS **nicht selbst**. Ein Reverse Proxy vor `web:3000` ist Pflicht.
 
 **Mindestanforderungen:**
 
@@ -336,7 +336,7 @@ Nach dem Start alle Punkte durchgehen:
 
 - [ ] **Connections** → GitLab/GitHub-Verbindung mit PAT (`api` GitLab / `repo` GitHub für Write-back)
 - [ ] **Projects** → Repo registrieren, **Sync** → Status `COMPLETED`
-- [ ] **Dashboard** → Ghost/Zombie/Milestone-Metriken sichtbar
+- [ ] **Dashboard** → Stale/Stuck/Milestone-Metriken sichtbar
 - [ ] Optional **Run analysis** → Vorschläge erscheinen
 - [ ] Optional **Apply** auf Vorschlag → Write-back `APPLIED` (prüft PAT-Write-Scopes)
 - [ ] Optional **Auto-sync** pro Projekt aktiviert (wenn `AUTO_SYNC_SCHEDULER_ENABLED=true`)
@@ -383,7 +383,7 @@ Kurzablauf für Endnutzer:
 | Migrationen (Prod) | `npm run docker:migrate` |
 | Stoppen | `npm run docker:down` |
 | PAT rotieren | Connection in UI bearbeiten, neuen Token speichern |
-| Ollama-Modelle | `docker exec triage-ops-ollama ollama list` |
+| Ollama-Modelle | `docker exec gridnull-ollama ollama list` |
 
 **Updates:** Nach Schema-Änderungen immer `docker:migrate` ausführen, bevor neue Web/Worker-Versionen Traffic bekommen.
 
@@ -409,7 +409,7 @@ Kurzablauf für Endnutzer:
 
 ```bash
 # 1. Klonen & konfigurieren
-git clone <repo-url> triage-ops && cd triage-ops
+git clone <repo-url> gridnull && cd gridnull
 cp .env.example .env
 # → .env anpassen (POSTGRES_PASSWORD, Auth, TOKEN_ENCRYPTION_KEY, RATE_LIMIT_*, …)
 
@@ -418,8 +418,8 @@ npm run docker:up:all
 npm run docker:migrate
 
 # 3. LLM-Modelle (optional)
-docker exec triage-ops-ollama ollama pull llama3.2:3b
-docker exec triage-ops-ollama ollama pull nomic-embed-text
+docker exec gridnull-ollama ollama pull llama3.2:3b
+docker exec gridnull-ollama ollama pull nomic-embed-text
 
 # 4. Reverse Proxy auf :3000 konfigurieren, AUTH_URL setzen, OAuth-App registrieren
 

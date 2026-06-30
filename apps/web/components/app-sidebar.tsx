@@ -77,7 +77,7 @@ export function AppSidebarNav({
       <>
         <div className="px-6 py-5">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">
-            TriageOps
+            Gridnull
           </p>
           <h1 className="text-lg font-semibold tracking-tight">Admin console</h1>
         </div>
@@ -124,7 +124,7 @@ export function AppSidebarNav({
     <>
       <div className="px-6 py-5">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">
-          TriageOps
+          Gridnull
         </p>
         <h1 className="text-lg font-semibold tracking-tight">Issue Triage</h1>
       </div>

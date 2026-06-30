@@ -1,4 +1,4 @@
-import { UserRole } from "@triage-ops/db";
+import { UserRole } from "@gridnull/db";
 import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth/session";
 

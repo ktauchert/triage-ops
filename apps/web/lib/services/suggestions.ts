@@ -3,7 +3,7 @@ import {
   IssueSuggestionType,
   SyncStatus,
   prisma,
-} from "@triage-ops/db";
+} from "@gridnull/db";
 import type { LlmAnalysisRun } from "@prisma/client";
 import { getProjectById } from "@/lib/services/projects";
 import type { AuthContext } from "@/lib/auth/session";

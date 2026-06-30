@@ -16,9 +16,9 @@ export function pickDuplicateSides(pair: IssueIidPair): DuplicateSides {
 }
 
 export function duplicateCloseComment(canonicalIid: number): string {
-  return `Closed as duplicate of #${canonicalIid} (applied via TriageOps).`;
+  return `Closed as duplicate of #${canonicalIid} (applied via Gridnull).`;
 }
 
 export function duplicateCanonicalComment(duplicateIid: number): string {
-  return `Linked duplicate #${duplicateIid} closed (applied via TriageOps).`;
+  return `Linked duplicate #${duplicateIid} closed (applied via Gridnull).`;
 }

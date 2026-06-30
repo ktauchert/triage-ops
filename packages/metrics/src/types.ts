@@ -31,11 +31,11 @@ export type MilestoneDecayEntry = {
 };
 
 export type MetricThresholds = {
-  ghostDays: number;
-  zombieDays: number;
+  staleDays: number;
+  stuckDays: number;
 };
 
 export const DEFAULT_THRESHOLDS: MetricThresholds = {
-  ghostDays: 30,
-  zombieDays: 14,
+  staleDays: 30,
+  stuckDays: 14,
 };

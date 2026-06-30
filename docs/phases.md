@@ -21,11 +21,11 @@ Scaffolding and core pipeline infrastructure.
 
 **Goal:** A team can connect a GitHub or GitLab project, sync issues, and see triage metrics on a dashboard.
 
-> **Verified:** GitHub + GitLab sync, dashboard overview, ghost/zombie/milestone decay — working end-to-end in local dev (June 2026).
+> **Verified:** GitHub + GitLab sync, dashboard overview, stale/stuck/milestone decay — working end-to-end in local dev (June 2026).
 
 ### Step 3 — Web API & sync trigger ✅
 
-- [x] Add `@triage-ops/db` dependency to `apps/web`
+- [x] Add `@gridnull/db` dependency to `apps/web`
 - [x] API route: `GET/POST /api/connections` — register VCS connection (GitHub or GitLab)
 - [x] API route: `GET/POST /api/projects` — register project under a connection
 - [x] API route: `POST /api/projects/[id]/sync` — create `SyncRun`, enqueue `gitlab-sync` job
@@ -45,8 +45,8 @@ Scaffolding and core pipeline infrastructure.
 ### Step 4 — Triage metrics engine ✅
 
 - [x] `packages/metrics` with pure functions:
-  - `countGhostIssues(issues, thresholdDays)`
-  - `countZombieIssues(issues, thresholdDays)`
+  - `countStaleIssues(issues, thresholdDays)`
+  - `countStuckIssues(issues, thresholdDays)`
   - `getMilestoneDecay(milestones, issues)`
 - [x] TDD: unit tests for each metric (zero matches, boundary dates, empty input)
 - [x] API route: `GET /api/projects/[id]/metrics` — returns metric summary JSON
@@ -162,7 +162,7 @@ flowchart LR
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Token encryption at rest | ✅ | `TOKEN_ENCRYPTION_KEY` + `sealAccessToken` / `openAccessToken` in `@triage-ops/db`; legacy plain tokens still readable |
+| Token encryption at rest | ✅ | `TOKEN_ENCRYPTION_KEY` + `sealAccessToken` / `openAccessToken` in `@gridnull/db`; legacy plain tokens still readable |
 | HTTPS + auth checklist | ✅ | Documented in [security.md](./security.md) — ops, not code |
 
 | Item | Status | Effort |
@@ -203,7 +203,7 @@ flowchart LR
 
 ## Phase 4 — Governance, admin & operations (in progress)
 
-**Goal:** Operate TriageOps with **roles**, **auditability**, and **reporting** when multiple users work with different responsibilities. An admin provisions access; users sign in via GitHub/GitLab OAuth (corporate SSO upstream). Suited for intranet teams that outgrow “everyone can do everything.”
+**Goal:** Operate Gridnull with **roles**, **auditability**, and **reporting** when multiple users work with different responsibilities. An admin provisions access; users sign in via GitHub/GitLab OAuth (corporate SSO upstream). Suited for intranet teams that outgrow “everyone can do everything.”
 
 **Product decisions (bootstrap + distribution):** [on-prem-product.md](./on-prem-product.md)
 
@@ -264,7 +264,7 @@ flowchart LR
 
 ### Step 16 — Impact reporting (timeline)
 
-- [ ] Periodic **metric snapshots** per project (ghost, zombie, milestone decay, open count)
+- [ ] Periodic **metric snapshots** per project (stale, stuck, milestone decay, open count)
 - [ ] Dashboard timeline: “since campaign start” — issues touched, duplicates closed, descriptions added
 - [ ] Delta vs baseline for management reporting
 
@@ -280,7 +280,7 @@ flowchart LR
 
 ## Phase 5 — Product presence (optional, post-validation)
 
-**Goal:** After the on-prem install path and core functionality are validated, give prospects and customers a **public-facing** place to learn about TriageOps — separate from the technical install bundle.
+**Goal:** After the on-prem install path and core functionality are validated, give prospects and customers a **public-facing** place to learn about Gridnull — separate from the technical install bundle.
 
 **When:** After clean-VM install dry-run, functional acceptance testing ([e2e-acceptance-test.md](./e2e-acceptance-test.md)), and a stable support/runbook path. **Not a blocker for `v1.0.0`** — ship the product first, market it second.
 
@@ -314,6 +314,31 @@ flowchart LR
 
 ---
 
+## Phase 6 — Brand identity & UI theme
+
+**Goal:** Align the in-app experience with the **Gridnull** story — simple, clean cyberpunk (grid structure, null cells, stale/stuck signals) without myth-heavy or graveyard metaphors.
+
+**When:** After the technical rename and domain registration ship. **Not a blocker for `v1.0.0`** — functional product first; visual polish and narrative second.
+
+**Prerequisites:**
+
+- [x] Product name **Gridnull** in code, install bundle, and legal docs
+- [x] Metric labels **stale** / **stuck** (replacing ghost/zombie)
+- [ ] Primary domains registered (`gridnull.com`, `gridnull.dev`)
+
+### Step 19 — Visual theme & in-app story
+
+- [ ] Dashboard theme pass: typography, accent color, grid-line motifs (dark-first)
+- [ ] App shell branding: sidebar, login, setup wizard wordmark
+- [ ] Metric cards and empty states copy aligned with Gridnull narrative
+- [ ] Optional tagline in shell (e.g. *Find the nulls. Fix what's stale. Unstick the rest.*)
+- [ ] Favicon + OG assets for install docs and future landing page
+- [ ] Sync [landing-page-content.md](./landing-page-content.md) with final voice after theme ships
+
+**Out of scope for Step 19:** full marketing site (Phase 5), license tiers, new features.
+
+---
+
 ## Suggested immediate next steps
 
 Phases 0–2.5 and Phase 1 MVP are complete (June 2026).
@@ -328,3 +353,4 @@ Legacy quick picks by deployment maturity:
 4. **Ops validation** — clean-VM install dry-run from release bundle; backup/restore procedure
 5. **Phase 3c** — Helm/K8s or multi-tenant only when required
 6. **Phase 5** — landing page & marketing site **after** on-prem workflow is validated (not before)
+7. **Phase 6** — Gridnull visual theme & in-app story (after rename ships)

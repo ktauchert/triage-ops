@@ -1,5 +1,5 @@
-import { SyncStatus, prisma } from "@triage-ops/db";
-import type { SyncJobPayload } from "@triage-ops/shared-types";
+import { SyncStatus, prisma } from "@gridnull/db";
+import type { SyncJobPayload } from "@gridnull/shared-types";
 import { createSyncQueue } from "../queues/sync-queue.js";
 
 export async function enqueueProjectSyncIfIdle(

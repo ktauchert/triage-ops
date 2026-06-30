@@ -2,7 +2,7 @@
 
 Last updated: June 2026
 
-This document is the **master checklist** for taking TriageOps from a working hobby project to a **complete on-prem product** — safe for security-conscious firms, installable without source access, and operable with full governance.
+This document is the **master checklist** for taking Gridnull from a working hobby project to a **complete on-prem product** — safe for security-conscious firms, installable without source access, and operable with full governance.
 
 Use it as the day-to-day todo list. Check items off as they ship. For phase-level detail and effort estimates, see [Implementation Phases](./phases.md). For pilot vs customer gates, see [Production Readiness](./production-readiness.md).
 
@@ -12,7 +12,7 @@ Use it as the day-to-day todo list. Check items off as they ship. For phase-leve
 
 ## Vision
 
-TriageOps runs **entirely inside the customer network**:
+Gridnull runs **entirely inside the customer network**:
 
 - Syncs only to **their** GitHub or GitLab (no third-party SaaS)
 - Runs LLM on **local Ollama** (issue text never sent to cloud AI)
@@ -107,7 +107,7 @@ All must be checked before calling the product complete for on-prem SME customer
 ### Tasks
 
 - [x] Add `docker-compose.prod.yml` at repo root (`image:` pins only, no `build:`)
-- [x] Pin image names/tags (`ghcr.io/ktauchert/triage-ops-web`, `…-worker`)
+- [x] Pin image names/tags (`ghcr.io/ktauchert/gridnull-web`, `…-worker`)
 - [x] CI job: on tag `v*`, build + push both images (`.github/workflows/release.yml`)
 - [x] Create `install/` template folder for release ZIP
 - [x] GitHub Release workflow: attach install bundle
@@ -119,7 +119,7 @@ All must be checked before calling the product complete for on-prem SME customer
 ### Target install bundle layout
 
 ```
-triage-ops-install-1.0.0/
+gridnull-install-1.0.0/
 ├── docker-compose.prod.yml
 ├── .env.example
 ├── install.md
@@ -159,7 +159,7 @@ triage-ops-install-1.0.0/
 
 ### Step 16 — Impact reporting
 
-- [ ] Periodic **metric snapshots** per project (ghost, zombie, milestone decay, open count)
+- [ ] Periodic **metric snapshots** per project (stale, stuck, milestone decay, open count)
 - [ ] Dashboard timeline: “since campaign start” — issues touched, duplicates closed, descriptions added
 - [ ] Delta vs baseline for management reporting
 - [ ] Optional: snapshot scheduler or manual “capture baseline” action

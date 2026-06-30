@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@triage-ops/db";
+import { prisma } from "@gridnull/db";
 import NextAuth from "next-auth";
 import { nextAuthConfig } from "./auth.config";
 

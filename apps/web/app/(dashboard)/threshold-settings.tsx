@@ -15,23 +15,23 @@ import { Label } from "@/components/ui/label";
 
 type ThresholdSettingsProps = {
   projectId: string;
-  ghostThresholdDays: number;
-  zombieThresholdDays: number;
+  staleThresholdDays: number;
+  stuckThresholdDays: number;
   canEdit: boolean;
 };
 
 export function ThresholdSettings({
   projectId,
-  ghostThresholdDays,
-  zombieThresholdDays,
+  staleThresholdDays,
+  stuckThresholdDays,
   canEdit,
 }: ThresholdSettingsProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
-    ghostThresholdDays: String(ghostThresholdDays),
-    zombieThresholdDays: String(zombieThresholdDays),
+    staleThresholdDays: String(staleThresholdDays),
+    stuckThresholdDays: String(stuckThresholdDays),
   });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -39,14 +39,14 @@ export function ThresholdSettings({
     setSubmitting(true);
     setError(null);
 
-    const ghostDays = Number.parseInt(form.ghostThresholdDays, 10);
-    const zombieDays = Number.parseInt(form.zombieThresholdDays, 10);
+    const staleDays = Number.parseInt(form.staleThresholdDays, 10);
+    const stuckDays = Number.parseInt(form.stuckThresholdDays, 10);
 
     if (
-      Number.isNaN(ghostDays) ||
-      Number.isNaN(zombieDays) ||
-      ghostDays < 0 ||
-      zombieDays < 0
+      Number.isNaN(staleDays) ||
+      Number.isNaN(stuckDays) ||
+      staleDays < 0 ||
+      stuckDays < 0
     ) {
       setError("Thresholds must be non-negative integers.");
       setSubmitting(false);
@@ -58,8 +58,8 @@ export function ThresholdSettings({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ghostThresholdDays: ghostDays,
-          zombieThresholdDays: zombieDays,
+          staleThresholdDays: staleDays,
+          stuckThresholdDays: stuckDays,
         }),
       });
 
@@ -86,38 +86,38 @@ export function ThresholdSettings({
       <CardHeader>
         <CardTitle>Metric thresholds</CardTitle>
         <CardDescription>
-          Per-project inactivity windows for ghost and zombie triage signals.
+          Per-project inactivity windows for stale and stuck triage signals.
         </CardDescription>
       </CardHeader>
       <CardContent>
         {canEdit ? (
         <form onSubmit={handleSubmit} className="grid max-w-xl gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="ghost-threshold">Ghost days</Label>
+            <Label htmlFor="stale-threshold">Stale days</Label>
             <Input
-              id="ghost-threshold"
+              id="stale-threshold"
               type="number"
               min={0}
-              value={form.ghostThresholdDays}
+              value={form.staleThresholdDays}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
-                  ghostThresholdDays: event.target.value,
+                  staleThresholdDays: event.target.value,
                 }))
               }
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="zombie-threshold">Zombie days</Label>
+            <Label htmlFor="stuck-threshold">Stuck days</Label>
             <Input
-              id="zombie-threshold"
+              id="stuck-threshold"
               type="number"
               min={0}
-              value={form.zombieThresholdDays}
+              value={form.stuckThresholdDays}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
-                  zombieThresholdDays: event.target.value,
+                  stuckThresholdDays: event.target.value,
                 }))
               }
             />
@@ -133,7 +133,7 @@ export function ThresholdSettings({
         </form>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Ghost: {ghostThresholdDays} days · Zombie: {zombieThresholdDays} days
+            Stale: {staleThresholdDays} days · Stuck: {stuckThresholdDays} days
             (read-only for your role)
           </p>
         )}

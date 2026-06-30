@@ -1,11 +1,11 @@
-# TriageOps production install — pull pre-built images only (no build:).
-# Set TRIAGE_OPS_VERSION in .env (see .env.production.example).
+# Gridnull production install — pull pre-built images only (no build:).
+# Set GRIDNULL_VERSION in .env (see .env.production.example).
 # First install: pull → up infra → migrate → up production profile.
 
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: triage-ops-postgres
+    container_name: gridnull-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-triage_ops}
@@ -21,7 +21,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: triage-ops-redis
+    container_name: gridnull-redis
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD:?set REDIS_PASSWORD}
     volumes:
@@ -34,14 +34,14 @@ services:
 
   ollama:
     image: ollama/ollama:0.30.10
-    container_name: triage-ops-ollama
+    container_name: gridnull-ollama
     restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
 
   web:
-    image: ${TRIAGE_OPS_REGISTRY:-ghcr.io/ktauchert}/triage-ops-web:${TRIAGE_OPS_VERSION:?set TRIAGE_OPS_VERSION}
-    container_name: triage-ops-web
+    image: ${GRIDNULL_REGISTRY:-ghcr.io/ktauchert}/gridnull-web:${GRIDNULL_VERSION:?set GRIDNULL_VERSION}
+    container_name: gridnull-web
     restart: unless-stopped
     profiles:
       - production
@@ -60,8 +60,8 @@ services:
         condition: service_healthy
 
   worker:
-    image: ${TRIAGE_OPS_REGISTRY:-ghcr.io/ktauchert}/triage-ops-worker:${TRIAGE_OPS_VERSION:?set TRIAGE_OPS_VERSION}
-    container_name: triage-ops-worker
+    image: ${GRIDNULL_REGISTRY:-ghcr.io/ktauchert}/gridnull-worker:${GRIDNULL_VERSION:?set GRIDNULL_VERSION}
+    container_name: gridnull-worker
     restart: unless-stopped
     profiles:
       - production
@@ -79,8 +79,8 @@ services:
         condition: service_healthy
 
   migrate:
-    image: ${TRIAGE_OPS_REGISTRY:-ghcr.io/ktauchert}/triage-ops-worker:${TRIAGE_OPS_VERSION:?set TRIAGE_OPS_VERSION}
-    container_name: triage-ops-migrate
+    image: ${GRIDNULL_REGISTRY:-ghcr.io/ktauchert}/gridnull-worker:${GRIDNULL_VERSION:?set GRIDNULL_VERSION}
+    container_name: gridnull-migrate
     profiles:
       - migrate
     environment:

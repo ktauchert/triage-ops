@@ -1,5 +1,5 @@
 import { Queue, Worker, type ConnectionOptions } from "bullmq";
-import { QUEUE_NAMES, type SyncJobPayload } from "@triage-ops/shared-types";
+import { QUEUE_NAMES, type SyncJobPayload } from "@gridnull/shared-types";
 import { getEnv } from "../config/env.js";
 
 export function getQueueConnection(): ConnectionOptions {

@@ -1,6 +1,6 @@
-# TriageOps Documentation
+# Gridnull Documentation
 
-**TriageOps** is a developer-tooling platform that syncs GitHub and GitLab issue metadata into a local Postgres database and surfaces triage metrics — ghost tickets, zombie tickets, milestone decay — via a dashboard.
+**Gridnull** is a developer-tooling platform that syncs GitHub and GitLab issue metadata into a local Postgres database and surfaces triage metrics — stale tickets, stuck tickets, milestone decay — via a dashboard.
 
 This folder is the single source of truth for project direction, architecture, and day-to-day development.
 
@@ -44,7 +44,7 @@ npm test                   # Vitest across all packages
 ## Repository layout
 
 ```
-triage-ops/
+gridnull/
 ├── apps/
 │   ├── web/          Next.js dashboard + API routes
 │   └── worker/       BullMQ background jobs + VCS API clients

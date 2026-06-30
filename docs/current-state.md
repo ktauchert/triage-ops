@@ -48,7 +48,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 
 ### Metrics engine (`packages/metrics`)
 
-- Pure functions: `countGhostIssues`, `countZombieIssues`, `getMilestoneDecay`
+- Pure functions: `countStaleIssues`, `countStuckIssues`, `getMilestoneDecay`
 - 17 unit tests (boundaries, empty input, edge cases)
 
 ### Worker (`apps/worker`)
@@ -101,7 +101,7 @@ This document describes what is **implemented**, **partially implemented**, and 
 - **BullMQ enqueue** from web via Redis
 - **API rate limiting** — Redis-backed middleware on `/api/*` (`RATE_LIMIT_*` env vars)
 - **190+ unit tests** across `lib/` and route handlers (`app/api/**/*.test.ts`)
-- Production build verified (`npm run build -w @triage-ops/web`)
+- Production build verified (`npm run build -w @gridnull/web`)
 
 ### Infrastructure
 
@@ -198,11 +198,11 @@ See [Implementation Phases](./phases.md#phase-4--governance-admin--operations-in
 
 | Package | Framework | Test files | Approx. cases | Scope |
 |---------|-----------|------------|---------------|-------|
-| `@triage-ops/worker` | Vitest + MSW | 22 | 100+ | VCS clients, Ollama, LLM logic, locks, write-back |
-| `@triage-ops/metrics` | Vitest | 3 | 17 | Ghost, zombie, milestone decay |
-| `@triage-ops/db` | Vitest | 1 | 7 | PAT encryption |
-| `@triage-ops/web` | Vitest | 36 | 190+ | API routes, auth, RBAC matrix, services, rate limits |
-| `@triage-ops/e2e` | Vitest | 2 | 3 | Register → sync → metrics smoke; navigation |
+| `@gridnull/worker` | Vitest + MSW | 22 | 100+ | VCS clients, Ollama, LLM logic, locks, write-back |
+| `@gridnull/metrics` | Vitest | 3 | 17 | Stale, stuck, milestone decay |
+| `@gridnull/db` | Vitest | 1 | 7 | PAT encryption |
+| `@gridnull/web` | Vitest | 36 | 190+ | API routes, auth, RBAC matrix, services, rate limits |
+| `@gridnull/e2e` | Vitest | 2 | 3 | Register → sync → metrics smoke; navigation |
 | **Total** | | **64** | **~320+** | (+ ~44 parameterized RBAC matrix cases at runtime) |
 
 Run all tests:
@@ -251,7 +251,7 @@ npm test
 | `AUTH_GITLAB_ID` / `AUTH_GITLAB_SECRET` / `AUTH_GITLAB_ISSUER` | web | issuer `https://gitlab.com` | GitLab OAuth app credentials |
 | `ALLOW_AUTH_DISABLED` | web | — | CI-only: allow `AUTH_DISABLED` in production |
 | `REDIS_PASSWORD` | prod compose | — | Required in `docker-compose.prod.yml` |
-| `TRIAGE_OPS_VERSION` / `TRIAGE_OPS_REGISTRY` | prod compose | — | Image tag and registry override |
+| `GRIDNULL_VERSION` / `GRIDNULL_REGISTRY` | prod compose | — | Image tag and registry override |
 
 Production template: `.env.production.example`. Rate limit details: [Security § Environment variables](./security.md#environment-variables).
 

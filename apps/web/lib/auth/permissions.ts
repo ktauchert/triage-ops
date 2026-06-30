@@ -1,4 +1,4 @@
-import { UserRole } from "@triage-ops/db";
+import { UserRole } from "@gridnull/db";
 import { errorResponse } from "@/lib/api";
 import type { AuthContext } from "./session";
 

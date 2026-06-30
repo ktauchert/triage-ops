@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { VcsProvider } from "@triage-ops/db";
+import { VcsProvider } from "@gridnull/db";
 import {
   isGitHubPullRequest,
   normalizeGitHubIssue,

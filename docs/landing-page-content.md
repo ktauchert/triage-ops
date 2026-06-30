@@ -1,4 +1,4 @@
-# TriageOps — Landing page content (marketing copy)
+# Gridnull — Landing page content (marketing copy)
 
 Last updated: June 2026
 
@@ -20,10 +20,10 @@ Last updated: June 2026
 
 | Field | Value |
 |-------|-------|
-| **Product name** | TriageOps |
+| **Product name** | Gridnull |
 | **Category** | On-prem issue triage & ops dashboard |
 | **One-liner** | See your triage debt. Fix it on your network. |
-| **Elevator pitch** | TriageOps syncs GitHub and GitLab issues into your infrastructure, surfaces ghost tickets, zombie issues, and milestone decay, and optionally runs **local AI** (Ollama) to suggest duplicates and description improvements — with human-approved write-back to your repos. |
+| **Elevator pitch** | Gridnull syncs GitHub and GitLab issues into your infrastructure, surfaces stale tickets, stuck issues, and milestone decay, and optionally runs **local AI** (Ollama) to suggest duplicates and description improvements — with human-approved write-back to your repos. |
 | **Tone** | Professional ops tool first. Dark UI, subtle cyan accents. Confident, not hypey. No “revolutionary AI” fluff. |
 
 ### Tagline options (pick one for hero)
@@ -50,7 +50,7 @@ Short pills / badges:
 
 **Headline:** Triage debt, inside your network.
 
-**Subheadline:** TriageOps connects to GitHub or GitLab, syncs issue metadata to Postgres, and gives your team ghost/zombie metrics plus optional **local LLM suggestions** — without sending repo data to a vendor cloud.
+**Subheadline:** Gridnull connects to GitHub or GitLab, syncs issue metadata to Postgres, and gives your team stale/stuck metrics plus optional **local LLM suggestions** — without sending repo data to a vendor cloud.
 
 **Primary CTA:** Request a pilot → `/contact`
 
@@ -63,7 +63,7 @@ Short pills / badges:
 | Column | Title | Body |
 |--------|-------|------|
 | 1 | Backlogs hide real risk | Open issues pile up. Stale tickets and decaying milestones are hard to see in the board view alone. |
-| 2 | Triage is manual and repetitive | Duplicate issues, empty descriptions, and zombie tickets eat lead time every sprint. |
+| 2 | Triage is manual and repetitive | Duplicate issues, empty descriptions, and stuck tickets eat lead time every sprint. |
 | 3 | Cloud AI is a hard sell | Security and platform teams often block tools that send issue text to external APIs. |
 
 ### Solution (3 pillars)
@@ -71,7 +71,7 @@ Short pills / badges:
 | Pillar | Title | Body |
 |--------|-------|------|
 | **Sync** | Unified issue mirror | Pull issues, labels, and milestones from GitHub or GitLab into Postgres on a schedule or on demand. |
-| **Measure** | Triage metrics that matter | Ghost issues, zombie issues, milestone decay — configurable thresholds per project. |
+| **Measure** | Triage metrics that matter | Stale issues, stuck issues, milestone decay — configurable thresholds per project. |
 | **Assist** | Local AI, your approval | Ollama suggests duplicates and description drafts. **Apply** updates VCS only when a human confirms. |
 
 ### How it works (4 steps)
@@ -120,8 +120,8 @@ Until then, use a neutral line:
 
 #### Triage metrics
 
-- **Ghost issues** — open too long without meaningful activity
-- **Zombie issues** — stale but still open
+- **Stale issues** — open too long without meaningful activity
+- **Stuck issues** — stale but still open
 - **Milestone decay** — milestones at risk as dates slip
 - Per-project thresholds; dashboard home and project workspace
 
@@ -258,7 +258,7 @@ Until then, use a neutral line:
 
 **Title:** Request a pilot
 
-**Subtitle:** TriageOps is currently offered to **small and medium organizations** for evaluation and production use on your infrastructure.
+**Subtitle:** Gridnull is currently offered to **small and medium organizations** for evaluation and production use on your infrastructure.
 
 ### Eligibility note
 
@@ -272,14 +272,14 @@ Eligible organizations: fewer than **250 employees** and annual turnover below *
 - Approx. team size
 - Primary VCS (GitHub / GitLab / both)
 - Message (optional)
-- Checkbox: “I agree to be contacted about TriageOps and have read the [Privacy Policy](/legal/privacy).”
+- Checkbox: “I agree to be contacted about Gridnull and have read the [Privacy Policy](/legal/privacy).”
 
 ### Without backend (Phase A default)
 
 **mailto block:**
 
 - Email: `{{CONTACT_EMAIL}}`
-- Subject: `TriageOps pilot request`
+- Subject: `Gridnull pilot request`
 
 **Body template:**
 
@@ -298,7 +298,7 @@ What we want to triage:
 
 **Title:** Documentation
 
-**Subtitle:** Install, secure, and operate TriageOps on your network.
+**Subtitle:** Install, secure, and operate Gridnull on your network.
 
 ### Doc cards
 
@@ -331,12 +331,12 @@ What we want to triage:
 
 **Resources**
 
-- GitHub Releases → `https://github.com/{{GITHUB_ORG}}/triage-ops/releases` *(install ZIP)*
+- GitHub Releases → `https://github.com/{{GITHUB_ORG}}/gridnull/releases` *(install ZIP)*
 - Security (full doc) → `/docs/security`
 
 ### Footer legal line
 
-© {{YEAR}} {{COMPANY_NAME}}. TriageOps is proprietary software. Use subject to the [EULA](/legal/eula). AI suggestions are recommendations only; you are responsible for changes applied to your repositories.
+© {{YEAR}} {{COMPANY_NAME}}. Gridnull is proprietary software. Use subject to the [EULA](/legal/eula). AI suggestions are recommendations only; you are responsible for changes applied to your repositories.
 
 ### Impressum (EU / Germany — required)
 
@@ -350,16 +350,16 @@ Link the footer **Impressum** → `/legal/impressum`. Full text lives in `apps/w
 
 | Route | Title | Description |
 |-------|-------|-------------|
-| `/` | TriageOps — On-prem issue triage & local AI | Sync GitHub/GitLab issues, measure triage debt, optional local LLM suggestions. On infrastructure you control. |
-| `/features` | Features — TriageOps | Sync, metrics, Ollama analysis, human-approved write-back, RBAC. |
-| `/security` | Security — TriageOps | On-prem deployment, local inference, OAuth, encrypted PATs, closed registration. |
-| `/editions` | Editions — TriageOps | Community vs Pro packaging (direction). Request a pilot. |
-| `/contact` | Contact — TriageOps | Request a pilot for SME teams. |
-| `/docs` | Documentation — TriageOps | Install and operate TriageOps on your network. |
-| `/legal/eula` | EULA — TriageOps | End User License Agreement. |
-| `/legal/privacy` | Privacy — TriageOps | Privacy Policy. |
+| `/` | Gridnull — On-prem issue triage & local AI | Sync GitHub/GitLab issues, measure triage debt, optional local LLM suggestions. On infrastructure you control. |
+| `/features` | Features — Gridnull | Sync, metrics, Ollama analysis, human-approved write-back, RBAC. |
+| `/security` | Security — Gridnull | On-prem deployment, local inference, OAuth, encrypted PATs, closed registration. |
+| `/editions` | Editions — Gridnull | Community vs Pro packaging (direction). Request a pilot. |
+| `/contact` | Contact — Gridnull | Request a pilot for SME teams. |
+| `/docs` | Documentation — Gridnull | Install and operate Gridnull on your network. |
+| `/legal/eula` | EULA — Gridnull | End User License Agreement. |
+| `/legal/privacy` | Privacy — Gridnull | Privacy Policy. |
 
-**Open Graph:** `og:site_name` = TriageOps; use dark branded `og-default.png` per landing-page-plan.
+**Open Graph:** `og:site_name` = Gridnull; use dark branded `og-default.png` per landing-page-plan.
 
 ---
 
@@ -389,7 +389,7 @@ See [legal.md](./legal.md) for full guidance.
 - ❌ “Enterprise SSO included” (not shipped)
 - ❌ “Fully automated triage” (human approves apply)
 - ❌ “CE/Pro enforced today” (edition gating not in code)
-- ❌ Sending data to “TriageOps cloud” (product is on-prem)
+- ❌ Sending data to “Gridnull cloud” (product is on-prem)
 - ❌ Helm / Kubernetes install (not shipped)
 
 ---

@@ -40,7 +40,7 @@ type MetricsPayload = {
   projectName: string;
   lastSyncedAt: Date | null;
   computedAt: string;
-  thresholds: { ghostDays: number; zombieDays: number };
+  thresholds: { staleDays: number; stuckDays: number };
   overview: {
     totalIssues: number;
     openIssues: number;
@@ -50,8 +50,8 @@ type MetricsPayload = {
   };
   issues: IssueSummary[];
   milestones: MilestoneSummary[];
-  ghost: { count: number; issues: IssueSummary[] };
-  zombie: { count: number; issues: IssueSummary[] };
+  stale: { count: number; issues: IssueSummary[] };
+  stuck: { count: number; issues: IssueSummary[] };
   milestoneDecay: {
     count: number;
     milestones: Array<{
@@ -130,8 +130,8 @@ export function DashboardMetrics({
 
       <ThresholdSettings
         projectId={metrics.projectId}
-        ghostThresholdDays={metrics.thresholds.ghostDays}
-        zombieThresholdDays={metrics.thresholds.zombieDays}
+        staleThresholdDays={metrics.thresholds.staleDays}
+        stuckThresholdDays={metrics.thresholds.stuckDays}
         canEdit={capabilities.canEditSettings}
       />
 
@@ -160,14 +160,14 @@ export function DashboardMetrics({
         <h3 className="section-heading">Triage signals</h3>
         <div className="grid gap-4 md:grid-cols-3">
           <MetricCard
-            title="Ghost tickets"
-            description={`Open issues inactive for more than ${metrics.thresholds.ghostDays} days`}
-            count={metrics.ghost.count}
+            title="Stale tickets"
+            description={`Open issues inactive for more than ${metrics.thresholds.staleDays} days`}
+            count={metrics.stale.count}
           />
           <MetricCard
-            title="Zombie tickets"
-            description={`Assigned, no milestone, stale for ${metrics.thresholds.zombieDays}+ days`}
-            count={metrics.zombie.count}
+            title="Stuck tickets"
+            description={`Assigned, no milestone, inactive for ${metrics.thresholds.stuckDays}+ days`}
+            count={metrics.stuck.count}
           />
           <MetricCard
             title="Milestone decay"
@@ -191,14 +191,14 @@ export function DashboardMetrics({
       />
 
       <IssueTable
-        title="Ghost issues"
-        issues={metrics.ghost.issues}
-        emptyMessage="No ghost tickets found."
+        title="Stale issues"
+        issues={metrics.stale.issues}
+        emptyMessage="No stale tickets found."
       />
       <IssueTable
-        title="Zombie issues"
-        issues={metrics.zombie.issues}
-        emptyMessage="No zombie tickets found."
+        title="Stuck issues"
+        issues={metrics.stuck.issues}
+        emptyMessage="No stuck tickets found."
       />
 
       {metrics.milestoneDecay.milestones.length > 0 ? (

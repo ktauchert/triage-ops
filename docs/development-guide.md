@@ -1,6 +1,6 @@
 # Development Guide
 
-Conventions, workflows, and patterns for contributing to TriageOps.
+Conventions, workflows, and patterns for contributing to Gridnull.
 
 ---
 
@@ -19,26 +19,26 @@ Conventions, workflows, and patterns for contributing to TriageOps.
 
 | Package | Import name |
 |---------|-------------|
-| `packages/db` | `@triage-ops/db` |
-| `packages/metrics` | `@triage-ops/metrics` |
-| `packages/shared-types` | `@triage-ops/shared-types` |
-| `apps/web` | `@triage-ops/web` |
-| `apps/worker` | `@triage-ops/worker` |
+| `packages/db` | `@gridnull/db` |
+| `packages/metrics` | `@gridnull/metrics` |
+| `packages/shared-types` | `@gridnull/shared-types` |
+| `apps/web` | `@gridnull/web` |
+| `apps/worker` | `@gridnull/worker` |
 
 ### Adding a dependency
 
 ```bash
 # To a specific workspace
-npm install <package> -w @triage-ops/worker
+npm install <package> -w @gridnull/worker
 
 # Dev dependency
-npm install -D vitest -w @triage-ops/worker
+npm install -D vitest -w @gridnull/worker
 ```
 
 ### Running a script in one workspace
 
 ```bash
-npm run <script> -w @triage-ops/<package>
+npm run <script> -w @gridnull/<package>
 ```
 
 ---
@@ -71,8 +71,8 @@ apps/web/
 └── lib/services/      Server-side data helpers
 
 packages/metrics/src/
-├── ghost.ts        countGhostIssues (+ *.test.ts)
-├── zombie.ts       countZombieIssues (+ *.test.ts)
+├── stale.ts        countStaleIssues (+ *.test.ts)
+├── stuck.ts        countStuckIssues (+ *.test.ts)
 └── milestone-decay.ts  getMilestoneDecay (+ *.test.ts)
 
 packages/db/
@@ -115,7 +115,7 @@ All backend utilities, API clients, and job handlers **must** follow this protoc
 ### Workflow
 
 1. **Write the test first** — define the contract in `*.test.ts`
-2. **Run test** — confirm it fails (`npm run test -w @triage-ops/worker`)
+2. **Run test** — confirm it fails (`npm run test -w @gridnull/worker`)
 3. **Implement** — minimal code to pass
 4. **Refactor** — clean up without breaking tests
 
@@ -151,7 +151,7 @@ MSW setup lives in `apps/worker/src/test/`:
 ## Database changes
 
 1. Edit `packages/db/prisma/schema.prisma`
-2. Run `npm run db:migrate -w @triage-ops/db -- --name describe_change`
+2. Run `npm run db:migrate -w @gridnull/db -- --name describe_change`
 3. Commit the generated migration SQL under `prisma/migrations/`
 4. Run `npm run db:generate` if client types are stale
 
@@ -229,7 +229,7 @@ npm run dev:worker
 
 # Database
 npm run db:migrate
-npm run db:studio -w @triage-ops/db
+npm run db:studio -w @gridnull/db
 
 # Quality
 npm test

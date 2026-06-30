@@ -1,5 +1,5 @@
-import { prisma, VcsProvider, sealAccessToken } from "@triage-ops/db";
-import { DEFAULT_GITHUB_API_URL } from "@triage-ops/shared-types";
+import { prisma, VcsProvider, sealAccessToken } from "@gridnull/db";
+import { DEFAULT_GITHUB_API_URL } from "@gridnull/shared-types";
 import {
   canAccessConnection,
   connectionWhereClause,
@@ -340,8 +340,8 @@ export async function setProjectFavorite(
 
 export type UpdateProjectSettingsInput = {
   isFavorite?: boolean;
-  ghostThresholdDays?: number;
-  zombieThresholdDays?: number;
+  staleThresholdDays?: number;
+  stuckThresholdDays?: number;
   autoSyncEnabled?: boolean;
   autoSyncIntervalMinutes?: number;
 };
@@ -365,8 +365,8 @@ export async function updateProjectSettings(
 
   const data: {
     isFavorite?: boolean;
-    ghostThresholdDays?: number;
-    zombieThresholdDays?: number;
+    staleThresholdDays?: number;
+    stuckThresholdDays?: number;
     autoSyncEnabled?: boolean;
     autoSyncIntervalMinutes?: number;
   } = {};
@@ -375,26 +375,26 @@ export async function updateProjectSettings(
     data.isFavorite = input.isFavorite;
   }
 
-  if (input.ghostThresholdDays !== undefined) {
+  if (input.staleThresholdDays !== undefined) {
     const parsed = parseNonNegativeInt(
-      input.ghostThresholdDays,
-      "ghostThresholdDays",
+      input.staleThresholdDays,
+      "staleThresholdDays",
     );
     if (parsed instanceof Error) {
       throw parsed;
     }
-    data.ghostThresholdDays = parsed;
+    data.staleThresholdDays = parsed;
   }
 
-  if (input.zombieThresholdDays !== undefined) {
+  if (input.stuckThresholdDays !== undefined) {
     const parsed = parseNonNegativeInt(
-      input.zombieThresholdDays,
-      "zombieThresholdDays",
+      input.stuckThresholdDays,
+      "stuckThresholdDays",
     );
     if (parsed instanceof Error) {
       throw parsed;
     }
-    data.zombieThresholdDays = parsed;
+    data.stuckThresholdDays = parsed;
   }
 
   if (input.autoSyncEnabled !== undefined) {
@@ -426,8 +426,8 @@ export async function updateProjectSettings(
   });
 
   const settingsChanged =
-    input.ghostThresholdDays !== undefined ||
-    input.zombieThresholdDays !== undefined ||
+    input.staleThresholdDays !== undefined ||
+    input.stuckThresholdDays !== undefined ||
     input.autoSyncEnabled !== undefined ||
     input.autoSyncIntervalMinutes !== undefined;
 
@@ -438,8 +438,8 @@ export async function updateProjectSettings(
       resourceType: "Project",
       resourceId: projectId,
       metadata: {
-        ghostThresholdDays: updated.ghostThresholdDays,
-        zombieThresholdDays: updated.zombieThresholdDays,
+        staleThresholdDays: updated.staleThresholdDays,
+        stuckThresholdDays: updated.stuckThresholdDays,
         autoSyncEnabled: updated.autoSyncEnabled,
         autoSyncIntervalMinutes: updated.autoSyncIntervalMinutes,
       },

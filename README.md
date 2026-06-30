@@ -1,6 +1,6 @@
-# TriageOps (GitLab Lens)
+# Gridnull
 
-A data-sync and triage engine for GitLab issue boards. Syncs issue metadata into Postgres and surfaces triage metrics — ghost tickets, zombie tickets, milestone decay — via a dashboard.
+On-prem issue triage for **GitHub and GitLab**: sync issue metadata into Postgres, surface triage metrics (stale tickets, stuck tickets, milestone decay), and review local LLM suggestions before write-back — all from a dashboard.
 
 ## Quick start
 
@@ -31,7 +31,7 @@ Full project documentation lives in **[`docs/`](./docs/README.md)**:
 
 ```
 apps/web       Next.js dashboard (App Router)
-apps/worker    BullMQ background jobs + GitLab client
+apps/worker    BullMQ background jobs + GitHub/GitLab sync
 packages/db    Prisma schema, migrations, Postgres client
 packages/shared-types   Queue payloads and shared DTOs
 ```
@@ -47,4 +47,4 @@ npm run db:migrate       # Apply Prisma migrations
 npm run docker:up        # Start Postgres, Redis, Ollama
 ```
 
-Requires **Node.js ≥ 20** and **Docker**.
+Requires **Node.js ≥ 24** and **Docker**.

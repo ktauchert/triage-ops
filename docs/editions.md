@@ -2,7 +2,7 @@
 
 Last updated: June 2026
 
-This document evaluates an **open-core / freemium-on-prem** model for TriageOps: a **Community Edition (CE)** that is genuinely useful for free self-hosting, and a **Pro** edition with paid features for teams that need automation, AI, governance, and write-back.
+This document evaluates an **open-core / freemium-on-prem** model for Gridnull: a **Community Edition (CE)** that is genuinely useful for free self-hosting, and a **Pro** edition with paid features for teams that need automation, AI, governance, and write-back.
 
 **Status:** Product direction · **not implemented in code yet** (no license gating). **Today all features below are available without edition checks** — this matrix describes a future packaging split, not current runtime behavior.
 
@@ -69,7 +69,7 @@ Every feature below is tagged:
 | Register projects | `[CE-LIMIT]` | Up to **3 projects** in CE |
 | Manual sync | `[CE]` | Core loop must work |
 | Sync history / sync runs | `[CE]` | Operational visibility |
-| Triage metrics (ghost, zombie, milestone decay) | `[CE]` | Main product value |
+| Triage metrics (stale, stuck, milestone decay) | `[CE]` | Main product value |
 | Metric thresholds (per project) | `[CE]` | Configuration, not enterprise |
 | Dashboard home + project workspace | `[CE]` | Full UI for triage |
 | Projects list, favorites | `[CE]` | |
@@ -178,7 +178,7 @@ Limits are **soft gates** in UI + API (`403` + upgrade message), not hard databa
 
 **Do not paywall:**
 
-- Ghost / zombie / milestone decay metrics — that's the “aha” moment
+- Stale / stuck / milestone decay metrics — that's the “aha” moment
 - Manual sync — proves the pipeline
 - One connection, a few projects — enough for a side project or POC
 
@@ -201,7 +201,7 @@ Not started. Rough plan:
 | **Runtime** | `getEditionFeatures()` → `{ canAnalyze, canApply, maxProjects, … }` |
 | **Enforcement** | API routes + worker job enqueue check edition before `analyze`, `apply`, `auto-sync` |
 | **UI** | Badges on nav (“Pro”), disabled buttons + upgrade link, admin shows edition |
-| **Images** | **Option A (simple):** one image, license unlocks Pro · **Option B:** `triage-ops-web:ce` vs `:pro` build flags |
+| **Images** | **Option A (simple):** one image, license unlocks Pro · **Option B:** `gridnull-web:ce` vs `:pro` build flags |
 
 Place in codebase (future):
 
@@ -235,7 +235,7 @@ Avoid per-sync or per-issue metering — too noisy for on-prem.
 | **B — Public CE repo + private Pro plugin** | GitHub public mirror of CE features | Pro as private module or overlay |
 | **C — Public source, Pro = support + images** | All source public (like GitLab CE code) | Paid registry + license |
 
-**Recommendation for TriageOps v1:** **Option A** until traction; consider **B** if you want GitHub stars and community PRs on CE-only paths.
+**Recommendation for Gridnull v1:** **Option A** until traction; consider **B** if you want GitHub stars and community PRs on CE-only paths.
 
 ---
 

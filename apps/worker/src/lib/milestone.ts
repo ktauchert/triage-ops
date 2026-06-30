@@ -1,5 +1,5 @@
-import { MilestoneState } from "@triage-ops/db";
-import type { NormalizedIssue } from "@triage-ops/shared-types";
+import { MilestoneState } from "@gridnull/db";
+import type { NormalizedIssue } from "@gridnull/shared-types";
 
 export function parseMilestoneDueDate(value: string | null): Date | null {
   if (!value) {

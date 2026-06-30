@@ -1,6 +1,6 @@
 # Landing Page & Product Site — Build Plan
 
-**Purpose:** Blueprint for an agent (or human) implementing TriageOps’ public **marketing + documentation + billing** site as a React SPA in the monorepo.
+**Purpose:** Blueprint for an agent (or human) implementing Gridnull’ public **marketing + documentation + billing** site as a React SPA in the monorepo.
 
 **Status:** Planning only — **do not implement until** [Phase 5 prerequisites](./phases.md#phase-5--product-presence-optional-post-validation) are met (on-prem workflow validated).
 
@@ -12,7 +12,7 @@
 
 | In scope | Out of scope |
 |----------|--------------|
-| Marketing pages (value prop, features, pricing preview) | The TriageOps dashboard (`apps/web`) |
+| Marketing pages (value prop, features, pricing preview) | The Gridnull dashboard (`apps/web`) |
 | Public documentation (install, security, architecture) | Customer GHCR registry credentials on the open web |
 | Contact / pilot CTA | Self-service product signup that provisions an instance |
 | Later: billing portal, license purchase, customer login | Replacing the install ZIP for deployments |
@@ -95,7 +95,7 @@ flowchart LR
 | Forms (Phase A) | Native + serverless endpoint or Formspree | Contact / pilot — **ask owner** |
 | Billing (Phase D) | **Stripe Checkout + Customer Portal** (default plan) | Industry standard; swap if owner says otherwise |
 | Deploy | Static host (**Cloudflare Pages**, **Netlify**, or **Vercel**) | No server required until billing webhooks |
-| Package name | `@triage-ops/site` in `apps/site` | Monorepo workspace |
+| Package name | `@gridnull/site` in `apps/site` | Monorepo workspace |
 
 **Explicitly not in stack (unless owner requests):** Next.js for marketing site, heavy CMS (Sanity/Contentful), GraphQL.
 
@@ -106,9 +106,9 @@ flowchart LR
 Add a new workspace app — **do not** fold into `apps/web` (dashboard stays private product UI).
 
 ```
-triage-ops/
+gridnull/
 ├── apps/
-│   ├── web/              # existing — TriageOps product dashboard
+│   ├── web/              # existing — Gridnull product dashboard
 │   ├── worker/           # existing
 │   └── site/             # NEW — public marketing + docs + billing SPA
 ├── packages/
@@ -121,8 +121,8 @@ triage-ops/
 **Root `package.json` scripts to add later:**
 
 ```json
-"dev:site": "npm run dev -w @triage-ops/site",
-"build:site": "npm run build -w @triage-ops/site"
+"dev:site": "npm run dev -w @gridnull/site",
+"build:site": "npm run build -w @gridnull/site"
 ```
 
 ---
@@ -452,7 +452,7 @@ sequenceDiagram
 
 1. **Production domain?** (e.g. `triageops.io`, `triageops.example.com`, subdomain of existing company site)
 2. **Staging domain?** (preview deploys)
-3. **Product name casing?** TriageOps / Triage Ops / other
+3. **Product name casing?** Gridnull / Triage Ops / other
 4. **Logo assets available?** SVG preferred; if none, use wordmark placeholder until provided
 5. **Favicon / OG image?** Provide files or approve generated placeholder
 
@@ -529,7 +529,7 @@ sequenceDiagram
 # .github/workflows/site.yml (sketch — implement in Phase C)
 # on: push to main (docs/** or apps/site/**)
 # jobs:
-#   - npm run build -w @triage-ops/site
+#   - npm run build -w @gridnull/site
 #   - deploy to staging
 # on: release published
 #   - npm run sync-docs (if scripted)
@@ -557,7 +557,7 @@ Before marking work complete, verify:
 
 - [ ] Read [phases.md § Phase 5](./phases.md#phase-5--product-presence-optional-post-validation) — prerequisites met
 - [ ] Completed §9 questionnaire with owner (or documented defaults from §10)
-- [ ] `npm run build -w @triage-ops/site` passes
+- [ ] `npm run build -w @gridnull/site` passes
 - [ ] No secrets in client bundle (`grep -r sk_live`, `VITE_.*SECRET` CI check)
 - [ ] Marketing claims match shipped product (no fake features)
 - [ ] Editions page matches [editions.md](./editions.md) or owner-approved diff

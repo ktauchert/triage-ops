@@ -19,13 +19,13 @@ Use this checklist before calling MVP **functionally complete**. A separate **pr
 
 ### Triage metrics
 
-- [x] Dashboard displays **Ghost ticket** count (default 30-day inactivity threshold)
-- [x] Dashboard displays **Zombie ticket** count (open + assigned + stale, default 14 days)
+- [x] Dashboard displays **Stale ticket** count (default 30-day inactivity threshold)
+- [x] Dashboard displays **Stuck ticket** count (open + assigned + stale, default 14 days)
 - [x] Dashboard displays **Milestone decay** — active milestones past due date with open issues
 - [x] Dashboard displays **Overview** counts (total/open/closed issues, milestones)
 - [x] Each triage metric links to a filterable issue list on the dashboard
 - [x] Metrics reflect last successful sync timestamp
-- [x] Metric thresholds configurable via UI (per-project ghost/zombie days on dashboard)
+- [x] Metric thresholds configurable via UI (per-project stale/stuck days on dashboard)
 
 ### User interface
 
@@ -55,7 +55,7 @@ Use this checklist before calling MVP **functionally complete**. A separate **pr
 
 ### Web
 
-- [x] Next.js production build succeeds (`npm run build -w @triage-ops/web`)
+- [x] Next.js production build succeeds (`npm run build -w @gridnull/web`)
 - [x] API routes validate input and return appropriate HTTP status codes (400, 404, 500)
 - [x] Connection tokens not returned in GET API responses
 - [x] API routes return 401 when unauthenticated (when `AUTH_DISABLED=false`)
@@ -113,7 +113,7 @@ A reviewer should be able to perform this flow without assistance:
 5. Add a **GitHub** or **GitLab** connection with a valid token
 6. Register a project/repo
 7. Click **Sync** and wait for completion
-8. View dashboard showing overview counts and ghost, zombie, and milestone decay metrics
+8. View dashboard showing overview counts and stale, stuck, and milestone decay metrics
 
 **MVP (functional) = all checked functional and technical boxes above, and the acceptance scenario passes.**
 

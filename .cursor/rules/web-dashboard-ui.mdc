@@ -27,5 +27,5 @@ alwaysApply: false
 
 ## Don't
 
-- Import `lib/api.ts` or `@triage-ops/db` from client components (use API routes).
+- Import `lib/api.ts` or `@gridnull/db` from client components (use API routes).
 - Parse markdown to HTML for issue descriptions — show raw markdown in `<pre>` for previews.

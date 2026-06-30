@@ -1,6 +1,6 @@
 import type Redis from "ioredis";
 
-const LOCK_PREFIX = "triage-ops:lock:";
+const LOCK_PREFIX = "gridnull:lock:";
 
 export function lockKey(resource: string): string {
   return `${LOCK_PREFIX}${resource}`;

@@ -3,8 +3,8 @@ import {
   SyncStatus,
   openAccessToken,
   prisma,
-} from "@triage-ops/db";
-import type { NormalizedIssue, SyncJobPayload } from "@triage-ops/shared-types";
+} from "@gridnull/db";
+import type { NormalizedIssue, SyncJobPayload } from "@gridnull/shared-types";
 import type { Job } from "bullmq";
 import { acquireLock, startLockHeartbeat } from "../lib/lock.js";
 import { getRedis } from "../lib/redis.js";

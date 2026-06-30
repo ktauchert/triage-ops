@@ -26,7 +26,7 @@ vi.mock("@/lib/services/projects", () => ({
   createProject: createProjectMock,
 }));
 
-vi.mock("@triage-ops/db", () => ({
+vi.mock("@gridnull/db", () => ({
   VcsProvider: { GITLAB: "GITLAB", GITHUB: "GITHUB" },
   prisma: prismaMock,
 }));

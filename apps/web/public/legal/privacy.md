@@ -1,4 +1,4 @@
-# TriageOps — Privacy Policy
+# Gridnull — Privacy Policy
 
 **Version:** 1.0 · **Effective:** June 2026
 
@@ -6,7 +6,7 @@
 
 ## 1. Scope
 
-This Privacy Policy explains how **TriageOps** (“we”, “the software”) handles information when you install and use it. TriageOps is typically deployed **on infrastructure you control** (on-prem or your cloud). In most pilots, **you** (the organization running the instance) are the **data controller** for your users’ and issue data; we provide the software.
+This Privacy Policy explains how **Gridnull** (“we”, “the software”) handles information when you install and use it. Gridnull is typically deployed **on infrastructure you control** (on-prem or your cloud). In most pilots, **you** (the organization running the instance) are the **data controller** for your users’ and issue data; we provide the software.
 
 **Provider / controller for this website and the software vendor:**
 
@@ -14,7 +14,7 @@ Karsten Tauchert · c/o Block Services, Stuttgarter Str. 106, 70736 Fellbach, Ge
 
 ## 2. What data the application processes
 
-Depending on configuration, TriageOps may store and process:
+Depending on configuration, Gridnull may store and process:
 
 | Category | Examples | Purpose |
 |----------|----------|---------|
@@ -59,7 +59,7 @@ This section applies to the **public website** where this policy is published (s
 
 ## 8. Your rights
 
-Subject to applicable law, individuals may have rights to access, rectify, erase, restrict, object to, or port their personal data, and to lodge a complaint with a supervisory authority. For data held in a deployed **instance**, contact your organization’s administrator (TriageOps admin). For data processed by the **provider** (this website, vendor contact), use the contact below.
+Subject to applicable law, individuals may have rights to access, rectify, erase, restrict, object to, or port their personal data, and to lodge a complaint with a supervisory authority. For data held in a deployed **instance**, contact your organization’s administrator (Gridnull admin). For data processed by the **provider** (this website, vendor contact), use the contact below.
 
 ## 9. Contact
 

@@ -2,7 +2,7 @@ import type {
   FetchGitLabIssuesParams,
   GitLabIssueRaw,
   GitLabIssuesPage,
-} from "@triage-ops/shared-types";
+} from "@gridnull/shared-types";
 import { fetchWithResilience } from "../http.js";
 
 export class GitLabApiError extends Error {

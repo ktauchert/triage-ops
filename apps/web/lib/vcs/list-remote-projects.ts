@@ -1,5 +1,5 @@
-import { VcsProvider } from "@triage-ops/db";
-import type { RemoteProject } from "@triage-ops/shared-types";
+import { VcsProvider } from "@gridnull/db";
+import type { RemoteProject } from "@gridnull/shared-types";
 import { remoteProjectListErrorMessage, VcsApiError } from "./errors";
 import { fetchAllGitHubRepos } from "./github-repos";
 import { fetchAllGitLabProjects } from "./gitlab-projects";

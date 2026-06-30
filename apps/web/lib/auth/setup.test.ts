@@ -17,8 +17,8 @@ const prismaMock = vi.hoisted(() => ({
   $transaction: vi.fn(),
 }));
 
-vi.mock("@triage-ops/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@triage-ops/db")>();
+vi.mock("@gridnull/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@gridnull/db")>();
   return {
     ...actual,
     prisma: prismaMock,

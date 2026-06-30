@@ -1,9 +1,9 @@
 import {
-  countGhostIssues,
-  countZombieIssues,
+  countStaleIssues,
+  countStuckIssues,
   type MetricIssue,
-} from "@triage-ops/metrics";
-import { prisma, type UserRole } from "@triage-ops/db";
+} from "@gridnull/metrics";
+import { prisma, type UserRole } from "@gridnull/db";
 import type { AuthContext } from "@/lib/auth/session";
 import {
   fetchProjectHealthSignals,
@@ -18,8 +18,8 @@ export type HomeProjectCard = {
   isFavorite: boolean;
   lastSyncedAt: Date | null;
   openIssues: number;
-  ghostCount: number;
-  zombieCount: number;
+  staleCount: number;
+  stuckCount: number;
   healthSignals: ProjectHealthSignal[];
 };
 
@@ -46,8 +46,8 @@ async function buildProjectCard(project: {
   pathWithNamespace: string;
   isFavorite: boolean;
   lastSyncedAt: Date | null;
-  ghostThresholdDays: number;
-  zombieThresholdDays: number;
+  staleThresholdDays: number;
+  stuckThresholdDays: number;
   syncRuns: Array<{ status: string }>;
 }): Promise<HomeProjectCard> {
   const [issues, healthSignals] = await Promise.all([
@@ -86,14 +86,14 @@ async function buildProjectCard(project: {
     isFavorite: project.isFavorite,
     lastSyncedAt: project.lastSyncedAt,
     openIssues: openIssues.length,
-    ghostCount: countGhostIssues(
+    staleCount: countStaleIssues(
       metricIssues,
-      project.ghostThresholdDays,
+      project.staleThresholdDays,
       now,
     ).count,
-    zombieCount: countZombieIssues(
+    stuckCount: countStuckIssues(
       metricIssues,
-      project.zombieThresholdDays,
+      project.stuckThresholdDays,
       now,
     ).count,
     healthSignals,

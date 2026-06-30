@@ -1,4 +1,4 @@
-import { openAccessToken, prisma } from "@triage-ops/db";
+import { openAccessToken, prisma } from "@gridnull/db";
 import { connectionWhereClause } from "@/lib/auth/access";
 import type { AuthContext } from "@/lib/auth/session";
 

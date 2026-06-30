@@ -1,5 +1,5 @@
 {
-  "name": "triage-ops",
+  "name": "gridnull",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
@@ -7,17 +7,17 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @triage-ops/web",
-    "dev:worker": "npm run dev -w @triage-ops/worker",
+    "dev": "npm run dev -w @gridnull/web",
+    "dev:worker": "npm run dev -w @gridnull/worker",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "test:e2e": "npm run test -w @triage-ops/e2e",
-    "db:generate": "npm run db:generate -w @triage-ops/db",
-    "db:migrate": "npm run db:migrate -w @triage-ops/db",
-    "db:migrate:deploy": "npm run db:migrate:deploy -w @triage-ops/db",
-    "db:seed": "npm run db:seed -w @triage-ops/db",
-    "gitlab:seed": "npm run seed:gitlab -w @triage-ops/worker",
+    "test:e2e": "npm run test -w @gridnull/e2e",
+    "db:generate": "npm run db:generate -w @gridnull/db",
+    "db:migrate": "npm run db:migrate -w @gridnull/db",
+    "db:migrate:deploy": "npm run db:migrate:deploy -w @gridnull/db",
+    "db:seed": "npm run db:seed -w @gridnull/db",
+    "gitlab:seed": "npm run seed:gitlab -w @gridnull/worker",
     "docker:up": "docker compose up -d postgres redis ollama",
     "docker:up:all": "docker compose --profile production up -d",
     "docker:down": "docker compose down",

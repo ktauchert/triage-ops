@@ -1,4 +1,4 @@
-# Agent prompt — Build TriageOps marketing site (Phase A)
+# Agent prompt — Build Gridnull marketing site (Phase A)
 
 Copy everything inside the **prompt block** below into a new agent session. Attach or reference these files in the same workspace:
 
@@ -12,7 +12,7 @@ Copy everything inside the **prompt block** below into a new agent session. Atta
 ## Prompt (copy from here)
 
 ```
-You are implementing the TriageOps public marketing site in the triage-ops monorepo.
+You are implementing the Gridnull public marketing site in the gridnull monorepo.
 
 ## Goal
 
@@ -31,7 +31,7 @@ Do NOT modify apps/web (product dashboard) except if required for shared assets 
 
 ## Tech stack (non-negotiable unless owner overrides)
 
-- apps/site — new npm workspace `@triage-ops/site`
+- apps/site — new npm workspace `@gridnull/site`
 - React 19 + Vite 6 + TypeScript
 - React Router 7
 - Tailwind CSS 4
@@ -90,7 +90,7 @@ If owner did not provide values, use these defaults and document in a short BUIL
 
 - CONTACT_EMAIL: hello@triageops.dev
 - SITE_URL: https://triageops.dev
-- COMPANY_NAME: TriageOps
+- COMPANY_NAME: Gridnull
 - GITHUB_ORG: ktauchert
 
 List placeholders the owner must replace before production launch.
@@ -108,7 +108,7 @@ If critical decisions are missing, use §10 defaults from landing-page-plan.md:
 
 ## Acceptance criteria
 
-- [ ] npm run build -w @triage-ops/site passes
+- [ ] npm run build -w @gridnull/site passes
 - [ ] npm run dev:site works
 - [ ] All Phase A routes render on mobile and desktop
 - [ ] prefers-reduced-motion disables parallax and CTA pulse
@@ -140,7 +140,7 @@ Start by reading the three doc files, then scaffold apps/site per landing-page-p
 
 ## How to use this
 
-1. Open a new Cursor agent (or Composer) in the `triage-ops` repo.
+1. Open a new Cursor agent (or Composer) in the `gridnull` repo.
 2. Paste the prompt block above.
 3. Ensure the agent can read `docs/landing-page-plan.md`, `docs/landing-page-content.md`, and `install/EULA.md`.
 4. Optionally answer §9 questionnaire in your first message (domain, contact email, logo).

@@ -15,7 +15,7 @@ const lockMock = vi.hoisted(() => ({
   forceReleaseLock: vi.fn(),
 }));
 
-vi.mock("@triage-ops/db", () => ({
+vi.mock("@gridnull/db", () => ({
   SyncStatus: { PENDING: "PENDING", RUNNING: "RUNNING", FAILED: "FAILED" },
   IssueSuggestionStatus: {
     APPLYING: "APPLYING",

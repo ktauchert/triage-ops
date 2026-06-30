@@ -16,10 +16,10 @@ describe("pickDuplicateSides", () => {
 describe("duplicate comments", () => {
   it("formats close and canonical comments", () => {
     expect(duplicateCloseComment(9)).toBe(
-      "Closed as duplicate of #9 (applied via TriageOps).",
+      "Closed as duplicate of #9 (applied via Gridnull).",
     );
     expect(duplicateCanonicalComment(15)).toBe(
-      "Linked duplicate #15 closed (applied via TriageOps).",
+      "Linked duplicate #15 closed (applied via Gridnull).",
     );
   });
 });

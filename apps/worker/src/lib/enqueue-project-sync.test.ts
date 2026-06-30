@@ -12,7 +12,7 @@ const prismaMock = vi.hoisted(() => ({
 
 const queueAddMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@triage-ops/db", () => ({
+vi.mock("@gridnull/db", () => ({
   SyncStatus: {
     PENDING: "PENDING",
     RUNNING: "RUNNING",

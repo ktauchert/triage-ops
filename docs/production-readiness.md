@@ -2,7 +2,7 @@
 
 Last updated: June 2026
 
-This document is the **single checklist** for taking TriageOps from “works great in dev” to **deployable for customers** who configure and run it — without cloning the source repo.
+This document is the **single checklist** for taking Gridnull from “works great in dev” to **deployable for customers** who configure and run it — without cloning the source repo.
 
 Use it when you return from a break or start a pilot. For day-to-day dev, see [Running the App](./running-the-app.md). For install steps once shipped, see [Intranet Rollout](./intranet-rollout.md).
 
@@ -72,12 +72,12 @@ Minimum to hand a customer an install they can run without your repo:
 
 Validate a release bundle **without** the monorepo on a fresh Linux VM with Docker:
 
-1. Download `triage-ops-install-x.y.z.zip` from the GitHub Release (or use a local build of the bundle).
+1. Download `gridnull-install-x.y.z.zip` from the GitHub Release (or use a local build of the bundle).
 2. Unzip and `cd` into the bundle directory.
 3. Configure `.env` from `.env.example` (OAuth credentials optional for infra-only smoke).
 4. From the monorepo checkout (or copy the script into the bundle), run:
    ```bash
-   scripts/verify-prod-install.sh /path/to/triage-ops-install-x.y.z
+   scripts/verify-prod-install.sh /path/to/gridnull-install-x.y.z
    ```
    The script pulls images, runs migrations, starts web + worker, and curls `/login` or `/setup`.
 5. Open `http://<vm>:3000/setup`, complete OAuth bootstrap, and invite a test user in Admin → Users.
@@ -93,7 +93,7 @@ Record the VM image, bundle version, and any friction in your pilot notes before
 | Task | Owner | Est. | Done |
 |------|-------|------|------|
 | Add `docker-compose.prod.yml` at repo root | Dev | 0.5 d | [x] |
-| Pin image names/tags (`ghcr.io/ktauchert/triage-ops-web`, `…-worker`) | Dev | 0.5 d | [x] |
+| Pin image names/tags (`ghcr.io/ktauchert/gridnull-web`, `…-worker`) | Dev | 0.5 d | [x] |
 | CI job: on tag `v*`, build + push both images | Dev | 1 d | [x] |
 | Create `install/` template folder for release ZIP | Dev | 0.5 d | [x] |
 | GitHub Release workflow: attach install bundle | Dev | 0.5 d | [x] |
@@ -101,7 +101,7 @@ Record the VM image, bundle version, and any friction in your pilot notes before
 | Dry-run install on clean VM from bundle only | Dev/Ops | 1 d | [x] (procedure documented; execute before first customer) |
 | Update [intranet-rollout.md](./intranet-rollout.md): product path = primary | Docs | 0.5 d | [x] |
 
-**Deliverable:** Customer receives `triage-ops-install-x.y.z.zip`, never clones git.
+**Deliverable:** Customer receives `gridnull-install-x.y.z.zip`, never clones git.
 
 See [on-prem-product.md § Production distribution](./on-prem-product.md#chosen-approach--production-distribution) for target layout.
 
@@ -166,7 +166,7 @@ flowchart TD
 What a customer **will** receive (no monorepo):
 
 ```
-triage-ops-install-1.0.0/
+gridnull-install-1.0.0/
 ├── docker-compose.prod.yml
 ├── .env.example
 ├── install.md

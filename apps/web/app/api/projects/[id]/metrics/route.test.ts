@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UserRole } from "@triage-ops/db";
+import { UserRole } from "@gridnull/db";
 import {
   readJson,
   routeContext,
@@ -64,8 +64,8 @@ describe("GET /api/projects/[id]/metrics", () => {
     );
     getProjectMetricsMock.mockResolvedValue({
       overview: { totalIssues: 5, openIssues: 3 },
-      ghost: { count: 1 },
-      zombie: { count: 0 },
+      stale: { count: 1 },
+      stuck: { count: 0 },
       milestoneDecay: { count: 0 },
     });
 
@@ -85,17 +85,17 @@ describe("GET /api/projects/[id]/metrics", () => {
   it("returns metrics payload", async () => {
     getProjectMetricsMock.mockResolvedValue({
       overview: { totalIssues: 10, openIssues: 6 },
-      ghost: { count: 2 },
-      zombie: { count: 1 },
+      stale: { count: 2 },
+      stuck: { count: 1 },
       milestoneDecay: { count: 1 },
     });
 
     const data = await readJson<{
-      metrics: { overview: { totalIssues: number }; ghost: { count: number } };
+      metrics: { overview: { totalIssues: number }; stale: { count: number } };
     }>(
       await GET(
         new Request(
-          "http://localhost/api/projects/project-1/metrics?ghostDays=30",
+          "http://localhost/api/projects/project-1/metrics?staleDays=30",
         ),
         ctx,
       ),
@@ -103,10 +103,10 @@ describe("GET /api/projects/[id]/metrics", () => {
     );
 
     expect(data.metrics.overview.totalIssues).toBe(10);
-    expect(data.metrics.ghost.count).toBe(2);
+    expect(data.metrics.stale.count).toBe(2);
     expect(getProjectMetricsMock).toHaveBeenCalledWith("project-1", {
-      ghostDays: 30,
-      zombieDays: undefined,
+      staleDays: 30,
+      stuckDays: undefined,
     });
   });
 });

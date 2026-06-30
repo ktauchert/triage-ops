@@ -33,7 +33,7 @@ Nach Erstellung dieses Reviews wurden **alle 15 High-Severity-Befunde** umgesetz
 
 ## Executive Summary
 
-TriageOps ist seit dem letzten Review (2026-06-21) deutlich gereift: PAT-Verschlüsselung (AES-256-GCM), API-Rate-Limiting (Redis), per-Projekt Auto-Sync, RBAC mit vier Rollen, Admin-UI (Users/Audit/Jobs), Instance-Bootstrap (`/setup`, geschlossene Registrierung, Invites) und eine Image-basierte On-Prem-Distribution (GHCR + Install-Bundle) sind hinzugekommen. Architektur und Code-Qualität bleiben **stark**; die Testkultur ist breit (326 grüne Unit-Tests, Web-Build sauber).
+Gridnull ist seit dem letzten Review (2026-06-21) deutlich gereift: PAT-Verschlüsselung (AES-256-GCM), API-Rate-Limiting (Redis), per-Projekt Auto-Sync, RBAC mit vier Rollen, Admin-UI (Users/Audit/Jobs), Instance-Bootstrap (`/setup`, geschlossene Registrierung, Invites) und eine Image-basierte On-Prem-Distribution (GHCR + Install-Bundle) sind hinzugekommen. Architektur und Code-Qualität bleiben **stark**; die Testkultur ist breit (326 grüne Unit-Tests, Web-Build sauber).
 
 Die zentrale Bewertungsfrage lautet: **Ist das System sicher und reif genug, um es Endkunden zum Selbstbetrieb zu überlassen?** Antwort:
 
@@ -82,8 +82,8 @@ Die meisten in der Vorgängerprüfung als „Phase 3/4 / später“ markierten P
 | Prüfung                                    | Ergebnis                                                                                          |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | `npm run test -w metrics -w worker -w web` | ✅ **326 Tests grün** (metrics 17, worker 88, web 221), 58 Testdateien                             |
-| `npm run build -w @triage-ops/web`         | ✅ Erfolgreich (alle Routes kompiliert, Middleware/Proxy gebaut)                                   |
-| e2e Smoke (`@triage-ops/e2e`)              | ⏭️ Übersprungen — benötigt laufendes Postgres/Redis (nicht im Review-Sandbox)                     |
+| `npm run build -w @gridnull/web`         | ✅ Erfolgreich (alle Routes kompiliert, Middleware/Proxy gebaut)                                   |
+| e2e Smoke (`@gridnull/e2e`)              | ⏭️ Übersprungen — benötigt laufendes Postgres/Redis (nicht im Review-Sandbox)                     |
 | Manuell gelesen (Security-Kern)            | `session.ts`, `setup.ts`, `auth.config.ts`, `token-crypto.ts`, `release.yml`, `apps/*/Dockerfile` |
 
 
@@ -206,11 +206,11 @@ Verbleibende Lücken für unbeaufsichtigten Kunden-Selbstbetrieb:
 
 | Paket                 | Tests   | Status                     |
 | --------------------- | ------- | -------------------------- |
-| `@triage-ops/metrics` | 17      | ✅                          |
-| `@triage-ops/worker`  | 88      | ✅                          |
-| `@triage-ops/web`     | 221     | ✅                          |
+| `@gridnull/metrics` | 17      | ✅                          |
+| `@gridnull/worker`  | 88      | ✅                          |
+| `@gridnull/web`     | 221     | ✅                          |
 | **Summe Unit**        | **326** | ✅ (58 Dateien)             |
-| `@triage-ops/e2e`     | 1       | ⏭️ benötigt Postgres+Redis |
+| `@gridnull/e2e`     | 1       | ⏭️ benötigt Postgres+Redis |
 
 
 **Bekannte Test-Lücken (Produktionsrelevanz):**
@@ -224,7 +224,7 @@ Verbleibende Lücken für unbeaufsichtigten Kunden-Selbstbetrieb:
 
 ## Produktnutzen & Marktreife
 
-**Use-Case:** TriageOps adressiert ein echtes, schmerzhaftes Problem — Issue-Backlogs in GitHub/GitLab werden unübersichtlich; „Ghost“-/„Zombie“-Issues und verfallende Milestones bleiben unbemerkt. Das Produkt liefert dafür (a) belastbare Metriken, (b) lokale LLM-Vorschläge (Duplikate, Beschreibungsentwürfe) **ohne** Cloud-/Token-Leak und (c) menschlich kontrollierte Write-backs zurück ins VCS. Das ist ein klar differenziertes, datenresidenz-freundliches Angebot — besonders attraktiv für sicherheitsbewusste/air-gapped Firmen.
+**Use-Case:** Gridnull adressiert ein echtes, schmerzhaftes Problem — Issue-Backlogs in GitHub/GitLab werden unübersichtlich; „Stale“-/„Stuck“-Issues und verfallende Milestones bleiben unbemerkt. Das Produkt liefert dafür (a) belastbare Metriken, (b) lokale LLM-Vorschläge (Duplikate, Beschreibungsentwürfe) **ohne** Cloud-/Token-Leak und (c) menschlich kontrollierte Write-backs zurück ins VCS. Das ist ein klar differenziertes, datenresidenz-freundliches Angebot — besonders attraktiv für sicherheitsbewusste/air-gapped Firmen.
 
 **Stärken als Produkt:**
 
@@ -283,7 +283,7 @@ Verbleibende Lücken für unbeaufsichtigten Kunden-Selbstbetrieb:
 | Unbeaufsichtigter Self-Service für „alle Firmen“ (Gate B) | ⛔ **No-Go bis P0 vollständig** + getesteter Backup/Restore-Zyklus + Clean-VM-Dry-Run |
 
 
-**Fazit:** TriageOps ist ein architektonisch sauberes, funktional reiches und gut getestetes Produkt mit einem überzeugenden On-Prem-Wertversprechen. Die Lücken zur vollen Kundenfreigabe sind **konkret, klein und ohne Architekturumbau behebbar** — primär JWT-Session-Lebenszyklus, Secret-Fail-Fast, Release-Gating und Betriebs-Runbooks. Mit der P0-Liste erreicht das System einen kunden­freigabefähigen Stand.
+**Fazit:** Gridnull ist ein architektonisch sauberes, funktional reiches und gut getestetes Produkt mit einem überzeugenden On-Prem-Wertversprechen. Die Lücken zur vollen Kundenfreigabe sind **konkret, klein und ohne Architekturumbau behebbar** — primär JWT-Session-Lebenszyklus, Secret-Fail-Fast, Release-Gating und Betriebs-Runbooks. Mit der P0-Liste erreicht das System einen kunden­freigabefähigen Stand.
 
 ---
 
@@ -298,7 +298,7 @@ Verbleibende Lücken für unbeaufsichtigten Kunden-Selbstbetrieb:
 | Worker       | `apps/worker/src/index.ts`, `workers/`*, `lib/lock.ts`, `lib/vcs/apply-suggestion.ts`   |
 | Infra        | `docker-compose.prod.yml`, `apps/web/Dockerfile`, `apps/worker/Dockerfile`, `install/`  |
 | CI/CD        | `.github/workflows/release.yml`, `.github/workflows/ci.yml`                             |
-| Verifikation | `npm test` (326 grün), `npm run build -w @triage-ops/web` (grün)                        |
+| Verifikation | `npm test` (326 grün), `npm run build -w @gridnull/web` (grün)                        |
 
 
 > Methodik: Statische Analyse + gezieltes Lesen der sicherheitskritischen Pfade + Ausführung der Test-/Build-Pipelines. Zwei vorläufige „kritische“ Infra-Befunde wurden bei der Verifikation **widerlegt** (siehe Deployment-Abschnitt) und entsprechend korrigiert.

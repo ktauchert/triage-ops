@@ -3,8 +3,8 @@ import {
   IssueSuggestionStatus,
   openAccessToken,
   prisma,
-} from "@triage-ops/db";
-import type { WriteBackJobPayload } from "@triage-ops/shared-types";
+} from "@gridnull/db";
+import type { WriteBackJobPayload } from "@gridnull/shared-types";
 import type { Job } from "bullmq";
 import { acquireLock, startLockHeartbeat } from "../lib/lock.js";
 import { getRedis } from "../lib/redis.js";

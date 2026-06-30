@@ -1,4 +1,4 @@
-import { UserRole, prisma } from "@triage-ops/db";
+import { UserRole, prisma } from "@gridnull/db";
 import { DEV_USER_ID } from "./config";
 import { isDevAuthBypassAllowed } from "./environment";
 

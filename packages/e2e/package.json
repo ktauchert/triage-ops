@@ -1,5 +1,5 @@
 {
-  "name": "@triage-ops/e2e",
+  "name": "@gridnull/e2e",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,8 +7,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@triage-ops/db": "*",
-    "@triage-ops/shared-types": "*",
+    "@gridnull/db": "*",
+    "@gridnull/shared-types": "*",
     "bullmq": "^5.56.0",
     "dotenv": "^16.6.1",
     "ioredis": "^5.6.1"

@@ -1,4 +1,4 @@
-import { prisma } from "@triage-ops/db";
+import { prisma } from "@gridnull/db";
 
 export async function syncIssueLabels(
   projectId: string,

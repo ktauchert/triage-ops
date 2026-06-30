@@ -44,7 +44,7 @@ Add a footer (or legal section) with:
 
 Short tagline for the marketing site:
 
-> TriageOps is proprietary on-prem software. Use is subject to our EULA. AI suggestions are recommendations only; you are responsible for changes applied to your repositories.
+> Gridnull is proprietary on-prem software. Use is subject to our EULA. AI suggestions are recommendations only; you are responsible for changes applied to your repositories.
 
 ---
 
@@ -54,7 +54,7 @@ Use these on the landing page or in pilot PDFs — they reflect the full EULA:
 
 | Topic | Summary |
 |-------|---------|
-| **Ownership** | TriageOps and its code remain the vendor’s property. No copying or redistribution without permission. |
+| **Ownership** | Gridnull and its code remain the vendor’s property. No copying or redistribution without permission. |
 | **Who may use** | Currently aimed at **SMEs** (&lt; 250 employees, &lt; EUR 50M turnover) unless a separate contract says otherwise. |
 | **Your infrastructure** | You configure OAuth, secrets, backups, and who gets invited. |
 | **AI & Apply** | Suggestions can be wrong. **Apply** changes real issues on GitHub/GitLab using **your** tokens — review before confirming. |
