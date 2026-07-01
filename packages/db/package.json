@@ -10,6 +10,11 @@
       "types": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./assert-encryption-configured": {
+      "types": "./src/assert-encryption-configured.ts",
+      "import": "./dist/assert-encryption-configured.js",
+      "default": "./dist/assert-encryption-configured.js"
     }
   },
   "scripts": {

@@ -32,27 +32,19 @@ vi.mock("./config", () => ({
 
 vi.mock("./allowlist", () => ({
   isEmailAllowed: vi.fn().mockReturnValue(true),
+  isAllowlistConfigured: vi.fn().mockReturnValue(false),
   normalizeEmail: (email: string | null | undefined) =>
     email?.trim().toLowerCase() ?? null,
 }));
-
-vi.mock("./setup", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./setup")>();
-  return {
-    ...actual,
-    isAllowlistConfigured: vi.fn().mockReturnValue(false),
-  };
-});
 
 vi.mock("@/lib/services/audit", () => ({
   logAuditEvent: vi.fn().mockResolvedValue({ id: "audit-1" }),
 }));
 
 import { isAuthDisabled, isAdminEmail } from "./config";
-import { isEmailAllowed } from "./allowlist";
+import { isEmailAllowed, isAllowlistConfigured } from "./allowlist";
 import {
   applySignInUserState,
-  assertAllowlistConfigured,
   canSignInWithEmail,
   completeSetup,
   isSetupComplete,
@@ -164,6 +156,7 @@ describe("setup auth", () => {
 
   it("enforces the allowlist during bootstrap when configured", async () => {
     vi.stubEnv("ALLOWED_EMAIL_DOMAINS", "company.com");
+    vi.mocked(isAllowlistConfigured).mockReturnValue(true);
     vi.mocked(isEmailAllowed).mockReturnValue(false);
 
     await expect(canSignInWithEmail("outsider@evil.com")).resolves.toBe(false);
@@ -226,31 +219,5 @@ describe("setup auth", () => {
       where: { id: "user-1" },
       data: { role: "ADMIN" },
     });
-  });
-});
-
-describe("assertAllowlistConfigured", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it("is a no-op outside production", () => {
-    vi.stubEnv("NODE_ENV", "development");
-    expect(() => assertAllowlistConfigured()).not.toThrow();
-  });
-
-  it("throws in production when the allowlist is empty", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("AUTH_DISABLED", "false");
-    vi.stubEnv("ALLOWED_EMAIL_DOMAINS", "");
-    vi.stubEnv("ALLOWED_EMAILS", "");
-    expect(() => assertAllowlistConfigured()).toThrow(/ALLOWED_EMAIL/);
-  });
-
-  it("passes in production when an allowlist is configured", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("AUTH_DISABLED", "false");
-    vi.stubEnv("ALLOWED_EMAIL_DOMAINS", "company.com");
-    expect(() => assertAllowlistConfigured()).not.toThrow();
   });
 });

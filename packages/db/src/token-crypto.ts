@@ -24,25 +24,6 @@ export function isEncryptedAccessToken(value: string): boolean {
   return value.startsWith(PREFIX);
 }
 
-/**
- * Fail fast in production when at-rest encryption is not configured.
- * Without a key, `sealAccessToken` silently stores VCS PATs in plain text.
- * Calling `getEncryptionKey()` also validates the key length when present.
- */
-export function assertEncryptionConfigured(): void {
-  if (process.env.NODE_ENV !== "production") {
-    return;
-  }
-
-  const key = getEncryptionKey();
-  if (!key) {
-    throw new Error(
-      "TOKEN_ENCRYPTION_KEY is required in production to encrypt VCS tokens at rest. " +
-        "Generate one with: openssl rand -base64 32",
-    );
-  }
-}
-
 export function sealAccessToken(plain: string): string {
   const key = getEncryptionKey();
   if (!key) {

@@ -1,6 +1,6 @@
 export { prisma } from "./client.js";
+export { assertEncryptionConfigured } from "./assert-encryption-configured.js";
 export {
-  assertEncryptionConfigured,
   isEncryptedAccessToken,
   openAccessToken,
   sealAccessToken,

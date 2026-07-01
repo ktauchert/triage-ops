@@ -66,7 +66,7 @@ You acknowledge that:
 - suggestions may be **incorrect, incomplete, or outdated**;  
 - **you** (not Licensor) choose to apply them;  
 - applied changes are **performed using your credentials** on your systems;  
-- Licensor does **not** guarantee triage outcomes, issue state, or data recovery after apply.
+- Licensor does **not** guarantee backlog scan outcomes, issue state, or data recovery after apply.
 
 **You are solely responsible** for reviewing suggestions and for all effects of apply operations on your version-control systems.
 

@@ -126,7 +126,7 @@ export function AppSidebarNav({
         <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">
           Gridnull
         </p>
-        <h1 className="text-lg font-semibold tracking-tight">Issue Triage</h1>
+        <h1 className="text-lg font-semibold tracking-tight">Backlog scan</h1>
       </div>
       <Separator />
       <nav className="flex flex-1 flex-col gap-1 p-4">

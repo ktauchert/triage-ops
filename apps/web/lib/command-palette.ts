@@ -92,7 +92,7 @@ export function buildCommandPaletteItems(
     items.push({
       id: `project-${project.id}`,
       label: project.isFavorite ? `${project.name} ★` : project.name,
-      keywords: `${project.name} ${project.pathWithNamespace} project triage dashboard`,
+      keywords: `${project.name} ${project.pathWithNamespace} project backlog scan signals`,
       href: projectDashboardPath(project.id),
       group: "Projects",
     });

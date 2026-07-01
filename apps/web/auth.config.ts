@@ -32,7 +32,7 @@ function buildProviders() {
       GitLab({
         clientId: authConfig.gitlab.clientId,
         clientSecret: authConfig.gitlab.clientSecret,
-        issuer: authConfig.gitlab.issuer,
+        baseUrl: authConfig.gitlab.issuer,
       }),
     );
   }

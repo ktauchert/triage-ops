@@ -10,9 +10,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getConfiguredProviders, isAuthDisabled } from "@/lib/auth/config";
+import {
+  getAuthProviders,
+  getConfiguredProviders,
+  isAuthDisabled,
+  isProviderConfigured,
+} from "@/lib/auth/config";
 import { isDevAuthBypassAllowed } from "@/lib/auth/environment";
 import { isSetupComplete } from "@/lib/auth/setup";
+import { SetupGitLabConfigHint } from "./setup-gitlab-config-hint";
 import { SetupOAuthPanel } from "./setup-oauth-panel";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +42,8 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
   const session = await auth();
   const { error } = await searchParams;
   const providers = getConfiguredProviders();
+  const showGitLabConfigHint =
+    getAuthProviders().includes("gitlab") && !isProviderConfigured("gitlab");
   const hasStaleSession = Boolean(session?.user);
 
   return (
@@ -90,7 +98,8 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
             <div className="glass-subtle rounded-lg border px-4 py-3 text-sm text-muted-foreground">
               No OAuth providers are configured. Set{" "}
               <code className="text-xs">AUTH_GITHUB_*</code> or{" "}
-              <code className="text-xs">AUTH_GITLAB_*</code> in your environment.
+              <code className="text-xs">AUTH_GITLAB_*</code> in your environment,
+              then restart the web service.
             </div>
           ) : (
             <SetupOAuthPanel
@@ -98,6 +107,8 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
               hasStaleSession={hasStaleSession}
             />
           )}
+
+          {showGitLabConfigHint ? <SetupGitLabConfigHint /> : null}
 
           {hasStaleSession ? (
             <p className="text-center text-xs text-muted-foreground">

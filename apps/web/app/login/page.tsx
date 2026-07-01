@@ -45,7 +45,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </p>
           <CardTitle className="text-2xl">Sign in</CardTitle>
           <CardDescription>
-            Authenticate to manage connections and view triage metrics.
+            Authenticate to manage connections and scan for stale and stuck work.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

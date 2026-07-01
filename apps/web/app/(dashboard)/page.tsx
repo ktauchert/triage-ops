@@ -36,8 +36,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <h2 className="page-heading">Welcome, {displayName}</h2>
         <p className="page-subheading">
           {summary.dataScope === "shared"
-            ? "Your triage overview across this instance."
-            : "Your triage overview and starred projects."}
+            ? "Your backlog overview across this instance."
+            : "Your backlog overview and starred projects."}
         </p>
         <div className="mt-3 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -57,7 +57,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div>
             <h3 className="section-heading">Starred projects</h3>
             <p className="text-sm text-muted-foreground">
-              Open a project to view triage metrics and AI suggestions.
+              Open a project to view signals and AI suggestions.
             </p>
           </div>
           <Button variant="outline" asChild>
@@ -81,7 +81,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <Link href="/projects" className="font-medium text-primary hover:underline">
                 projects page
               </Link>{" "}
-              to pin them here, then open one to start triaging.
+              to pin them here, then open one to run a backlog scan.
             </p>
           </div>
         ) : (

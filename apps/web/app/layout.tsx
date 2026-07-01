@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Gridnull",
-  description: "GitHub and GitLab issue triage metrics dashboard",
+  description: "GitHub and GitLab backlog health dashboard",
 };
 
 export default function RootLayout({

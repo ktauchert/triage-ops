@@ -157,7 +157,7 @@ export function DashboardMetrics({
       />
 
       <section className="space-y-3">
-        <h3 className="section-heading">Triage signals</h3>
+        <h3 className="section-heading">Signals</h3>
         <div className="grid gap-4 md:grid-cols-3">
           <MetricCard
             title="Stale tickets"
@@ -193,12 +193,12 @@ export function DashboardMetrics({
       <IssueTable
         title="Stale issues"
         issues={metrics.stale.issues}
-        emptyMessage="No stale tickets found."
+        emptyMessage="Nothing quiet beyond your threshold."
       />
       <IssueTable
         title="Stuck issues"
         issues={metrics.stuck.issues}
-        emptyMessage="No stuck tickets found."
+        emptyMessage="Nothing blocked in place."
       />
 
       {metrics.milestoneDecay.milestones.length > 0 ? (

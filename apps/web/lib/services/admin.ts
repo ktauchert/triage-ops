@@ -6,7 +6,8 @@ import {
   isAuthDisabled,
   getAdminEmails,
 } from "@/lib/auth/config";
-import { isAllowlistConfigured, isSetupComplete } from "@/lib/auth/setup";
+import { isAllowlistConfigured } from "@/lib/auth/allowlist";
+import { isSetupComplete } from "@/lib/auth/setup";
 import type { AuthContext } from "@/lib/auth/session";
 import { logAuditEvent, listAuditEvents } from "@/lib/services/audit";
 

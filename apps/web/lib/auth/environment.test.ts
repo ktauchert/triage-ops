@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  assertAllowlistConfigured,
   assertProductionAuthConfig,
   isDevAuthBypassAllowed,
   isProductionEnvironment,
@@ -63,5 +64,31 @@ describe("environment auth guards", () => {
     vi.stubEnv("AUTH_DISABLED", "false");
     vi.stubEnv("AUTH_SECRET", "a".repeat(32));
     expect(() => assertProductionAuthConfig()).not.toThrow();
+  });
+});
+
+describe("assertAllowlistConfigured", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("is a no-op outside production", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    expect(() => assertAllowlistConfigured()).not.toThrow();
+  });
+
+  it("throws in production when the allowlist is empty", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("AUTH_DISABLED", "false");
+    vi.stubEnv("ALLOWED_EMAIL_DOMAINS", "");
+    vi.stubEnv("ALLOWED_EMAILS", "");
+    expect(() => assertAllowlistConfigured()).toThrow(/ALLOWED_EMAIL/);
+  });
+
+  it("passes in production when an allowlist is configured", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("AUTH_DISABLED", "false");
+    vi.stubEnv("ALLOWED_EMAIL_DOMAINS", "company.com");
+    expect(() => assertAllowlistConfigured()).not.toThrow();
   });
 });

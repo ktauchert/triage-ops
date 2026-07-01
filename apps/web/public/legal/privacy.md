@@ -30,7 +30,7 @@ We do **not** design the product to send issue content or tokens to the Licensor
 
 If GDPR applies, typical bases for processing **by the controller (you)** include:
 
-- **Contract** — providing the triage tool to your team  
+- **Contract** — providing Gridnull to your team  
 - **Legitimate interests** — securing and operating internal developer tooling  
 - **Consent** — where required for optional features  
 

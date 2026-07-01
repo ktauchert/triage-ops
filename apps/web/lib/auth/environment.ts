@@ -1,3 +1,4 @@
+import { isAllowlistConfigured } from "./allowlist";
 import { isAuthDisabled } from "./config";
 
 export function isProductionEnvironment(): boolean {
@@ -35,4 +36,19 @@ export function assertProductionAuthConfig(): void {
       );
     }
   }
+}
+
+export function assertAllowlistConfigured(): void {
+  if (
+    !isProductionEnvironment() ||
+    isDevAuthBypassAllowed() ||
+    isAllowlistConfigured()
+  ) {
+    return;
+  }
+
+  throw new Error(
+    "ALLOWED_EMAIL_DOMAINS or ALLOWED_EMAILS must be configured in production. " +
+      "Set at least one allowlist to restrict who can sign in via OAuth.",
+  );
 }

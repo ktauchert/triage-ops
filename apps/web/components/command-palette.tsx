@@ -32,7 +32,7 @@ type CommandPaletteProps = {
   capabilities: RoleCapabilities;
 };
 
-const OPEN_COMMAND_PALETTE_EVENT = "triageops:open-command-palette";
+const OPEN_COMMAND_PALETTE_EVENT = "gridnull:open-command-palette";
 
 function itemIcon(item: CommandPaletteItem) {
   switch (item.id) {

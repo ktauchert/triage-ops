@@ -4,6 +4,8 @@ Last updated: June 2026
 
 **Status:** **Name chosen — Gridnull.** Technical rename executed in-repo (packages `@gridnull/*`, `GRIDNULL_*` env, stale/stuck metrics). Register domains + rename GitHub repo (`ktauchert/triage-ops` → `ktauchert/gridnull`) before external pilot.
 
+**Work summary:** [rename-to-gridnull.md](./rename-to-gridnull.md) — full chronicle of what changed (code, DB, Docker, migrations).
+
 ## Chosen name: Gridnull
 
 | Layer | Target |

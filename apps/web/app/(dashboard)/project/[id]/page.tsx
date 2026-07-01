@@ -43,7 +43,7 @@ export default async function ProjectDashboardPage({
       <div>
         <h2 className="page-heading">{project.name}</h2>
         <p className="page-subheading">
-          Triage metrics from your last issue sync.
+          Signals from your last sync.
         </p>
       </div>
 

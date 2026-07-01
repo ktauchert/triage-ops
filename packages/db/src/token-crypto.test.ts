@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { assertEncryptionConfigured } from "./assert-encryption-configured.js";
 import {
-  assertEncryptionConfigured,
   isEncryptedAccessToken,
   openAccessToken,
   sealAccessToken,

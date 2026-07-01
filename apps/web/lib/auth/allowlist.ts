@@ -37,6 +37,12 @@ export function normalizeEmail(
   return email.trim().toLowerCase();
 }
 
+export function isAllowlistConfigured(): boolean {
+  const domains = process.env.ALLOWED_EMAIL_DOMAINS?.trim() ?? "";
+  const emails = process.env.ALLOWED_EMAILS?.trim() ?? "";
+  return domains.length > 0 || emails.length > 0;
+}
+
 export function isEmailAllowed(email: string | null | undefined): boolean {
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) {

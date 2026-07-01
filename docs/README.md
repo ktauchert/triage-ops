@@ -19,7 +19,8 @@ This folder is the single source of truth for project direction, architecture, a
 | [Landing page build plan](./landing-page-plan.md) | **React marketing + docs + billing site — folder structure, phases, agent questionnaire** |
 | [Landing page content](./landing-page-content.md) | **Marketing copy, SEO, footer — source text for `apps/site`** |
 | [Landing page agent prompt](./landing-page-agent-prompt.md) | **Copy-paste prompt to give an agent when building the site** |
-| [Legal (EULA & privacy)](./legal.md) | **Install bundle legal texts, setup acceptance, landing-page copy** |
+| [Product naming](./product-naming.md) | **Gridnull** brand choice, domain checks, rejected names |
+| [Rename to Gridnull (summary)](./rename-to-gridnull.md) | **Chronicle: rebrand, stale/stuck metrics, migrations, infra cleanup** |
 | [**Completion Roadmap**](./completion-roadmap.md) | **Master todo: final steps to v1.0 (on-prem complete)** |
 | [Dashboard restructure](./dashboard-restructure.md) | **Role-aware routes, home/project/admin shells** |
 | [MVP Definition of Done](./mvp-definition-of-done.md) | Checklist that marks Phase 1 MVP as shippable |

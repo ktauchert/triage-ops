@@ -1,7 +1,11 @@
 import { UserRole, prisma } from "@gridnull/db";
-import { isEmailAllowed, normalizeEmail } from "./allowlist";
+import {
+  isAllowlistConfigured,
+  isEmailAllowed,
+  normalizeEmail,
+} from "./allowlist";
 import { isAdminEmail, isAuthDisabled } from "./config";
-import { isDevAuthBypassAllowed, isProductionEnvironment } from "./environment";
+import { isDevAuthBypassAllowed } from "./environment";
 import { logAuditEvent } from "@/lib/services/audit";
 
 const SETTINGS_ID = "default";
@@ -202,12 +206,6 @@ export async function applySignInUserState(
   }
 }
 
-export function isAllowlistConfigured(): boolean {
-  const domains = process.env.ALLOWED_EMAIL_DOMAINS?.trim() ?? "";
-  const emails = process.env.ALLOWED_EMAILS?.trim() ?? "";
-  return domains.length > 0 || emails.length > 0;
-}
-
 export async function assertSetupAllowsApiAccess(): Promise<Response | null> {
   if (isAuthDisabled() || (await isSetupComplete())) {
     return null;
@@ -215,19 +213,4 @@ export async function assertSetupAllowsApiAccess(): Promise<Response | null> {
 
   const { errorResponse } = await import("@/lib/api");
   return errorResponse("Instance setup is not complete", 503);
-}
-
-export function assertAllowlistConfigured(): void {
-  if (
-    !isProductionEnvironment() ||
-    isDevAuthBypassAllowed() ||
-    isAllowlistConfigured()
-  ) {
-    return;
-  }
-
-  throw new Error(
-    "ALLOWED_EMAIL_DOMAINS or ALLOWED_EMAILS must be configured in production. " +
-      "Set at least one allowlist to restrict who can sign in via OAuth.",
-  );
 }

@@ -86,7 +86,7 @@ export function ThresholdSettings({
       <CardHeader>
         <CardTitle>Metric thresholds</CardTitle>
         <CardDescription>
-          Per-project inactivity windows for stale and stuck triage signals.
+          Per-project windows for stale and stuck signals.
         </CardDescription>
       </CardHeader>
       <CardContent>
