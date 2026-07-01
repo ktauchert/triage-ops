@@ -14,13 +14,13 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: triage_ops
-          POSTGRES_PASSWORD: triage_ops
-          POSTGRES_DB: triage_ops
+          POSTGRES_USER: gridnull
+          POSTGRES_PASSWORD: gridnull
+          POSTGRES_DB: gridnull
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U triage_ops"
+          --health-cmd "pg_isready -U gridnull"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -36,7 +36,7 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: postgresql://triage_ops:triage_ops@localhost:5432/triage_ops
+      DATABASE_URL: postgresql://gridnull:gridnull@localhost:5432/gridnull
       REDIS_URL: redis://localhost:6379
       AUTH_SECRET: test-secret-for-ci
       AUTH_DISABLED: "true"

@@ -2,19 +2,21 @@
 # Set GRIDNULL_VERSION in .env (see .env.production.example).
 # First install: pull → up infra → migrate → up production profile.
 
+name: gridnull
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: gridnull-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-triage_ops}
+      POSTGRES_USER: ${POSTGRES_USER:-gridnull}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-triage_ops}
+      POSTGRES_DB: ${POSTGRES_DB:-gridnull}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-triage_ops} -d ${POSTGRES_DB:-triage_ops}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gridnull} -d ${POSTGRES_DB:-gridnull}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,7 +52,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-triage_ops}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gridnull}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gridnull}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       NODE_ENV: production
     depends_on:
@@ -68,7 +70,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-triage_ops}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gridnull}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gridnull}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       OLLAMA_HOST: http://ollama:11434
       NODE_ENV: production
@@ -84,7 +86,7 @@ services:
     profiles:
       - migrate
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-triage_ops}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-triage_ops}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gridnull}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gridnull}
     depends_on:
       postgres:
         condition: service_healthy

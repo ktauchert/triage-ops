@@ -317,7 +317,7 @@ Use this before exposing Gridnull beyond a single developer machine:
 
 ### Default Docker Compose (development)
 
-The bundled `docker-compose.yml` falls back to **default passwords** (`triage_ops`) when `POSTGRES_PASSWORD` is unset in `.env`, and **published ports** for local dev. Set `POSTGRES_PASSWORD` in `.env` for production — Compose substitutes it into Postgres, web, worker, and migrate.
+The bundled `docker-compose.yml` falls back to **default passwords** (`gridnull`) when `POSTGRES_PASSWORD` is unset in `.env`, and **published ports** for local dev. Set `POSTGRES_PASSWORD` in `.env` for production — Compose substitutes it into Postgres, web, worker, and migrate.
 
 ---
 
@@ -342,9 +342,9 @@ AUTH_GITLAB_ID=<oauth-app-id>
 AUTH_GITLAB_SECRET=<oauth-app-secret>
 AUTH_GITLAB_ISSUER=https://gitlab.company.internal
 
-POSTGRES_USER=triage_ops
+POSTGRES_USER=gridnull
 POSTGRES_PASSWORD=<strong-password>
-POSTGRES_DB=triage_ops
+POSTGRES_DB=gridnull
 
 REDIS_PASSWORD=<strong-password>
 REDIS_URL=redis://:<strong-password>@redis:6379

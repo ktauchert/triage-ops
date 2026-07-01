@@ -217,8 +217,8 @@ npm test
 
 | Variable | Required by | Default (local) | Meaning |
 |----------|-------------|-----------------|---------|
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | docker-compose | `triage_ops` | Postgres credentials (Compose substitution) |
-| `DATABASE_URL` | db, worker, web | `postgresql://triage_ops:triage_ops@localhost:5433/triage_ops` | Postgres connection string |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | docker-compose | `gridnull` | Postgres credentials (Compose substitution) |
+| `DATABASE_URL` | db, worker, web | `postgresql://gridnull:gridnull@localhost:5433/gridnull` | Postgres connection string |
 | `REDIS_URL` | worker, web | `redis://localhost:6379` | Redis for BullMQ and API rate limits |
 | `OLLAMA_HOST` | worker | `http://localhost:11434` | Ollama API base URL |
 | `OLLAMA_CHAT_MODEL` | worker | `llama3.2:3b` | Chat model for description drafts |

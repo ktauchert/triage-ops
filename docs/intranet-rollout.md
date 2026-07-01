@@ -144,12 +144,12 @@ Passe Hostnamen und Secrets an:
 
 ```env
 # ── Postgres (Compose substituiert in docker-compose.yml) ───────────────────
-POSTGRES_USER=triage_ops
+POSTGRES_USER=gridnull
 POSTGRES_PASSWORD=<STARKES-PASSWORT>
-POSTGRES_DB=triage_ops
+POSTGRES_DB=gridnull
 
 # Nur nötig für Host-Dev (npm run dev); reiner Docker-Betrieb ignoriert Host/Port.
-DATABASE_URL=postgresql://triage_ops:<STARKES-PASSWORT>@localhost:5433/triage_ops
+DATABASE_URL=postgresql://gridnull:<STARKES-PASSWORT>@localhost:5433/gridnull
 
 REDIS_URL=redis://redis:6379
 
@@ -202,13 +202,13 @@ openssl rand -base64 32   # für TOKEN_ENCRYPTION_KEY
 
 ### 1.5 Postgres-Passwort (nur `.env`, nicht `docker-compose.yml`)
 
-Für Produktion `POSTGRES_PASSWORD` in `.env` setzen. `docker-compose.yml` referenziert `${POSTGRES_PASSWORD:-triage_ops}` — Postgres, web, worker und migrate bekommen dasselbe Passwort automatisch.
+Für Produktion `POSTGRES_PASSWORD` in `.env` setzen. `docker-compose.yml` referenziert `${POSTGRES_PASSWORD:-gridnull}` — Postgres, web, worker und migrate bekommen dasselbe Passwort automatisch.
 
 ```env
 POSTGRES_PASSWORD=<STARKES-PASSWORT>
 ```
 
-Ohne `.env`-Eintrag bleiben die Dev-Defaults (`triage_ops`) aktiv.
+Ohne `.env`-Eintrag bleiben die Dev-Defaults (`gridnull`) aktiv.
 
 Optional: Postgres- und Redis-**Port-Mappings** (`5433:5432`, `6379:6379`) in `docker-compose.yml` entfernen, damit die Dienste nur im Docker-Netz erreichbar sind.
 

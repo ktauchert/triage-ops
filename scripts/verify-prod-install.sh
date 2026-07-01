@@ -53,7 +53,7 @@ if [ ! -f .env ]; then
     cp .env.example .env
     # Replace placeholders with dev-safe values for smoke test only
     if grep -q '<strong-password>' .env; then
-      sed -i 's/<strong-password>/triage_ops_verify/g' .env
+      sed -i 's/<strong-password>/gridnull_verify/g' .env
     fi
     if grep -q '<openssl rand -base64 32>' .env; then
       sed -i 's/<openssl rand -base64 32>/verify-test-secret-base64-value/g' .env
